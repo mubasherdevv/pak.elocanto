@@ -30,6 +30,8 @@ import City from './models/City.js';
 import Area from './models/Area.js';
 import Hotel from './models/Hotel.js';
 import Category from './models/Category.js';
+import Subcategory from './models/Subcategory.js';
+import SubSubCategory from './models/SubSubCategory.js';
 import Ad from './models/Ad.js';
 
 import { generalRateLimiter, loginRateLimiter, forgotPasswordRateLimiter } from './middleware/rateLimiter.js';
@@ -246,6 +248,29 @@ if (process.env.NODE_ENV === 'production') {
         if (segments.length === 1) {
           const category = await Category.findOne({ slug: segments[0] }).lean();
           if (category) context = { pageType: 'category', referenceId: category._id };
+        } else if (segments.length === 2 && !urlPath.startsWith('/cities')) {
+          const subcategory = await Subcategory.findOne({ slug: segments[1] }).lean();
+          if (subcategory) context = { pageType: 'category', referenceId: subcategory._id };
+        } else if (segments.length === 3 && !urlPath.startsWith('/cities')) {
+          const subsub = await SubSubCategory.findOne({ slug: segments[2] }).lean();
+          if (subsub) context = { pageType: 'category', referenceId: subsub._id };
+        } else if (segments.length === 4 && !urlPath.startsWith('/cities')) {
+          // Alternative Ad pattern: /cat/sub/subsub/slug-id
+          const identifier = segments[3];
+          let ad = await Ad.findOne({ slug: identifier }).lean();
+          if (!ad && identifier.includes('-')) {
+            const parts = identifier.split('-');
+            const potentialId = parts[parts.length - 1];
+            if (potentialId.match(/^[0-9a-fA-F]{24}$/)) ad = await Ad.findById(potentialId).lean();
+          }
+          if (ad) {
+            return {
+              title: `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${siteName}`,
+              description: ad.description?.substring(0, 160) || defaultDesc,
+              keywords: ad.tags?.join(', ') || defaultKeywords,
+              url: `https://pk.elocanto.com${urlPath}`
+            };
+          }
         }
       }
 
@@ -272,7 +297,13 @@ if (process.env.NODE_ENV === 'production') {
       return result;
     } catch (error) {
       console.error('SSR SEO Error:', error);
-      return { title: 'Elocanto.pk', description: 'Classified Marketplace', keywords: '', url: 'https://pk.elocanto.com' };
+      const defaults = await Settings.findOne({}).lean();
+      return { 
+        title: defaults?.siteName || 'Elocanto.pk', 
+        description: 'Classified Marketplace', 
+        keywords: '', 
+        url: 'https://pk.elocanto.com' 
+      };
     }
   };
 
@@ -293,12 +324,12 @@ if (process.env.NODE_ENV === 'production') {
       let html = fs.readFileSync(indexPath, 'utf8');
       const seo = await resolveSeoMetadata(req.path);
 
-      // Replace placeholders
+      // Replace placeholders with dynamic data
       html = html
-        .replace(/__SEO_TITLE__/g, seo.title || 'Elocanto.pk')
-        .replace(/__SEO_DESCRIPTION__/g, seo.description || 'Classified Marketplace')
-        .replace(/__SEO_KEYWORDS__/g, seo.keywords || '')
-        .replace(/__SEO_URL__/g, seo.url || 'https://pk.elocanto.com');
+        .replace(/Elocanto \| Classified Marketplace in Pakistan/g, seo.title || 'Elocanto.pk')
+        .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
+        .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
+        .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
 
       res.setHeader('Cache-Control', 'no-cache');
       res.send(html);
