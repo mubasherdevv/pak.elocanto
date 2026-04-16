@@ -62,6 +62,10 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 console.log('Server starting...');
 
+// 1. Immediate Healthcheck (Railway Requirement)
+app.get('/api/health', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -191,36 +195,31 @@ const resolveSeoMetadata = async (urlPath) => {
     // 1. Get Global Defaults
     const settings = await getSettings();
     const siteName = settings?.siteName || 'Elocanto.pk';
-    const defaultTitle = settings?.defaultMetaTitle || `${siteName} | Classified Marketplace`;
-    const defaultDesc = settings?.defaultMetaDescription || 'Buy and sell locally on Elocanto.';
+    const defaultTitle = settings?.defaultMetaTitle || `${siteName} | Marketplace`;
+    const defaultDesc = settings?.defaultMetaDescription || 'Secure destination to buy and sell.';
     const defaultKeywords = settings?.defaultKeywords || '';
 
-    // 2. Check Cache
-    const cacheKey = `seo_${urlPath.replace(/\//g, '_')}`;
-    const cachedSeo = getCache(cacheKey);
-    if (cachedSeo) return cachedSeo;
-
-    let context = { type: 'general', id: null, refId: null };
+    // 2. Determine Context & Check Validity
+    let context = { type: 'home', id: 'home', refId: null };
     let isValidRoute = false;
 
-    // 3. Static Whitelist Check
+    // Static Whitelist
     if (VALID_STATIC_ROUTES.includes(urlPath) || urlPath.startsWith('/profile/') || urlPath.startsWith('/edit-ad/') || urlPath.startsWith('/messages/')) {
       isValidRoute = true;
     }
 
-    // 4. Dynamic Path Analysis
+    // Dynamic Analysis
     const segments = urlPath.split('/').filter(Boolean);
     
     if (urlPath === '/' || urlPath === '') {
-      context = { type: 'homepage', id: 'home' };
+      context = { type: 'home', id: 'home' };
       isValidRoute = true;
     } else if (urlPath === '/ads') {
-      context = { type: 'ads', id: 'ads' };
+      context = { type: 'ads-listing', id: 'ads' };
       isValidRoute = true;
     } else if (urlPath.startsWith('/ads/')) {
-      // Pattern: /ads/:slug
       const slug = segments[1];
-      const ad = await Ad.findOne({ slug }).lean();
+      const ad = await Ad.findOne({ slug, isActive: true }).select('_id').lean();
       if (ad) {
         context = { type: 'ad', id: slug, refId: ad._id };
         isValidRoute = true;
@@ -233,21 +232,27 @@ const resolveSeoMetadata = async (urlPath) => {
         isValidRoute = true;
       }
     } else if (segments.length > 0) {
-      // Category patterns or catch-all dynamic SEO
-      const cat = await Category.findOne({ slug: segments[0] }).lean();
-      if (cat) {
-        context = { type: 'category', id: segments[0], refId: cat._id };
-        isValidRoute = true;
-      } else {
-        const sub = await Subcategory.findOne({ slug: segments[0] }).lean();
-        if (sub) {
-          context = { type: 'category', id: segments[0], refId: sub._id };
+      if (!isValidRoute) {
+        const cat = await Category.findOne({ slug: segments[0] }).lean();
+        if (cat) {
+          context = { type: 'category', id: segments[0], refId: cat._id };
           isValidRoute = true;
+        } else {
+          const sub = await Subcategory.findOne({ slug: segments[0] }).lean();
+          if (sub) {
+            context = { type: 'category', id: segments[0], refId: sub._id };
+            isValidRoute = true;
+          }
         }
       }
     }
 
-    // 5. Fetch Custom SEO Settings
+    // 3. Check Cache
+    const cacheKey = `seo_v2_${urlPath.replace(/\//g, '_')}`;
+    const cachedSeo = getCache(cacheKey);
+    if (cachedSeo) return { ...cachedSeo, status: isValidRoute ? 200 : 404 };
+
+    // 4. Fetch Custom SEO Settings
     const seo = await SeoSettings.findOne({ 
       pageType: context.type, 
       referenceId: context.refId,
@@ -258,15 +263,14 @@ const resolveSeoMetadata = async (urlPath) => {
       title: seo?.title?.replace('{name}', context.id || '') || defaultTitle,
       description: seo?.metaDescription || defaultDesc,
       keywords: seo?.keywords || defaultKeywords,
-      url: `https://pk.elocanto.com${urlPath}`,
-      status: isValidRoute ? 200 : 404
+      url: `https://pk.elocanto.com${urlPath}`
     };
 
-    setCache(cacheKey, result, 1800); // 30 min cache
-    return result;
+    setCache(cacheKey, result, 1800);
+    return { ...result, status: isValidRoute ? 200 : 404 };
   } catch (error) {
     console.error('SEO Resolve Error:', error);
-    return { title: 'Elocanto', status: 200 };
+    return { title: 'Marketplace', status: 200 };
   }
 };
 
@@ -337,10 +341,6 @@ app.get('*', async (req, res) => {
 });
 } else {
   console.log('Development mode: Frontend serving disabled via backend.');
-  // Health check
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'OLX Marketplace API is running' });
-  });
 }
 
 // Error Handlers
