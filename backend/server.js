@@ -350,7 +350,11 @@ if (process.env.NODE_ENV === 'production') {
         .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
 
       // Inject Analytics & Header Scripts
-      const headerContent = (analyticsScript + (settings?.headerScripts || '')).trim();
+      const gscMeta = settings?.googleSearchConsoleId 
+        ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` 
+        : '';
+        
+      const headerContent = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
       if (headerContent) {
         html = html.replace('</head>', `${headerContent}</head>`);
       }

@@ -65,6 +65,17 @@ export const SettingsProvider = ({ children }) => {
           console.log(`[ANALYTICS] Google Analytics (${id}) injected.`);
         }
       }
+
+      // Google Search Console Meta Injection
+      if (settings.googleSearchConsoleId) {
+        if (!document.querySelector('meta[name="google-site-verification"]')) {
+          const meta = document.createElement('meta');
+          meta.name = "google-site-verification";
+          meta.content = settings.googleSearchConsoleId;
+          document.head.appendChild(meta);
+          console.log(`[SEO] Google Site Verification injected.`);
+        }
+      }
     }
   }, [settings]);
 

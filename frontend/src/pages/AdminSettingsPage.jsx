@@ -436,6 +436,18 @@ export default function AdminSettingsPage() {
           <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold">Example: G-7A2BCDEFGH</p>
         </div>
 
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Google Search Console Verification ID</label>
+          <input 
+            type="text" 
+            className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono"
+            placeholder="google-site-verification-id"
+            value={settings.googleSearchConsoleId || ''} 
+            onChange={(e) => setSettings({ ...settings, googleSearchConsoleId: e.target.value })} 
+          />
+          <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold italic text-blue-500">Only paste the "content" value from the meta tag.</p>
+        </div>
+
         <hr className="border-gray-50 my-6" />
 
         <div>
