@@ -233,15 +233,27 @@ const resolveSeoMetadata = async (urlPath) => {
       }
     } else if (segments.length > 0) {
       if (!isValidRoute) {
-        const cat = await Category.findOne({ slug: segments[0] }).lean();
-        if (cat) {
-          context = { type: 'category', id: segments[0], refId: cat._id };
+        // Find the most specific match by checking segments from specific to general
+        const lastSegment = segments[segments.length - 1];
+        
+        // 1. Check Sub-Subcategory
+        const subSubCat = await SubSubCategory.findOne({ slug: lastSegment, isActive: true }).lean();
+        if (subSubCat) {
+          context = { type: 'category', id: lastSegment, refId: subSubCat._id };
           isValidRoute = true;
         } else {
-          const sub = await Subcategory.findOne({ slug: segments[0] }).lean();
-          if (sub) {
-            context = { type: 'category', id: segments[0], refId: sub._id };
+          // 2. Check Subcategory
+          const subCat = await Subcategory.findOne({ slug: lastSegment, isActive: true }).lean();
+          if (subCat) {
+            context = { type: 'category', id: lastSegment, refId: subCat._id };
             isValidRoute = true;
+          } else {
+            // 3. Check Category
+            const cat = await Category.findOne({ slug: lastSegment, isActive: true }).lean();
+            if (cat) {
+              context = { type: 'category', id: lastSegment, refId: cat._id };
+              isValidRoute = true;
+            }
           }
         }
       }
@@ -314,7 +326,7 @@ app.get('*', async (req, res) => {
       .replace(/Elocanto \| Classified Marketplace in Pakistan/g, seo.title || 'Elocanto.pk')
       .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
       .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
-      .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
+      .replace(/__CANONICAL_URL__/g, seo.url || 'https://pk.elocanto.com');
 
     // Inject Analytics, GSC and Header Scripts
     const gscMeta = settings?.googleSearchConsoleId 
