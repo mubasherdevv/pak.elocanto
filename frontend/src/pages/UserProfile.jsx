@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
+import NotFoundPage from './NotFoundPage';
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -77,7 +78,7 @@ export default function UserProfile() {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div></div>;
-  if (!profileUser) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><p className="text-gray-500 font-bold">User not found</p></div>;
+  if (!profileUser) return <NotFoundPage />;
 
   const filteredAds = ads.filter(ad => {
     if (activeTab === 'active') return ad.isActive;

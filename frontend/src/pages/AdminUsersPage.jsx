@@ -322,11 +322,23 @@ export default function AdminUsersPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${
-                              ['bg-blue-50 text-blue-500', 'bg-green-50 text-green-500', 'bg-orange-50 text-orange-500', 'bg-purple-50 text-purple-500'][user.name.length % 4]
-                            }`}>
-                              {user.name.substring(0, 2).toUpperCase()}
-                            </div>
+                            {user.profilePhoto ? (
+                              <img 
+                                src={getOptimizedImageUrl(user.profilePhoto, 100)} 
+                                className="w-9 h-9 rounded-full object-cover border border-gray-100" 
+                                alt=""
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
+                                }}
+                              />
+                            ) : (
+                              <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${
+                                ['bg-blue-50 text-blue-500', 'bg-green-50 text-green-500', 'bg-orange-50 text-orange-500', 'bg-purple-50 text-purple-500'][user.name.length % 4]
+                              }`}>
+                                {user.name.substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
                             {user.lastLogin && new Date(user.lastLogin) > new Date(Date.now() - 5 * 60 * 1000) && (
                               <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
                             )}

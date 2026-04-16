@@ -172,6 +172,7 @@ export default function AdsListingPage() {
           setCategories(pageCache.categories);
           setCities(pageCache.cities);
         }
+        setNotFound(false); // Reset on every load
 
         const galleryLimit = settings?.featuredAdsLimit || 10;
         
@@ -199,6 +200,18 @@ export default function AdsListingPage() {
           }
         }
         if (citySlug) cityInfoRes = essentialResults[index++];
+
+        if (citySlug) {
+          // Validate City
+          if (cityInfoRes?.data) {
+            setCityInfo(cityInfoRes.data);
+            setBreadcrumbs([{ name: 'Home', path: '/' }, { name: cityInfoRes.data.name, path: `/cities/${citySlug}` }]);
+          } else {
+            setNotFound(true);
+            setDataLoading(false);
+            return;
+          }
+        }
 
         if (pageCache.categories) {
           const catData = pageCache.categories;
@@ -243,18 +256,6 @@ export default function AdsListingPage() {
             setActiveSub(foundSub);
             setActiveSubSub(foundSubSub);
             setBreadcrumbs(bc);
-          } else {
-            let bc = [{ name: 'Home', path: '/' }];
-            if (cityInfoRes?.data) {
-              const info = cityInfoRes.data;
-              setCityInfo(info);
-              bc.push({ name: info.name, path: `/cities/${citySlug}` });
-            }
-            setNotFound(false);
-            setActiveCategory(null);
-            setActiveSub(null);
-            setActiveSubSub(null);
-            setBreadcrumbs(bc);
           }
         }
 
@@ -278,10 +279,17 @@ export default function AdsListingPage() {
             if (areaSlug || hotelSlug || isHotelsPage) {
                setBreadcrumbs(prev => {
                  const newBc = [...prev];
+                 let foundSpecific = false;
+
                  if (areaSlug) {
                    const area = areasRes.data.find(a => a.slug === areaSlug);
-                   if (area && !newBc.find(b => b.path.includes(areaSlug))) {
-                     newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
+                   if (area) {
+                     foundSpecific = true;
+                     if (!newBc.find(b => b.path.includes(areaSlug))) {
+                       newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
+                     }
+                   } else {
+                     setNotFound(true);
                    }
                  }
                  if (isHotelsPage || hotelSlug) {
@@ -290,15 +298,26 @@ export default function AdsListingPage() {
                    }
                    if (hotelSlug) {
                      const hotel = hotelsRes.data.find(h => h.slug === hotelSlug);
-                     if (hotel && !newBc.find(b => b.path.includes(hotelSlug))) {
-                       newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
+                     if (hotel) {
+                       foundSpecific = true;
+                       if (!newBc.find(b => b.path.includes(hotelSlug))) {
+                         newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
+                       }
+                     } else {
+                       setNotFound(true);
                      }
+                   } else if (isHotelsPage) {
+                     foundSpecific = true;
                    }
                  }
                  return newBc;
                });
             }
-          }).catch(() => setIsLocationsLoading(false));
+          }).catch(() => {
+            setIsLocationsLoading(false);
+            // If the areas/hotels fetch fails completely and we are on a specific area/hotel page, 404
+            if (areaSlug || hotelSlug) setNotFound(true);
+          });
         }
 
       } catch (err) {

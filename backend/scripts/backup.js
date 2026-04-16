@@ -4,11 +4,16 @@ import path from 'path';
 import os from 'os';
 import dotenv from 'dotenv';
 import archiver from 'archiver';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-const BACKUP_DIR = path.resolve(process.cwd(), 'backups');
-const UPLOADS_DIR = path.resolve(process.cwd(), 'uploads');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// backup.js is in backend/scripts, so we go up one level to reach backend/
+const BACKEND_DIR = path.resolve(__dirname, '..');
+const BACKUP_DIR = path.join(BACKEND_DIR, 'backups');
+const UPLOADS_DIR = path.join(BACKEND_DIR, 'uploads');
 
 if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
@@ -49,6 +54,23 @@ export const createBackup = async (options = {}) => {
       throw new Error('Database object not available');
     }
 
+    console.log('[BACKUP] Building URL lookups...');
+    const SITE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+    
+    // Fetch critical collections for mapping
+    const [rawCats, rawSubs, rawCities] = await Promise.all([
+      db.collection('categories').find({}).project({ slug: 1 }).toArray(),
+      db.collection('subcategories').find({}).project({ slug: 1, category: 1 }).toArray(),
+      db.collection('cities').find({}).project({ slug: 1 }).toArray()
+    ]).catch(err => {
+      console.warn('[BACKUP] URL lookup pre-cache failed:', err.message);
+      return [[], [], []];
+    });
+
+    const catMap = new Map(rawCats.map(c => [c._id.toString(), c.slug]));
+    const subMap = new Map(rawSubs.map(s => [s._id.toString(), { slug: s.slug, catSlug: catMap.get(s.category?.toString()) }]));
+    const cityMap = new Map(rawCities.map(c => [c._id.toString(), c.slug]));
+
     console.log('[BACKUP] Fetching collections...');
     const collections = await db.listCollections().toArray();
     const backupData = {};
@@ -61,7 +83,44 @@ export const createBackup = async (options = {}) => {
       try {
         console.log(`[BACKUP] Collecting: ${colName}`);
         const collection = db.collection(colName);
-        const documents = await collection.find({}).toArray();
+        let documents = await collection.find({}).toArray();
+
+        // 2. Inject context-aware website links
+        if (colName === 'ads') {
+          documents = documents.map(doc => ({ 
+            ...doc, 
+            website_link: `${SITE_URL}/ads/${doc.slug || doc._id}`,
+            full_image_links: (doc.images || []).map(img => {
+              if (img.startsWith('http')) return img;
+              return `${SITE_URL}${img.startsWith('/') ? '' : '/'}${img}`;
+            })
+          }));
+        } else if (colName === 'categories') {
+          documents = documents.map(doc => ({ ...doc, website_link: `${SITE_URL}/${doc.slug || doc._id}` }));
+        } else if (colName === 'subcategories') {
+          documents = documents.map(doc => {
+            const catSlug = catMap.get(doc.category?.toString());
+            return { ...doc, website_link: catSlug ? `${SITE_URL}/${catSlug}/${doc.slug}` : `${SITE_URL}/${doc.slug}` };
+          });
+        } else if (colName === 'subsubcategories') {
+          documents = documents.map(doc => {
+            const subInfo = subMap.get(doc.subcategory?.toString());
+            return { ...doc, website_link: subInfo?.catSlug ? `${SITE_URL}/${subInfo.catSlug}/${subInfo.slug}/${doc.slug}` : `${SITE_URL}/${doc.slug}` };
+          });
+        } else if (colName === 'cities') {
+          documents = documents.map(doc => ({ ...doc, website_link: `${SITE_URL}/cities/${doc.slug || doc._id}` }));
+        } else if (colName === 'areas') {
+          documents = documents.map(doc => {
+            const citySlug = cityMap.get(doc.city?.toString());
+            return { ...doc, website_link: citySlug ? `${SITE_URL}/cities/${citySlug}/areas/${doc.slug}` : `${SITE_URL}/areas/${doc.slug}` };
+          });
+        } else if (colName === 'hotels') {
+          documents = documents.map(doc => {
+            const citySlug = cityMap.get(doc.city?.toString());
+            return { ...doc, website_link: citySlug ? `${SITE_URL}/cities/${citySlug}/hotels/${doc.slug}` : `${SITE_URL}/hotels/${doc.slug}` };
+          });
+        }
+
         backupData[colName] = documents;
         totalDocs += documents.length;
       } catch (err) {

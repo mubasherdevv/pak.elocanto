@@ -402,7 +402,7 @@ export default function UserDashboardPage() {
                     <div className="relative mx-auto md:mx-0">
                       <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-50 border-4 border-white shadow-xl">
                         {profileData.profilePhoto ? (
-                          <img src={getImageUrl(profileData.profilePhoto)} className="w-full h-full object-cover" />
+                          <img src={getOptimizedImageUrl(profileData.profilePhoto, 200)} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-orange-400 to-orange-600 text-white flex items-center justify-center text-4xl font-black">
                             {profileData.name?.[0]?.toUpperCase()}

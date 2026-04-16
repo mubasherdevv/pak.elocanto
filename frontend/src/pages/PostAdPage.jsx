@@ -6,6 +6,7 @@ import api from '../lib/api';
 import { compressMultipleImages, getOptimizedImageUrl } from '../utils/imageUtils';
 import ImageEditorModal from '../components/ImageEditorModal';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
+import NotFoundPage from './NotFoundPage';
 
 export default function PostAdPage() {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ export default function PostAdPage() {
   const maxImages = settings?.maxImagesPerAd || 5;
   const [editingImage, setEditingImage] = useState(null); // { url, index }
   const [isEditing, setIsEditing] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   
   useEffect(() => {
     const fetchSettings = async () => {
@@ -75,6 +77,7 @@ export default function PostAdPage() {
       });
       setStep(2); // Start at Step 2 for editing details
     } catch (err) {
+      if (err.response?.status === 404) setNotFound(true);
       setError('Failed to load ad details for editing');
     } finally {
       setLoading(false);
@@ -266,6 +269,8 @@ export default function PostAdPage() {
       setLoading(false);
     }
   };
+
+  if (notFound) return <NotFoundPage />;
 
   return (
     <div className="page-wrapper" style={{ background: '#f7f8fa' }}>

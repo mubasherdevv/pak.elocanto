@@ -28,6 +28,7 @@ import SeoSettings from './models/SeoSettings.js';
 import Settings from './models/Settings.js';
 import City from './models/City.js';
 import Area from './models/Area.js';
+import User from './models/User.js';
 import Hotel from './models/Hotel.js';
 import Category from './models/Category.js';
 import Subcategory from './models/Subcategory.js';
@@ -203,8 +204,8 @@ const resolveSeoMetadata = async (urlPath) => {
     let context = { type: 'home', id: 'home', refId: null };
     let isValidRoute = false;
 
-    // Static Whitelist
-    if (VALID_STATIC_ROUTES.includes(urlPath) || urlPath.startsWith('/profile/') || urlPath.startsWith('/edit-ad/') || urlPath.startsWith('/messages/')) {
+    // Static Whitelist (Absolute Matches)
+    if (VALID_STATIC_ROUTES.includes(urlPath)) {
       isValidRoute = true;
     }
 
@@ -228,9 +229,48 @@ const resolveSeoMetadata = async (urlPath) => {
       const citySlug = segments[1];
       const city = await City.findOne({ slug: citySlug }).lean();
       if (city) {
-        context = { type: 'city', id: citySlug, refId: city._id };
         isValidRoute = true;
+        context = { type: 'city', id: citySlug, refId: city._id };
+
+        // Sub-validation for Area/Hotel
+        if (segments.length >= 4) {
+          const subType = segments[2]; // 'areas' or 'hotels'
+          const subSlug = segments[3];
+          if (subType === 'areas') {
+            const area = await Area.findOne({ city: city._id, slug: subSlug }).lean();
+            if (!area) isValidRoute = false;
+            else {
+               context = { type: 'area', id: subSlug, refId: area._id };
+            }
+          } else if (subType === 'hotels') {
+            const hotel = await Hotel.findOne({ city: city._id, slug: subSlug }).lean();
+            if (!hotel) isValidRoute = false;
+            else {
+               context = { type: 'hotel', id: subSlug, refId: hotel._id };
+            }
+          }
+        }
       }
+    } else if (urlPath.startsWith('/profile/')) {
+      const userId = segments[1];
+      if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
+        const user = await User.findById(userId).select('_id').lean();
+        if (user) {
+          context = { type: 'profile', id: userId, refId: user._id };
+          isValidRoute = true;
+        }
+      }
+    } else if (urlPath.startsWith('/edit-ad/')) {
+      const adId = segments[1];
+      if (adId && adId.match(/^[0-9a-fA-F]{24}$/)) {
+        const ad = await Ad.findById(adId).select('_id').lean();
+        if (ad) {
+          context = { type: 'edit-ad', id: adId, refId: ad._id };
+          isValidRoute = true;
+        }
+      }
+    } else if (urlPath.startsWith('/messages/')) {
+      isValidRoute = true; // Messages usually require auth, keep simple for SEO
     } else if (segments.length > 0) {
       if (!isValidRoute) {
         // Find the most specific match by checking segments from specific to general
@@ -282,7 +322,7 @@ const resolveSeoMetadata = async (urlPath) => {
     return { ...result, status: isValidRoute ? 200 : 404 };
   } catch (error) {
     console.error('SEO Resolve Error:', error);
-    return { title: 'Marketplace', status: 200 };
+    return { title: 'Marketplace', status: 404 };
   }
 };
 

@@ -18,6 +18,7 @@ import {
   ChartBarIcon
 } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconMini } from '@heroicons/react/20/solid';
+import { getOptimizedImageUrl } from '../utils/imageUtils';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -122,9 +123,21 @@ export default function AdminLayout() {
         <div className="p-4 border-t border-white/5 shrink-0 space-y-2">
           <div className="bg-white/5 rounded-2xl p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-lg shadow-orange-500/20">
-                {user?.name?.charAt(0) || 'A'}
-              </div>
+              {user?.profilePhoto ? (
+                <img 
+                  src={getOptimizedImageUrl(user.profilePhoto, 100)} 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-orange-500/20 shadow-lg" 
+                  alt=""
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=f97316&color=fff`;
+                  }}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-lg shadow-orange-500/20">
+                  {user?.name?.charAt(0) || 'A'}
+                </div>
+              )}
               <div className="min-w-0">
                 <p className="text-sm font-bold truncate text-white">{user?.name || 'Administrator'}</p>
                 <p className="text-[10px] text-gray-400 truncate tracking-wider uppercase font-medium">Master Access</p>
