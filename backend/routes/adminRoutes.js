@@ -13,6 +13,7 @@ import FeaturedAdView from '../models/FeaturedAdView.js';
 import path from 'path';
 import fs from 'fs';
 import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
+import { delCache } from '../utils/cache.js';
 
 const router = express.Router();
 
@@ -127,6 +128,9 @@ router.put('/settings', protect, admin, async (req, res) => {
       description: 'Updated site settings',
       targetType: 'Settings'
     });
+
+    // Clear Cache for immediate update
+    delCache('site_settings');
     
     res.json(settings);
   } catch (error) {

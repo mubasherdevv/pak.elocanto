@@ -1,4 +1,5 @@
 import SeoSettings from '../models/SeoSettings.js';
+import { flushCache } from '../utils/cache.js';
 
 // @desc    Get SEO settings for a specific page
 // @route   GET /api/public/seo
@@ -65,6 +66,9 @@ export const saveSeoSettings = async (req, res) => {
       });
     }
 
+    // Flush cache for immediate update
+    flushCache();
+
     res.status(201).json(settings);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -80,6 +84,10 @@ export const deleteSeoSetting = async (req, res) => {
     if (!settings) return res.status(404).json({ message: 'Not found' });
 
     await settings.deleteOne();
+    
+    // Flush cache for immediate update
+    flushCache();
+
     res.json({ message: 'SEO setting removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
