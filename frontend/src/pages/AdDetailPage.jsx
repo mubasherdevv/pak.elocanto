@@ -14,12 +14,14 @@ import { generateAdSlug, extractIdFromSlug } from '../utils/urlUtils';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
+import { useSettings } from '../context/SettingsContext';
 
 export default function AdDetailPage() {
   const params = useParams();
   const slug = params.slug || params.subSubcatSlug || params.subCategorySlug || params.categorySlug;
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [ad, setAd] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -307,8 +309,14 @@ export default function AdDetailPage() {
   return (
     <div className="page-wrapper" style={{ background: isMobile ? '#f8fafc' : '#f7f8fa' }}>
       <Helmet>
-        <title>{ad ? `${ad.title} - PKR ${ad.price?.toLocaleString()} | Marketplace` : 'Loading...'}</title>
-        <meta name="description" content={ad?.description?.substring(0, 160)} />
+        <title>
+          {ad 
+            ? `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${settings?.siteName || 'Elocanto'}` 
+            : slug 
+              ? `${slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} | ${settings?.siteName || 'Elocanto'}`
+              : 'Loading...'}
+        </title>
+        <meta name="description" content={ad?.description?.substring(0, 160) || 'View this listing on Elocanto.'} />
       </Helmet>
 
       {isMobile ? (

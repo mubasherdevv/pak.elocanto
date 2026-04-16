@@ -30,6 +30,7 @@ import City from './models/City.js';
 import Area from './models/Area.js';
 import Hotel from './models/Hotel.js';
 import Category from './models/Category.js';
+import Ad from './models/Ad.js';
 
 import { generalRateLimiter, loginRateLimiter, forgotPasswordRateLimiter } from './middleware/rateLimiter.js';
 
@@ -211,6 +212,34 @@ if (process.env.NODE_ENV === 'production') {
         } else if (segments.length === 3 && segments[2] === 'hotels') {
           const city = await City.findOne({ slug: citySlug }).lean();
           if (city) context = { pageType: 'city', referenceId: city._id };
+        }
+      } else if (urlPath.startsWith('/ads/')) {
+        const segments = urlPath.split('/').filter(Boolean);
+        // Pattern: /ads/:slug
+        if (segments.length === 2) {
+          const identifier = segments[1];
+          let ad = await Ad.findOne({ slug: identifier }).lean();
+          
+          if (!ad && identifier.match(/^[0-9a-fA-F]{24}$/)) {
+            ad = await Ad.findById(identifier).lean();
+          }
+          
+          if (!ad && identifier.includes('-')) {
+            const parts = identifier.split('-');
+            const potentialId = parts[parts.length - 1];
+            if (potentialId.match(/^[0-9a-fA-F]{24}$/)) {
+              ad = await Ad.findById(potentialId).lean();
+            }
+          }
+
+          if (ad) {
+            return {
+              title: `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${siteName}`,
+              description: ad.description?.substring(0, 160) || defaultDesc,
+              keywords: ad.tags?.join(', ') || defaultKeywords,
+              url: `https://pk.elocanto.com${urlPath}`
+            };
+          }
         }
       } else {
         const segments = urlPath.split('/').filter(Boolean);
