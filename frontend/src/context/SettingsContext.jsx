@@ -30,15 +30,40 @@ export const SettingsProvider = ({ children }) => {
     }
   }, []);
 
-  // Update document title and favicon dynamically
+  // Update document title, favicon and inject Analytics dynamically
   useEffect(() => {
     if (settings) {
+      // Favicon
       if (settings.favicon) {
         const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
         link.type = 'image/x-icon';
         link.rel = 'shortcut icon';
         link.href = settings.favicon;
         document.getElementsByTagName('head')[0].appendChild(link);
+      }
+
+      // Google Analytics Injection
+      if (settings.googleAnalyticsId) {
+        const id = settings.googleAnalyticsId;
+        // Check if script already exists to prevent duplicates
+        if (!document.getElementById('ga-script')) {
+          const script1 = document.createElement('script');
+          script1.id = 'ga-script';
+          script1.async = true;
+          script1.src = `https://www.googletagmanager.com/gtag/js?id=${id}`;
+          document.head.appendChild(script1);
+
+          const script2 = document.createElement('script');
+          script2.id = 'ga-config';
+          script2.innerHTML = `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${id}');
+          `;
+          document.head.appendChild(script2);
+          console.log(`[ANALYTICS] Google Analytics (${id}) injected.`);
+        }
       }
     }
   }, [settings]);

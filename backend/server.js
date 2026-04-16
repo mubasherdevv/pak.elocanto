@@ -67,12 +67,12 @@ app.use(
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
-        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "data:", "https://elocanto.com", "https://*.elocanto.com", "https://cdn.jsdelivr.net"],
-        "script-src-elem": ["'self'", "'unsafe-inline'", "data:", "https://elocanto.com", "https://*.elocanto.com", "https://cdn.jsdelivr.net"],
+        "script-src": ["'self'", "'unsafe-inline'", "'unsafe-eval'", "data:", "https://elocanto.com", "https://*.elocanto.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
+        "script-src-elem": ["'self'", "'unsafe-inline'", "data:", "https://elocanto.com", "https://*.elocanto.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
         "script-src-attr": ["'unsafe-inline'"],
         "frame-src": ["'self'", "https://elocanto.com", "https://*.elocanto.com"],
-        "connect-src": ["'self'", "data:", "blob:", "https://elocanto.up.railway.app", "https://elocanto.com", "https://*.elocanto.com"],
-        "img-src": ["'self'", "data:", "blob:", "https:", "http:"],
+        "connect-src": ["'self'", "data:", "blob:", "https://elocanto.up.railway.app", "https://elocanto.com", "https://*.elocanto.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"],
+        "img-src": ["'self'", "data:", "blob:", "https:", "http:", "https://www.google-analytics.com", "https://www.googletagmanager.com"],
         "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
         "style-src": ["'self'", "'unsafe-inline'", "data:", "https://fonts.googleapis.com"],
         "worker-src": ["'self'", "blob:", "https://cdn.jsdelivr.net"],
@@ -323,6 +323,24 @@ if (process.env.NODE_ENV === 'production') {
 
       let html = fs.readFileSync(indexPath, 'utf8');
       const seo = await resolveSeoMetadata(req.path);
+      const settings = await getSettings();
+
+      // GA4 Script Injection
+      let analyticsScript = '';
+      if (settings?.googleAnalyticsId) {
+        analyticsScript = `
+          <!-- Google tag (gtag.js) -->
+          <script async src="https://www.googletagmanager.com/gtag/js?id=${settings.googleAnalyticsId}"></script>
+          <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${settings.googleAnalyticsId}', {
+              page_path: window.location.pathname,
+            });
+          </script>
+        `;
+      }
 
       // Replace placeholders with dynamic data
       html = html
@@ -330,6 +348,17 @@ if (process.env.NODE_ENV === 'production') {
         .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
         .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
         .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
+
+      // Inject Analytics & Header Scripts
+      const headerContent = (analyticsScript + (settings?.headerScripts || '')).trim();
+      if (headerContent) {
+        html = html.replace('</head>', `${headerContent}</head>`);
+      }
+
+      // Inject Footer Scripts
+      if (settings?.footerScripts) {
+        html = html.replace('</body>', `${settings.footerScripts}</body>`);
+      }
 
       res.setHeader('Cache-Control', 'no-cache');
       res.send(html);

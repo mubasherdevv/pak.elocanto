@@ -105,7 +105,12 @@ const settingsSchema = mongoose.Schema(
     // 10. UI/UX Controls
     enableDarkMode: { type: Boolean, default: false },
     showPhoneOnAds: { type: Boolean, default: true },
-    enableChat: { type: Boolean, default: true }
+    enableChat: { type: Boolean, default: true },
+
+    // 11. Analytics & Tracking
+    googleAnalyticsId: { type: String, default: '' },
+    headerScripts: { type: String, default: '' }, // Custom scripts for <head>
+    footerScripts: { type: String, default: '' }  // Custom scripts before </body>
   },
   {
     timestamps: true,

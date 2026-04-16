@@ -13,7 +13,8 @@ import {
   ServerIcon,
   DocumentArrowDownIcon,
   TrashIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +29,7 @@ const TABS = [
   { id: 'seo', name: 'SEO Settings', icon: MagnifyingGlassIcon },
   { id: 'security', name: 'Security', icon: ShieldCheckIcon },
   { id: 'email', name: 'Email Settings', icon: EnvelopeIcon },
+  { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
   { id: 'backup', name: 'Backup & Restore', icon: ServerIcon },
 ];
 
@@ -177,6 +179,7 @@ export default function AdminSettingsPage() {
       case 'seo': return renderSeo();
       case 'security': return renderSecurity();
       case 'email': return renderEmail();
+      case 'analytics': return renderAnalytics();
       case 'backup': return renderBackup();
       default: return null;
     }
@@ -416,6 +419,62 @@ export default function AdminSettingsPage() {
       </div>
     );
   };
+
+  const renderAnalytics = () => (
+    <div className="space-y-6">
+      <h2 className="text-lg font-black text-gray-900 mb-4">Analytics & Tracking</h2>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Google Analytics Measurement ID (GA4)</label>
+          <input 
+            type="text" 
+            className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono"
+            placeholder="G-XXXXXXXXXX"
+            value={settings.googleAnalyticsId || ''} 
+            onChange={(e) => setSettings({ ...settings, googleAnalyticsId: e.target.value })} 
+          />
+          <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold">Example: G-7A2BCDEFGH</p>
+        </div>
+
+        <hr className="border-gray-50 my-6" />
+
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Custom Header Scripts</label>
+          <p className="text-[10px] text-gray-400 mb-2 ml-1">Will be injected into the &lt;head&gt; section. Use for Facebook Pixel, verification tags, etc.</p>
+          <textarea 
+            rows="5" 
+            className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono text-xs"
+            placeholder="<script>...</script>"
+            value={settings.headerScripts || ''} 
+            onChange={(e) => setSettings({ ...settings, headerScripts: e.target.value })} 
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Custom Footer Scripts</label>
+          <p className="text-[10px] text-gray-400 mb-2 ml-1">Will be injected before the closing &lt;/body&gt; tag.</p>
+          <textarea 
+            rows="5" 
+            className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono text-xs"
+            placeholder="<script>...</script>"
+            value={settings.footerScripts || ''} 
+            onChange={(e) => setSettings({ ...settings, footerScripts: e.target.value })} 
+          />
+        </div>
+      </div>
+
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mt-6">
+        <h4 className="font-black text-blue-900 mb-2 text-sm flex items-center gap-2">
+          <ChartBarIcon className="w-4 h-4" />
+          Note on Injection
+        </h4>
+        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+          Scripts are injected on the server-side during production. Changes may take a few minutes to reflect if caching is enabled. 
+          Make sure to include correct &lt;script&gt; tags.
+        </p>
+      </div>
+    </div>
+  );
 
   const renderGeneral = () => (
     <div className="space-y-6">
