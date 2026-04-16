@@ -175,202 +175,166 @@ if (process.env.NODE_ENV === 'production') {
     return settings;
   };
 
-  // Helper to resolve SEO for server-side injection
-  const resolveSeoMetadata = async (urlPath) => {
-    try {
-      // 1. Get Global Defaults (with Caching)
-      const settings = await getSettings(); // This uses the optimized version with caching
-      const siteName = settings?.siteName || 'Elocanto.pk';
-      const defaultTitle = settings?.defaultMetaTitle || `${siteName} | Classified Marketplace`;
-      const defaultDesc = settings?.defaultMetaDescription || 'Buy and sell locally on Elocanto.';
-      const defaultKeywords = settings?.defaultKeywords || '';
+// Valid Static Frontend Routes (Non-Dynamic)
+const VALID_STATIC_ROUTES = [
+  '/', '/ads', '/login', '/register', '/forgot-password', 
+  '/post-ad', '/dashboard', '/profile', '/messages', '/admin',
+  '/admin/ads', '/admin/users', '/admin/categories', '/admin/cities',
+  '/admin/reports', '/admin/settings', '/admin/seo', '/admin/titles-seo'
+];
 
-      const cacheKey = `seo_${urlPath.replace(/\//g, '_')}`;
-      const cachedSeo = getCache(cacheKey);
-      if (cachedSeo) return cachedSeo;
+/**
+ * Resolves SEO metadata by analyzing URL path and querying database
+ */
+const resolveSeoMetadata = async (urlPath) => {
+  try {
+    // 1. Get Global Defaults
+    const settings = await getSettings();
+    const siteName = settings?.siteName || 'Elocanto.pk';
+    const defaultTitle = settings?.defaultMetaTitle || `${siteName} | Classified Marketplace`;
+    const defaultDesc = settings?.defaultMetaDescription || 'Buy and sell locally on Elocanto.';
+    const defaultKeywords = settings?.defaultKeywords || '';
 
-      let context = { pageType: 'homepage', referenceId: null };
+    // 2. Check Cache
+    const cacheKey = `seo_${urlPath.replace(/\//g, '_')}`;
+    const cachedSeo = getCache(cacheKey);
+    if (cachedSeo) return cachedSeo;
 
-      // 2. Determine Context based on URL
-      if (urlPath === '/' || urlPath === '') {
-        context = { pageType: 'homepage', referenceId: null };
-      } else if (urlPath.startsWith('/ads')) {
-        context = { pageType: 'ads', referenceId: null };
-      } else if (urlPath.startsWith('/cities/')) {
-        const segments = urlPath.split('/').filter(Boolean);
-        const citySlug = segments[1];
+    let context = { type: 'general', id: null, refId: null };
+    let isValidRoute = false;
 
-        if (segments.length === 2) {
-          const city = await City.findOne({ slug: citySlug }).lean();
-          if (city) context = { pageType: 'city', referenceId: city._id };
-        } else if (segments.length === 4) {
-          if (segments[2] === 'areas') {
-            const area = await Area.findOne({ slug: segments[3] }).lean();
-            if (area) context = { pageType: 'area', referenceId: area._id };
-          } else if (segments[2] === 'hotels') {
-            const hotel = await Hotel.findOne({ slug: segments[3] }).lean();
-            if (hotel) context = { pageType: 'hotel', referenceId: hotel._id };
-          }
-        } else if (segments.length === 3 && segments[2] === 'hotels') {
-          const city = await City.findOne({ slug: citySlug }).lean();
-          if (city) context = { pageType: 'city', referenceId: city._id };
-        }
-      } else if (urlPath.startsWith('/ads/')) {
-        const segments = urlPath.split('/').filter(Boolean);
-        // Pattern: /ads/:slug
-        if (segments.length === 2) {
-          const identifier = segments[1];
-          let ad = await Ad.findOne({ slug: identifier }).lean();
-          
-          if (!ad && identifier.match(/^[0-9a-fA-F]{24}$/)) {
-            ad = await Ad.findById(identifier).lean();
-          }
-          
-          if (!ad && identifier.includes('-')) {
-            const parts = identifier.split('-');
-            const potentialId = parts[parts.length - 1];
-            if (potentialId.match(/^[0-9a-fA-F]{24}$/)) {
-              ad = await Ad.findById(potentialId).lean();
-            }
-          }
+    // 3. Static Whitelist Check
+    if (VALID_STATIC_ROUTES.includes(urlPath) || urlPath.startsWith('/profile/') || urlPath.startsWith('/edit-ad/') || urlPath.startsWith('/messages/')) {
+      isValidRoute = true;
+    }
 
-          if (ad) {
-            return {
-              title: `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${siteName}`,
-              description: ad.description?.substring(0, 160) || defaultDesc,
-              keywords: ad.tags?.join(', ') || defaultKeywords,
-              url: `https://pk.elocanto.com${urlPath}`
-            };
-          }
-        }
+    // 4. Dynamic Path Analysis
+    const segments = urlPath.split('/').filter(Boolean);
+    
+    if (urlPath === '/' || urlPath === '') {
+      context = { type: 'homepage', id: 'home' };
+      isValidRoute = true;
+    } else if (urlPath === '/ads') {
+      context = { type: 'ads', id: 'ads' };
+      isValidRoute = true;
+    } else if (urlPath.startsWith('/ads/')) {
+      // Pattern: /ads/:slug
+      const slug = segments[1];
+      const ad = await Ad.findOne({ slug }).lean();
+      if (ad) {
+        context = { type: 'ad', id: slug, refId: ad._id };
+        isValidRoute = true;
+      }
+    } else if (urlPath.startsWith('/cities/')) {
+      const citySlug = segments[1];
+      const city = await City.findOne({ slug: citySlug }).lean();
+      if (city) {
+        context = { type: 'city', id: citySlug, refId: city._id };
+        isValidRoute = true;
+      }
+    } else if (segments.length > 0) {
+      // Category patterns or catch-all dynamic SEO
+      const cat = await Category.findOne({ slug: segments[0] }).lean();
+      if (cat) {
+        context = { type: 'category', id: segments[0], refId: cat._id };
+        isValidRoute = true;
       } else {
-        const segments = urlPath.split('/').filter(Boolean);
-        if (segments.length === 1) {
-          const category = await Category.findOne({ slug: segments[0] }).lean();
-          if (category) context = { pageType: 'category', referenceId: category._id };
-        } else if (segments.length === 2 && !urlPath.startsWith('/cities')) {
-          const subcategory = await Subcategory.findOne({ slug: segments[1] }).lean();
-          if (subcategory) context = { pageType: 'category', referenceId: subcategory._id };
-        } else if (segments.length === 3 && !urlPath.startsWith('/cities')) {
-          const subsub = await SubSubCategory.findOne({ slug: segments[2] }).lean();
-          if (subsub) context = { pageType: 'category', referenceId: subsub._id };
-        } else if (segments.length === 4 && !urlPath.startsWith('/cities')) {
-          // Alternative Ad pattern: /cat/sub/subsub/slug-id
-          const identifier = segments[3];
-          let ad = await Ad.findOne({ slug: identifier }).lean();
-          if (!ad && identifier.includes('-')) {
-            const parts = identifier.split('-');
-            const potentialId = parts[parts.length - 1];
-            if (potentialId.match(/^[0-9a-fA-F]{24}$/)) ad = await Ad.findById(potentialId).lean();
-          }
-          if (ad) {
-            return {
-              title: `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${siteName}`,
-              description: ad.description?.substring(0, 160) || defaultDesc,
-              keywords: ad.tags?.join(', ') || defaultKeywords,
-              url: `https://pk.elocanto.com${urlPath}`
-            };
-          }
+        const sub = await Subcategory.findOne({ slug: segments[0] }).lean();
+        if (sub) {
+          context = { type: 'category', id: segments[0], refId: sub._id };
+          isValidRoute = true;
         }
       }
-
-      // 3. Fetch from SeoSettings
-      const seo = await SeoSettings.findOne({ 
-        pageType: context.pageType, 
-        referenceId: context.referenceId, 
-        isActive: true 
-      }).lean();
-
-      const result = seo ? {
-        title: seo.title,
-        description: seo.metaDescription,
-        keywords: seo.keywords || defaultKeywords,
-        url: `https://pk.elocanto.com${urlPath}`
-      } : {
-        title: defaultTitle,
-        description: defaultDesc,
-        keywords: defaultKeywords,
-        url: `https://pk.elocanto.com${urlPath}`
-      };
-
-      setCache(cacheKey, result, 1800); // 30 min cache
-      return result;
-    } catch (error) {
-      console.error('SSR SEO Error:', error);
-      const defaults = await Settings.findOne({}).lean();
-      return { 
-        title: defaults?.siteName || 'Elocanto.pk', 
-        description: 'Classified Marketplace', 
-        keywords: '', 
-        url: 'https://pk.elocanto.com' 
-      };
-    }
-  };
-
-  // Handle SPA routing with dynamic SEO injection
-  app.get('*', async (req, res) => {
-    // If the request is for a file that DOES NOT exist (has an extension), return 404
-    const ext = path.extname(req.path);
-    if (ext && !ext.match(/\.(html|js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i)) {
-      return res.status(404).json({ message: 'Resource not found' });
     }
 
-    try {
-      const indexPath = path.resolve(frontendDistPath, 'index.html');
-      if (!fs.existsSync(indexPath)) {
-        return res.sendFile(indexPath); // Fallback to standard behavior if file missing
-      }
+    // 5. Fetch Custom SEO Settings
+    const seo = await SeoSettings.findOne({ 
+      pageType: context.type, 
+      referenceId: context.refId,
+      isActive: true 
+    }).lean();
 
-      let html = fs.readFileSync(indexPath, 'utf8');
-      const seo = await resolveSeoMetadata(req.path);
-      const settings = await getSettings();
+    const result = {
+      title: seo?.title?.replace('{name}', context.id || '') || defaultTitle,
+      description: seo?.metaDescription || defaultDesc,
+      keywords: seo?.keywords || defaultKeywords,
+      url: `https://pk.elocanto.com${urlPath}`,
+      status: isValidRoute ? 200 : 404
+    };
 
-      // GA4 Script Injection
-      let analyticsScript = '';
-      if (settings?.googleAnalyticsId) {
-        analyticsScript = `
-          <!-- Google tag (gtag.js) -->
-          <script async src="https://www.googletagmanager.com/gtag/js?id=${settings.googleAnalyticsId}"></script>
-          <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${settings.googleAnalyticsId}', {
-              page_path: window.location.pathname,
-            });
-          </script>
-        `;
-      }
+    setCache(cacheKey, result, 1800); // 30 min cache
+    return result;
+  } catch (error) {
+    console.error('SEO Resolve Error:', error);
+    return { title: 'Elocanto', status: 200 };
+  }
+};
 
-      // Replace placeholders with dynamic data
-      html = html
-        .replace(/Elocanto \| Classified Marketplace in Pakistan/g, seo.title || 'Elocanto.pk')
-        .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
-        .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
-        .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
+// Handle SPA routing with dynamic SEO injection
+app.get('*', async (req, res) => {
+  // If the request is for a file that DOES NOT exist (has an extension), return 404
+  const ext = path.extname(req.path);
+  if (ext && !ext.match(/\.(html|js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i)) {
+    return res.status(404).json({ message: 'Resource not found' });
+  }
 
-      // Inject Analytics & Header Scripts
-      const gscMeta = settings?.googleSearchConsoleId 
-        ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` 
-        : '';
-        
-      const headerContent = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
-      if (headerContent) {
-        html = html.replace('</head>', `${headerContent}</head>`);
-      }
-
-      // Inject Footer Scripts
-      if (settings?.footerScripts) {
-        html = html.replace('</body>', `${settings.footerScripts}</body>`);
-      }
-
-      res.setHeader('Cache-Control', 'no-cache');
-      res.send(html);
-    } catch (err) {
-      console.error('HTML Injection Error:', err);
-      res.sendFile(path.resolve(frontendDistPath, 'index.html'));
+  try {
+    const indexPath = path.resolve(frontendDistPath, 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      return res.status(404).send('Frontend build not found');
     }
-  });
+
+    let html = fs.readFileSync(indexPath, 'utf8');
+    const seo = await resolveSeoMetadata(req.path);
+    const settings = await getSettings();
+
+    // GA4 Script Injection
+    let analyticsScript = '';
+    if (settings?.googleAnalyticsId) {
+      analyticsScript = `
+        <!-- Google tag (gtag.js) -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=${settings.googleAnalyticsId}"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', '${settings.googleAnalyticsId}', {
+            page_path: window.location.pathname,
+          });
+        </script>
+      `;
+    }
+
+    // Replace placeholders with dynamic data
+    html = html
+      .replace(/Elocanto \| Classified Marketplace in Pakistan/g, seo.title || 'Elocanto.pk')
+      .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
+      .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
+      .replace(/https:\/\/pk\.elocanto\.com/g, seo.url || 'https://pk.elocanto.com');
+
+    // Inject Analytics, GSC and Header Scripts
+    const gscMeta = settings?.googleSearchConsoleId 
+      ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` 
+      : '';
+      
+    const headerContent = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
+    if (headerContent) {
+      html = html.replace('</head>', `${headerContent}</head>`);
+    }
+
+    // Inject Footer Scripts
+    if (settings?.footerScripts) {
+      html = html.replace('</body>', `${settings.footerScripts}</body>`);
+    }
+
+    res.status(seo.status || 200);
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(html);
+  } catch (err) {
+    console.error('Server error during HTML generation:', err);
+    res.status(500).send('An error occurred');
+  }
+});
 } else {
   console.log('Development mode: Frontend serving disabled via backend.');
   // Health check
