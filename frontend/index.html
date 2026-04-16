@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>__SEO_TITLE__</title>
+  <meta name="description" content="__SEO_DESCRIPTION__" />
+  <meta name="keywords" content="__SEO_KEYWORDS__" />
+  <meta property="og:title" content="__SEO_TITLE__" />
+  <meta property="og:description" content="__SEO_DESCRIPTION__" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="__SEO_URL__" />
+  <meta property="og:image" content="https://pk.elocanto.com/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <meta name="theme-color" content="#3e6fe1" />
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="canonical" href="__SEO_URL__" />
+
+  <!-- Preconnect to critical domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://pk.elocanto.com" />
+  <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+  <!-- Preload Critical Font -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap"
+    media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" />
+  </noscript>
+
+  <!-- Critical Shell Colors to prevent FOUC -->
+  <style>
+    :root {
+      --primary: #f95e26;
+      --dark: #0f172a;
+      --white: #ffffff;
+    }
+
+    body {
+      background-color: var(--white);
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    #root {
+      min-height: 100vh;
+    }
+
+    .container-custom {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 16px;
+    }
+  </style>
+
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Elocanto.pk",
+    "url": "https://pk.elocanto.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://pk.elocanto.com/ads?keyword={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
+</html>

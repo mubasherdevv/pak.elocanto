@@ -1,0 +1,11 @@
+{
+  "verbose": false,
+  "ignore": [
+    "backups/",
+    "uploads/",
+    "node_modules/",
+    ".git/",
+    "*.test.js"
+  ],
+  "ext": "js,mjs,cjs,json"
+}
