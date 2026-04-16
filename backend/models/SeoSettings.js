@@ -5,7 +5,7 @@ const seoSettingsSchema = new mongoose.Schema(
     pageType: {
       type: String,
       required: true,
-      enum: ['homepage', 'ads', 'city', 'area', 'hotel', 'category'],
+      enum: ['home', 'ads', 'ad', 'city', 'city-hotels', 'city-areas', 'area', 'hotel', 'category', 'profile'],
     },
     referenceId: {
       type: mongoose.Schema.Types.ObjectId,

@@ -72,7 +72,7 @@ export default function HomePage() {
     }
   }, [featuredAds]);
 
-  const { seo } = usePageSeo('homepage');
+  const { seo } = usePageSeo('home');
 
   return (
     <div style={{ background: 'var(--white)', paddingBottom: 64 }}>

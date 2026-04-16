@@ -216,7 +216,7 @@ const resolveSeoMetadata = async (urlPath) => {
       context = { type: 'home', id: 'home' };
       isValidRoute = true;
     } else if (urlPath === '/ads') {
-      context = { type: 'ads-listing', id: 'ads' };
+      context = { type: 'ads', id: 'ads' };
       isValidRoute = true;
     } else if (urlPath.startsWith('/ads/')) {
       const slug = segments[1];
@@ -232,21 +232,37 @@ const resolveSeoMetadata = async (urlPath) => {
         isValidRoute = true;
         context = { type: 'city', id: citySlug, refId: city._id };
 
-        // Sub-validation for Area/Hotel
-        if (segments.length >= 4) {
+        // Sub-validation for Area/Hotel/Lists
+        if (segments.length >= 3) {
           const subType = segments[2]; // 'areas' or 'hotels'
-          const subSlug = segments[3];
-          if (subType === 'areas') {
-            const area = await Area.findOne({ city: city._id, slug: subSlug }).lean();
-            if (!area) isValidRoute = false;
-            else {
-               context = { type: 'area', id: subSlug, refId: area._id };
+          
+          if (segments.length === 3) {
+            // City Lists (e.g. /cities/lahore/hotels)
+            if (subType === 'areas') {
+              context = { type: 'city-areas', id: `${citySlug}-areas`, refId: city._id };
+              isValidRoute = true;
+            } else if (subType === 'hotels') {
+              context = { type: 'city-hotels', id: `${citySlug}-hotels`, refId: city._id };
+              isValidRoute = true;
             }
-          } else if (subType === 'hotels') {
-            const hotel = await Hotel.findOne({ city: city._id, slug: subSlug }).lean();
-            if (!hotel) isValidRoute = false;
-            else {
-               context = { type: 'hotel', id: subSlug, refId: hotel._id };
+          } else if (segments.length >= 4) {
+            const subSlug = segments[3];
+            if (subType === 'areas') {
+              const area = await Area.findOne({ city: city._id, slug: subSlug }).lean();
+              if (area) {
+                context = { type: 'area', id: subSlug, refId: area._id };
+                isValidRoute = true;
+              } else {
+                isValidRoute = false;
+              }
+            } else if (subType === 'hotels') {
+              const hotel = await Hotel.findOne({ city: city._id, slug: subSlug }).lean();
+              if (hotel) {
+                context = { type: 'hotel', id: subSlug, refId: hotel._id };
+                isValidRoute = true;
+              } else {
+                isValidRoute = false;
+              }
             }
           }
         }
@@ -307,7 +323,7 @@ const resolveSeoMetadata = async (urlPath) => {
     // 4. Fetch Custom SEO Settings
     const seo = await SeoSettings.findOne({ 
       pageType: context.type, 
-      referenceId: context.refId,
+      referenceId: context.refId || null,
       isActive: true 
     }).lean();
 

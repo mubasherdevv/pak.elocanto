@@ -11,7 +11,8 @@ import {
   BuildingOfficeIcon,
   FolderIcon,
   MagnifyingGlassIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,7 +26,7 @@ export default function AdminTitlesSeoPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    pageType: 'homepage',
+    pageType: 'home',
     referenceId: '',
     title: '',
     metaDescription: '',
@@ -180,7 +181,7 @@ export default function AdminTitlesSeoPage() {
   const resetForm = () => {
     setEditingId(null);
     setFormData({
-      pageType: 'homepage',
+      pageType: 'home',
       referenceId: '',
       title: '',
       metaDescription: '',
@@ -193,9 +194,13 @@ export default function AdminTitlesSeoPage() {
 
   const getPageIcon = (type) => {
     switch(type) {
-      case 'homepage': return <GlobeAltIcon className="w-5 h-5" />;
+      case 'home': return <GlobeAltIcon className="w-5 h-5" />;
       case 'ads': return <TagIcon className="w-5 h-5" />;
+      case 'ad': return <TagIcon className="w-5 h-5 text-orange-500" />;
+      case 'profile': return <UsersIcon className="w-5 h-5" />;
       case 'city': return <MapPinIcon className="w-5 h-5" />;
+      case 'city-hotels': return <BuildingOfficeIcon className="w-5 h-5 text-orange-500" />;
+      case 'city-areas': return <MapPinIcon className="w-5 h-5 text-orange-500" />;
       case 'area': return <MagnifyingGlassIcon className="w-5 h-5" />;
       case 'hotel': return <BuildingOfficeIcon className="w-5 h-5" />;
       case 'category': return <FolderIcon className="w-5 h-5" />;
@@ -263,16 +268,20 @@ export default function AdminTitlesSeoPage() {
                   value={formData.pageType}
                   onChange={handlePageTypeChange}
                 >
-                  <option value="homepage">Homepage</option>
-                  <option value="ads">All Ads Page</option>
-                  <option value="city">City Page</option>
-                  <option value="area">Area Page</option>
-                  <option value="hotel">Hotel Page</option>
+                  <option value="home">Homepage</option>
+                  <option value="ads">All Ads Listing</option>
+                  <option value="ad">Individual Ad Detail</option>
                   <option value="category">Category Page</option>
+                  <option value="city">City Home Page</option>
+                  <option value="city-hotels">City Hotels List</option>
+                  <option value="city-areas">City Areas List</option>
+                  <option value="area">Specific Area Page</option>
+                  <option value="hotel">Specific Hotel Page</option>
+                  <option value="profile">User Profile Page</option>
                 </select>
               </div>
 
-              {(formData.pageType === 'city' || formData.pageType === 'area' || formData.pageType === 'hotel') && (
+              {(['city', 'area', 'hotel', 'city-areas', 'city-hotels'].includes(formData.pageType)) && (
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Select City</label>
                   <select 
@@ -431,12 +440,16 @@ export default function AdminTitlesSeoPage() {
               onChange={(e) => setFilterPageType(e.target.value)}
             >
               <option value="">All Page Types</option>
-              <option value="homepage">Homepage ({getTypeEntryCount('homepage')})</option>
+              <option value="home">Homepage ({getTypeEntryCount('home')})</option>
               <option value="ads">Ads Listing ({getTypeEntryCount('ads')})</option>
+              <option value="ad">Individual Ads ({getTypeEntryCount('ad')})</option>
+              <option value="category">Categories ({getTypeEntryCount('category')})</option>
               <option value="city">Cities ({getTypeEntryCount('city')})</option>
+              <option value="city-hotels">City Hotels ({getTypeEntryCount('city-hotels')})</option>
+              <option value="city-areas">City Areas ({getTypeEntryCount('city-areas')})</option>
               <option value="area">Areas ({getTypeEntryCount('area')})</option>
               <option value="hotel">Hotels ({getTypeEntryCount('hotel')})</option>
-              <option value="category">Categories ({getTypeEntryCount('category')})</option>
+              <option value="profile">Profiles ({getTypeEntryCount('profile')})</option>
             </select>
             <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>

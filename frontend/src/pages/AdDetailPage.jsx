@@ -15,6 +15,7 @@ import { getOptimizedImageUrl } from '../utils/imageUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { useSettings } from '../context/SettingsContext';
+import { usePageSeo } from '../hooks/usePageSeo';
 
 export default function AdDetailPage() {
   const params = useParams();
@@ -81,6 +82,8 @@ export default function AdDetailPage() {
     if (slug) fetchAd();
     window.scrollTo(0, 0);
   }, [slug, user, navigate]);
+  
+  const { seo } = usePageSeo('ad', ad?._id, { title: ad?.title });
 
   const toggleFav = async () => {
     if (!user) return navigate('/login');
@@ -309,14 +312,11 @@ export default function AdDetailPage() {
   return (
     <div className="page-wrapper" style={{ background: isMobile ? '#f8fafc' : '#f7f8fa' }}>
       <Helmet>
-        <title>
-          {ad 
-            ? `${ad.title} - PKR ${ad.price?.toLocaleString()} | ${settings?.siteName || 'Elocanto'}` 
-            : slug 
-              ? `${slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')} | ${settings?.siteName || 'Elocanto'}`
-              : 'Loading...'}
-        </title>
-        <meta name="description" content={ad?.description?.substring(0, 160) || 'View this listing on Elocanto.'} />
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.metaDescription} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={seo.metaDescription} />
       </Helmet>
 
       {isMobile ? (
