@@ -14,6 +14,7 @@ import path from 'path';
 import fs from 'fs';
 import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
 import { delCache } from '../utils/cache.js';
+import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
 
 const router = express.Router();
 
@@ -644,6 +645,22 @@ router.post('/maintenance/watermark-bulk', protect, admin, async (req, res) => {
     console.error('Bulk watermark error:', error);
     res.status(500).json({ message: error.message || 'Bulk watermarking failed' });
   }
+});
+
+// @desc    Manual Google Indexing
+// @route   POST /api/admin/indexing/manual
+// @access  Private/Admin
+router.post('/indexing/manual', protect, admin, async (req, res) => {
+  const { url, type } = req.body;
+  if (!url) return res.status(400).json({ message: 'URL is required' });
+  
+  const result = await publishToGoogleIndexing(url, type || 'URL_UPDATED');
+  
+  if (result?.error) {
+    return res.status(500).json({ message: result.error });
+  }
+  
+  res.json({ message: 'Notification sent to Google', data: result });
 });
 
 export default router;

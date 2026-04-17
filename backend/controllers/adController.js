@@ -13,6 +13,7 @@ import FeaturedAdView from '../models/FeaturedAdView.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { getCache, setCache } from '../utils/cache.js';
 import { deleteFromCloudinary, extractPublicId, isConfigured } from '../utils/cloudinary.js';
+import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
 
 const getSettings = async () => {
   const cachedSettings = getCache('site_settings');
@@ -261,6 +262,12 @@ export const createAd = asyncHandler(async (req, res) => {
     targetType: 'Ad'
   });
   
+  // Auto-Indexing for newly created ads (if approved)
+  if (ad.isApproved && settings.enableGoogleIndexing) {
+    const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
+    publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
+  }
+  
   res.status(201).json(populated);
 });
 
@@ -330,6 +337,13 @@ export const updateAd = asyncHandler(async (req, res) => {
       });
     }
     
+    // Auto-Indexing on Update
+    const settings = await getSettings();
+    if (updated.isApproved && settings.enableGoogleIndexing) {
+      const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${updated.slug}`;
+      publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
+    }
+    
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message || 'Failed to update ad' });
@@ -378,6 +392,13 @@ export const deleteAd = asyncHandler(async (req, res) => {
       description: `Deleted own ad: ${adTitle}`,
       targetType: 'Ad'
     });
+  }
+  
+  // Auto-Indexing for Deletion
+  const settings = await getSettings();
+  if (settings.enableGoogleIndexing) {
+    const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
+    publishToGoogleIndexing(adUrl, 'URL_DELETED').catch(err => console.error('[Indexing] Error:', err));
   }
   
   res.json({ message: 'Ad removed' });

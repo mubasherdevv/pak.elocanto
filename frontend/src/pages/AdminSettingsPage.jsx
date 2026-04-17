@@ -14,7 +14,9 @@ import {
   DocumentArrowDownIcon,
   TrashIcon,
   ArrowPathIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  ArrowTopRightOnSquareIcon,
+  KeyIcon
 } from '@heroicons/react/24/outline';
 
 import { useAuth } from '../context/AuthContext';
@@ -25,11 +27,12 @@ const TABS = [
   { id: 'general', name: 'General', icon: GlobeAltIcon },
   { id: 'homepage', name: 'Homepage', icon: HomeIcon },
   { id: 'ads', name: 'Ads Listings', icon: MegaphoneIcon },
-  { id: 'users', name: 'User Controls', icon: UserIcon },
-  { id: 'seo', name: 'SEO Settings', icon: MagnifyingGlassIcon },
+  // { id: 'users', name: 'User Controls', icon: UserIcon },
+  // { id: 'seo', name: 'SEO Settings', icon: MagnifyingGlassIcon },
   { id: 'security', name: 'Security', icon: ShieldCheckIcon },
   { id: 'email', name: 'Email Settings', icon: EnvelopeIcon },
   { id: 'analytics', name: 'Analytics', icon: ChartBarIcon },
+  { id: 'indexing', name: 'Google Indexing', icon: ArrowPathIcon },
   { id: 'backup', name: 'Backup & Restore', icon: ServerIcon },
 ];
 
@@ -55,6 +58,12 @@ export default function AdminSettingsPage() {
   const [selectedBackup, setSelectedBackup] = useState(null);
   const [backupMsg, setBackupMsg] = useState('');
   const [backupError, setBackupError] = useState('');
+
+  // Indexing states
+  const [manualUrl, setManualUrl] = useState('');
+  const [indexingLoading, setIndexingLoading] = useState(false);
+  const [indexingMsg, setIndexingMsg] = useState('');
+  const [indexingError, setIndexingError] = useState('');
 
   useEffect(() => {
     fetchSettings();
@@ -180,6 +189,7 @@ export default function AdminSettingsPage() {
       case 'security': return renderSecurity();
       case 'email': return renderEmail();
       case 'analytics': return renderAnalytics();
+      case 'indexing': return renderIndexing();
       case 'backup': return renderBackup();
       default: return null;
     }
@@ -420,30 +430,178 @@ export default function AdminSettingsPage() {
     );
   };
 
+
+
+  const renderIndexing = () => {
+    const handleManualIndex = async (type = 'URL_UPDATED') => {
+      if (!manualUrl) return;
+      setIndexingLoading(true);
+      setIndexingMsg('');
+      setIndexingError('');
+      try {
+        const { data } = await api.post('/admin/indexing/manual', { url: manualUrl, type });
+        setIndexingMsg(data.message || 'Notification sent successfully!');
+      } catch (err) {
+        setIndexingError(err.response?.data?.message || 'Failed to notify Google');
+      } finally {
+        setIndexingLoading(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-black text-gray-900">Google Indexing API</h2>
+            <p className="text-sm text-gray-500 mt-1">Speed up crawling and indexing of your ads by notifying Google of URL changes.</p>
+          </div>
+          <div className="flex gap-2">
+            <a 
+              href="https://console.cloud.google.com/apis/library/indexing.googleapis.com" 
+              target="_blank" 
+              rel="noreferrer"
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-black rounded-xl transition-colors flex items-center gap-2"
+            >
+              <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                Google Console
+            </a>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6">
+          <div className="bg-orange-50/50 border-2 border-orange-50 p-6 rounded-[32px] space-y-4">
+            <label className="flex items-center gap-4 cursor-pointer p-2 hover:bg-white/50 rounded-2xl transition-colors">
+              <input
+                type="checkbox"
+                checked={settings.enableGoogleIndexing || false}
+                className="w-6 h-6 accent-orange-600 rounded-lg"
+                onChange={(e) => setSettings({ ...settings, enableGoogleIndexing: e.target.checked })}
+              />
+              <div>
+                <span className="block text-sm font-black text-orange-900">Enable Auto-Indexing</span>
+                <span className="block text-xs font-bold text-orange-400">Automatically notify Google when ads are published, updated, or deleted.</span>
+              </div>
+            </label>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Site Canonical URL</label>
+              <input
+                type="text"
+                className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono"
+                placeholder="https://pk.elocanto.com"
+                value={settings.siteUrl || ''}
+                onChange={(e) => setSettings({ ...settings, siteUrl: e.target.value })}
+              />
+              <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold">Important: Do not include a trailing slash.</p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1 flex items-center gap-2">
+                <KeyIcon className="w-3 h-3" />
+                Google Service Account Key (JSON)
+              </label>
+              <textarea
+                rows="8"
+                className="w-full px-5 py-4 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono text-xs"
+                placeholder='{ "type": "service_account", ... }'
+                value={settings.googleIndexingKey || ''}
+                onChange={(e) => setSettings({ ...settings, googleIndexingKey: e.target.value })}
+              />
+              <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold">Paste the entire contents of your downloaded Service Account JSON key file.</p>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-gray-100 my-8" />
+
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-lg font-black text-gray-900">Manual Indexing Tool</h2>
+            <p className="text-sm text-gray-500 mt-1">Force Google to crawl a specific URL immediately.</p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              className="flex-1 px-5 py-3 rounded-2xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none bg-white font-medium shadow-sm"
+              placeholder="https://pk.elocanto.com/ads/example-ad-slug"
+              value={manualUrl}
+              onChange={(e) => setManualUrl(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleManualIndex('URL_UPDATED')}
+                disabled={indexingLoading || !manualUrl}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-2xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {indexingLoading ? 'Processing...' : 'Notify Update'}
+              </button>
+              <button
+                onClick={() => handleManualIndex('URL_DELETED')}
+                disabled={indexingLoading || !manualUrl}
+                className="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-black rounded-2xl transition-all disabled:opacity-50"
+              >
+                Notify Delete
+              </button>
+            </div>
+          </div>
+
+          {indexingMsg && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-2xl text-green-800 font-bold text-sm flex items-center gap-2">
+              <CheckCircleIcon className="w-5 h-5" />
+              {indexingMsg}
+            </div>
+          )}
+          {indexingError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-800 font-bold text-sm">
+              {indexingError}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 mt-8">
+          <h4 className="font-black text-blue-900 mb-3 flex items-center gap-2">
+            <MagnifyingGlassIcon className="w-5 h-5" />
+            Integration Steps
+          </h4>
+          <div className="space-y-3 text-sm text-blue-800 font-medium">
+            <p>1. <strong>Enable Indexing API</strong> in Google Cloud Console for your project.</p>
+            <p>2. <strong>Create a Service Account</strong> and download the JSON key.</p>
+            <p>3. <strong>Copy the Service Account Email</strong> (e.g. <em>your-app@project.iam.gserviceaccount.com</em>).</p>
+            <p>4. Go to <strong>Google Search Console</strong> &rarr; Settings &rarr; Users and Permissions.</p>
+            <p>5. <strong>Add the Email as an Owner</strong> of the property.</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderAnalytics = () => (
     <div className="space-y-6">
       <h2 className="text-lg font-black text-gray-900 mb-4">Analytics & Tracking</h2>
       <div className="space-y-4">
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Google Analytics Measurement ID (GA4)</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono"
             placeholder="G-XXXXXXXXXX"
-            value={settings.googleAnalyticsId || ''} 
-            onChange={(e) => setSettings({ ...settings, googleAnalyticsId: e.target.value })} 
+            value={settings.googleAnalyticsId || ''}
+            onChange={(e) => setSettings({ ...settings, googleAnalyticsId: e.target.value })}
           />
           <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold">Example: G-7A2BCDEFGH</p>
         </div>
 
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Google Search Console Verification ID</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono"
             placeholder="google-site-verification-id"
-            value={settings.googleSearchConsoleId || ''} 
-            onChange={(e) => setSettings({ ...settings, googleSearchConsoleId: e.target.value })} 
+            value={settings.googleSearchConsoleId || ''}
+            onChange={(e) => setSettings({ ...settings, googleSearchConsoleId: e.target.value })}
           />
           <p className="text-[10px] text-gray-400 mt-1 ml-1 font-bold italic text-blue-500">Only paste the "content" value from the meta tag.</p>
         </div>
@@ -453,24 +611,24 @@ export default function AdminSettingsPage() {
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Custom Header Scripts</label>
           <p className="text-[10px] text-gray-400 mb-2 ml-1">Will be injected into the &lt;head&gt; section. Use for Facebook Pixel, verification tags, etc.</p>
-          <textarea 
-            rows="5" 
+          <textarea
+            rows="5"
             className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono text-xs"
             placeholder="<script>...</script>"
-            value={settings.headerScripts || ''} 
-            onChange={(e) => setSettings({ ...settings, headerScripts: e.target.value })} 
+            value={settings.headerScripts || ''}
+            onChange={(e) => setSettings({ ...settings, headerScripts: e.target.value })}
           />
         </div>
 
         <div>
           <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Custom Footer Scripts</label>
           <p className="text-[10px] text-gray-400 mb-2 ml-1">Will be injected before the closing &lt;/body&gt; tag.</p>
-          <textarea 
-            rows="5" 
+          <textarea
+            rows="5"
             className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50 font-mono text-xs"
             placeholder="<script>...</script>"
-            value={settings.footerScripts || ''} 
-            onChange={(e) => setSettings({ ...settings, footerScripts: e.target.value })} 
+            value={settings.footerScripts || ''}
+            onChange={(e) => setSettings({ ...settings, footerScripts: e.target.value })}
           />
         </div>
       </div>
@@ -481,7 +639,7 @@ export default function AdminSettingsPage() {
           Note on Injection
         </h4>
         <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          Scripts are injected on the server-side during production. Changes may take a few minutes to reflect if caching is enabled. 
+          Scripts are injected on the server-side during production. Changes may take a few minutes to reflect if caching is enabled.
           Make sure to include correct &lt;script&gt; tags.
         </p>
       </div>
@@ -667,66 +825,66 @@ export default function AdminSettingsPage() {
     </div>
   );
 
-  const renderUsers = () => (
-    <div className="space-y-6">
-      <h2 className="text-lg font-black text-gray-900 mb-4">User Registration & Access</h2>
-      <div className="space-y-4">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={settings.enableUserRegistration || false} className="w-5 h-5 accent-orange-500 rounded"
-            onChange={(e) => setSettings({ ...settings, enableUserRegistration: e.target.checked })} />
-          <span className="text-sm font-bold text-gray-700">Enable New User Registration</span>
-        </label>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={settings.enableEmailVerification || false} className="w-5 h-5 accent-orange-500 rounded"
-            onChange={(e) => setSettings({ ...settings, enableEmailVerification: e.target.checked })} />
-          <span className="text-sm font-bold text-gray-700">Enable Email Verification</span>
-        </label>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={settings.allowTemporaryEmails || false} className="w-5 h-5 accent-orange-500 rounded"
-            onChange={(e) => setSettings({ ...settings, allowTemporaryEmails: e.target.checked })} />
-          <span className="text-sm font-bold text-gray-700">Allow Temporary Emails (Disposable)</span>
-        </label>
-      </div>
+  // const renderUsers = () => (
+  //   <div className="space-y-6">
+  //     <h2 className="text-lg font-black text-gray-900 mb-4">User Registration & Access</h2>
+  //     <div className="space-y-4">
+  //       <label className="flex items-center gap-3 cursor-pointer">
+  //         <input type="checkbox" checked={settings.enableUserRegistration || false} className="w-5 h-5 accent-orange-500 rounded"
+  //           onChange={(e) => setSettings({ ...settings, enableUserRegistration: e.target.checked })} />
+  //         <span className="text-sm font-bold text-gray-700">Enable New User Registration</span>
+  //       </label>
+  //       <label className="flex items-center gap-3 cursor-pointer">
+  //         <input type="checkbox" checked={settings.enableEmailVerification || false} className="w-5 h-5 accent-orange-500 rounded"
+  //           onChange={(e) => setSettings({ ...settings, enableEmailVerification: e.target.checked })} />
+  //         <span className="text-sm font-bold text-gray-700">Enable Email Verification</span>
+  //       </label>
+  //       <label className="flex items-center gap-3 cursor-pointer">
+  //         <input type="checkbox" checked={settings.allowTemporaryEmails || false} className="w-5 h-5 accent-orange-500 rounded"
+  //           onChange={(e) => setSettings({ ...settings, allowTemporaryEmails: e.target.checked })} />
+  //         <span className="text-sm font-bold text-gray-700">Allow Temporary Emails (Disposable)</span>
+  //       </label>
+  //     </div>
 
-      <div className="w-64 mt-6">
-        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default User Role</label>
-        <select className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
-          value={settings.defaultUserRole || 'user'} onChange={(e) => setSettings({ ...settings, defaultUserRole: e.target.value })}>
-          <option value="user">User</option>
-          <option value="seller">Seller</option>
-        </select>
-      </div>
-    </div>
-  );
+  //     <div className="w-64 mt-6">
+  //       <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default User Role</label>
+  //       <select className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
+  //         value={settings.defaultUserRole || 'user'} onChange={(e) => setSettings({ ...settings, defaultUserRole: e.target.value })}>
+  //         <option value="user">User</option>
+  //         <option value="seller">Seller</option>
+  //       </select>
+  //     </div>
+  //   </div>
+  // );
 
-  const renderSeo = () => (
-    <div className="space-y-6">
-      <h2 className="text-lg font-black text-gray-900 mb-4">Default SEO Configuration</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Meta Title</label>
-          <input type="text" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
-            value={settings.defaultMetaTitle || ''} onChange={(e) => setSettings({ ...settings, defaultMetaTitle: e.target.value })} />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Meta Description</label>
-          <textarea rows="3" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
-            value={settings.defaultMetaDescription || ''} onChange={(e) => setSettings({ ...settings, defaultMetaDescription: e.target.value })} />
-        </div>
-        <div>
-          <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Keywords</label>
-          <input type="text" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
-            value={settings.defaultKeywords || ''} onChange={(e) => setSettings({ ...settings, defaultKeywords: e.target.value })}
-            placeholder="marketplace, buy, sell, local" />
-        </div>
-      </div>
-      <label className="flex items-center gap-3 cursor-pointer pt-2">
-        <input type="checkbox" checked={settings.enableDynamicSeoContent || false} className="w-5 h-5 accent-orange-500 rounded"
-          onChange={(e) => setSettings({ ...settings, enableDynamicSeoContent: e.target.checked })} />
-        <span className="text-sm font-bold text-gray-700">Enable Dynamic SEO content from SEO Manage</span>
-      </label>
-    </div>
-  );
+  // const renderSeo = () => (
+  //   <div className="space-y-6">
+  //     <h2 className="text-lg font-black text-gray-900 mb-4">Default SEO Configuration</h2>
+  //     <div className="space-y-4">
+  //       <div>
+  //         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Meta Title</label>
+  //         <input type="text" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
+  //           value={settings.defaultMetaTitle || ''} onChange={(e) => setSettings({ ...settings, defaultMetaTitle: e.target.value })} />
+  //       </div>
+  //       <div>
+  //         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Meta Description</label>
+  //         <textarea rows="3" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
+  //           value={settings.defaultMetaDescription || ''} onChange={(e) => setSettings({ ...settings, defaultMetaDescription: e.target.value })} />
+  //       </div>
+  //       <div>
+  //         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Default Keywords</label>
+  //         <input type="text" className="w-full px-5 py-3 rounded-2xl border-2 border-gray-50 focus:border-orange-500 focus:outline-none bg-gray-50/50"
+  //           value={settings.defaultKeywords || ''} onChange={(e) => setSettings({ ...settings, defaultKeywords: e.target.value })}
+  //           placeholder="marketplace, buy, sell, local" />
+  //       </div>
+  //     </div>
+  //     <label className="flex items-center gap-3 cursor-pointer pt-2">
+  //       <input type="checkbox" checked={settings.enableDynamicSeoContent || false} className="w-5 h-5 accent-orange-500 rounded"
+  //         onChange={(e) => setSettings({ ...settings, enableDynamicSeoContent: e.target.checked })} />
+  //       <span className="text-sm font-bold text-gray-700">Enable Dynamic SEO content from SEO Manage</span>
+  //     </label>
+  //   </div>
+  // );
 
   const renderSecurity = () => (
     <div className="space-y-6">
@@ -888,8 +1046,8 @@ export default function AdminSettingsPage() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-left text-sm font-black transition-all ${activeTab === tab.id
-                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-100'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-orange-500 text-white shadow-lg shadow-orange-100'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
             >
               <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-white' : 'text-gray-400'}`} />
