@@ -24,21 +24,21 @@ export const publishToGoogleIndexing = async (url, type = 'URL_UPDATED') => {
       return { error: 'Invalid Service Account JSON key' };
     }
 
-    const jwtClient = new google.auth.JWT(
-      key.client_email,
-      null,
-      key.private_key,
-      ['https://www.googleapis.com/auth/indexing'],
-      null
-    );
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: key.client_email,
+        private_key: key.private_key,
+      },
+      scopes: ['https://www.googleapis.com/auth/indexing'],
+    });
 
-    const tokens = await jwtClient.authorize();
+    const accessToken = await auth.getAccessToken();
     
     const response = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${tokens.access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         url: url,
