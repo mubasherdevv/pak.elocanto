@@ -69,6 +69,7 @@ const adSchema = mongoose.Schema(
       enum: ['High Demand', 'Popular', 'Hot Premium', 'Trending Now', 'Recommended']
     }],
     slug: { type: String },
+    rejectionReason: { type: String },
   },
   { timestamps: true }
 );

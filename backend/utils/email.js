@@ -95,6 +95,62 @@ export const sendPasswordChangeNotification = async (user) => {
   return sendEmail(user.email, subject, html);
 };
 
+export const sendAdRejectionEmail = async (user, ad, reason) => {
+  const settings = await getSettings();
+  const siteName = settings?.siteName || 'Elocanto';
+  const siteUrl = settings?.siteUrl || 'https://pk.elocanto.com';
+  
+  const subject = `Listing Update: Your ad "${ad.title}" has been rejected`;
+  
+  const html = `
+    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; borderRadius: 16px; overflow: hidden;">
+      <div style="background: #3e6fe1; padding: 24px; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px;">Listing Update</h1>
+      </div>
+      <div style="padding: 32px; background: white;">
+        <h2 style="color: #1f2937; margin-top: 0;">Hello ${user.name},</h2>
+        <p style="color: #4b5563; line-height: 1.6;">
+          Thank you for posting on <strong>${siteName}</strong>. After reviewing your advertisement, our moderation team has decided to <strong>reject</strong> your listing at this time.
+        </p>
+        
+        <div style="background: #fdf2f2; border: 1px solid #fecaca; padding: 20px; border-radius: 12px; margin: 24px 0;">
+          <h3 style="color: #991b1b; margin-top: 0; font-size: 16px;">Reason for Rejection:</h3>
+          <p style="color: #b91c1c; margin-bottom: 0; font-weight: 600;">"${reason}"</p>
+        </div>
+
+        <h3 style="color: #1f2937; font-size: 16px; margin-bottom: 12px;">Ad Details:</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; width: 120px;">Title:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${ad.title}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Price:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">Rs ${ad.price.toLocaleString()}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">City:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-weight: 600;">${ad.city}</td>
+          </tr>
+        </table>
+
+        <p style="color: #4b5563; line-height: 1.6;">
+          Please review our <a href="${siteUrl}/terms" style="color: #3e6fe1;">Terms of Service</a> and community guidelines before reposting. You can edit your ad from your dashboard to address the issues mentioned above.
+        </p>
+        
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${siteUrl}/dashboard" style="background: #3e6fe1; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Go to My Dashboard</a>
+        </div>
+      </div>
+      <div style="background: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+        <p style="color: #9ca3af; font-size: 12px; margin: 0;">&copy; ${new Date().getFullYear()} ${siteName}. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail(user.email, subject, html);
+};
+
 export const reinitTransporter = async () => {
   console.log('Brevo integration active.');
 };

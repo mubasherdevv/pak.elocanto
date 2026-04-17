@@ -47,6 +47,11 @@ export default function AdminAdsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [settings, setSettings] = useState(null);
   const adsPerPage = 10;
+  
+  // Rejection Modal State
+  const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
+  const [adToReject, setAdToReject] = useState(null);
+  const [tempRejectionReason, setTempRejectionReason] = useState('Does not meet our community standards');
 
   useEffect(() => {
     fetchSettings();
@@ -139,7 +144,8 @@ export default function AdminAdsPage() {
         isFeatured: editingAd.isFeatured,
         expiresAt: editingAd.expiresAt,
         badges: editingAd.badges || [],
-        images: editingAd.images || []
+        images: editingAd.images || [],
+        rejectionReason: editingAd.rejectionReason || ''
       };
       await api.put(`/ads/${editingAd._id}`, updateData);
 
@@ -455,22 +461,16 @@ export default function AdminAdsPage() {
                               <CheckBadgeIcon className="w-5 h-5" />
                             </button>
                           )}
-                          {ad.isApproved && ad.isActive && (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  if (!window.confirm('Reject and hide this ad?')) return;
-                                  await api.put(`/ads/${ad._id}`, { isApproved: false, isActive: false });
-
-                                  fetchData();
-                                } catch (err) { alert('Failed to reject'); }
-                              }}
-                              className="p-3 bg-red-100 text-red-600 rounded-2xl hover:bg-red-200 shadow-sm transition-all"
-                              title="Reject/Hide"
-                            >
-                              <NoSymbolIcon className="w-5 h-5" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              setAdToReject(ad);
+                              setRejectionModalOpen(true);
+                            }}
+                            className="p-3 bg-red-100 text-red-600 rounded-2xl hover:bg-red-200 shadow-sm transition-all"
+                            title="Reject/Hide"
+                          >
+                            <NoSymbolIcon className="w-5 h-5" />
+                          </button>
                           <button
                             onClick={() => window.open(`/ads/${generateAdSlug(ad)}`, '_blank')}
                             className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-500 hover:border-blue-100 shadow-sm transition-all"
@@ -773,6 +773,18 @@ export default function AdminAdsPage() {
                       </div>
                     </label>
 
+                    {!editingAd.isApproved && (
+                      <div className="md:col-span-2 space-y-3 animate-fade-in">
+                        <label className="text-xs font-black text-red-500 uppercase tracking-widest px-1">Rejection Reason (Internal & Email)</label>
+                        <textarea
+                          className="w-full p-4 rounded-2xl border-2 border-red-50 bg-red-50/30 focus:bg-white focus:border-red-500 focus:outline-none transition-all font-bold text-gray-900"
+                          placeholder="Why is this ad being rejected? (User will see this in their email)"
+                          value={editingAd.rejectionReason || ''}
+                          onChange={(e) => setEditingAd({ ...editingAd, rejectionReason: e.target.value })}
+                        ></textarea>
+                      </div>
+                    )}
+
                     <label className="flex items-center gap-4 cursor-pointer group">
                       <input
                         type="checkbox"
@@ -902,6 +914,86 @@ export default function AdminAdsPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Rejection Modal */}
+      {rejectionModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-[40px] shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden animate-slide-up">
+            <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+                  <NoSymbolIcon className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Reject Listing</h3>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-0.5">#{adToReject?._id.slice(-8)}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setRejectionModalOpen(false)}
+                className="p-2 hover:bg-white rounded-xl transition-all"
+              >
+                <XMarkIcon className="w-6 h-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-6">
+              <div className="p-5 bg-orange-50 rounded-3xl border border-orange-100 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0">
+                  <img src={getOptimizedImageUrl(adToReject?.images?.[0], 100)} className="w-full h-full object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-black text-gray-900 truncate">{adToReject?.title}</p>
+                  <p className="text-xs font-bold text-orange-600 uppercase">Rs {adToReject?.price.toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Rejection Reason</label>
+                <textarea
+                  className="w-full p-6 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-red-500 focus:outline-none transition-all font-bold text-gray-900 min-h-[150px]"
+                  placeholder="Enter reason for rejection..."
+                  value={tempRejectionReason}
+                  onChange={(e) => setTempRejectionReason(e.target.value)}
+                />
+                <p className="text-[10px] text-gray-400 font-medium px-1 flex items-center gap-1.5">
+                  <EnvelopeIcon className="w-3 h-3" /> This reason will be emailed to the seller immediately.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-8 bg-gray-50/50 border-t border-gray-50 flex gap-4">
+              <button
+                onClick={() => setRejectionModalOpen(false)}
+                className="flex-1 py-4.5 rounded-2xl font-black text-gray-400 hover:text-gray-900 transition-all uppercase tracking-widest text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    setUpdateLoading(true);
+                    await api.put(`/ads/${adToReject._id}`, { 
+                      isApproved: false, 
+                      isActive: false,
+                      rejectionReason: tempRejectionReason 
+                    });
+                    setRejectionModalOpen(false);
+                    fetchData();
+                  } catch (err) {
+                    alert('Failed to reject ad');
+                  } finally {
+                    setUpdateLoading(false);
+                  }
+                }}
+                disabled={updateLoading || !tempRejectionReason.trim()}
+                className="flex-[2] py-4.5 rounded-2xl font-black text-white bg-red-500 hover:bg-red-600 shadow-xl shadow-red-200 transition-all uppercase tracking-widest text-sm flex items-center justify-center gap-2"
+              >
+                {updateLoading ? 'Processing...' : 'Send Rejection'}
+              </button>
             </div>
           </div>
         </div>

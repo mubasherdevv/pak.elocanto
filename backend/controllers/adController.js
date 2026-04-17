@@ -14,6 +14,7 @@ import asyncHandler from '../middleware/asyncHandler.js';
 import { getCache, setCache } from '../utils/cache.js';
 import { deleteFromCloudinary, extractPublicId, isConfigured } from '../utils/cloudinary.js';
 import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
+import { sendAdRejectionEmail } from '../utils/email.js';
 
 const getSettings = async () => {
   const cachedSettings = getCache('site_settings');
@@ -317,7 +318,21 @@ export const updateAd = asyncHandler(async (req, res) => {
       ad.images = newImages;
     }
 
+    // Check for rejection to send email
+    const isRejecting = ad.isApproved === true && req.body.isApproved === false;
+    const rejectionReason = req.body.rejectionReason;
+
     const updated = await ad.save();
+    
+    // Send rejection email if applicable
+    // We send it if isApproved is false and a reason is newly provided or the ad's approval is being revoked
+    if (req.body.isApproved === false && rejectionReason) {
+      const seller = await User.findById(ad.seller);
+      if (seller && seller.email) {
+        sendAdRejectionEmail(seller, updated, rejectionReason)
+          .catch(err => console.error('[EMAIL] Failed to send rejection email:', err));
+      }
+    }
     
     if (req.user.isAdmin) {
       await ActivityLog.create({
