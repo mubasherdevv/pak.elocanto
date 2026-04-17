@@ -192,6 +192,7 @@ const VALID_STATIC_ROUTES = [
  * Resolves SEO metadata by analyzing URL path and querying database
  */
 const resolveSeoMetadata = async (urlPath) => {
+  console.log(`[SEO-SSR] Resolving for: ${urlPath}`);
   try {
     // 1. Get Global Defaults
     const settings = await getSettings();
@@ -220,10 +221,14 @@ const resolveSeoMetadata = async (urlPath) => {
       isValidRoute = true;
     } else if (urlPath.startsWith('/ads/')) {
       const slug = segments[1];
+      console.log(`[SEO-SSR] Looking for Ad with slug: ${slug}`);
       const ad = await Ad.findOne({ slug, isActive: true }).select('_id title').lean();
       if (ad) {
+        console.log(`[SEO-SSR] Ad found: ${ad.title}`);
         context = { type: 'ad', id: ad.title, refId: ad._id };
         isValidRoute = true;
+      } else {
+        console.log(`[SEO-SSR] Ad NOT found for slug: ${slug}`);
       }
     } else if (urlPath.startsWith('/cities/')) {
       const citySlug = segments[1];
@@ -337,8 +342,20 @@ const resolveSeoMetadata = async (urlPath) => {
     }
 
     const placeholderName = context.id || '';
+
+    // Dynamic Default construction based on type if no SEO found
+    let finalTitle = seo?.title;
+    if (!finalTitle) {
+      if (context.type === 'home') finalTitle = defaultTitle;
+      else if (['ad', 'category', 'city', 'area', 'hotel'].includes(context.type)) {
+        finalTitle = `{name} | ${siteName}`;
+      } else {
+        finalTitle = defaultTitle;
+      }
+    }
+
     const result = {
-      title: (seo?.title || defaultTitle).replace(/{name}/gi, placeholderName),
+      title: finalTitle.replace(/{name}/gi, placeholderName),
       description: (seo?.metaDescription || defaultDesc).replace(/{name}/gi, placeholderName),
       keywords: (seo?.keywords || defaultKeywords).replace(/{name}/gi, placeholderName),
       url: `https://pk.elocanto.com${urlPath}`
