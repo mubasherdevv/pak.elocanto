@@ -25,13 +25,20 @@ const normalizePath = (rawPath) => {
  */
 const resolvePathForRecord = async (pageType, referenceId) => {
   let path = '/';
+  
+  const ensureCitySuffix = (slug) => {
+    if (!slug) return '';
+    return slug.endsWith('-call-girls-service') ? slug : `${slug}-call-girls-service`;
+  };
+
   try {
     if (pageType === 'home') path = '/';
     else if (pageType === 'ads') path = '/ads';
     else if (pageType === 'city' && referenceId) {
       const city = await City.findById(referenceId);
-      if (city) path = `/cities/${city.slug}`;
+      if (city) path = `/cities/${ensureCitySuffix(city.slug)}`;
     } else if (pageType === 'category' && referenceId) {
+      // Direct category/subcategory/subsubcategory path
       const subsub = await SubSubCategory.findById(referenceId);
       if (subsub) path = `/${subsub.slug}`;
       else {
@@ -47,12 +54,18 @@ const resolvePathForRecord = async (pageType, referenceId) => {
       if (ad) path = `/ads/${ad.slug}`;
     } else if (pageType === 'area' && referenceId) {
       const area = await Area.findById(referenceId).populate('city');
-      if (area && area.city) path = `/cities/${area.city.slug}/areas/${area.slug}`;
-      else if (area) path = `/areas/${area.slug}`;
+      if (area && area.city) {
+        path = `/cities/${ensureCitySuffix(area.city.slug)}/areas/${area.slug}`;
+      } else if (area) {
+        path = `/areas/${area.slug}`;
+      }
     } else if (pageType === 'hotel' && referenceId) {
       const hotel = await Hotel.findById(referenceId).populate('city');
-      if (hotel && hotel.city) path = `/cities/${hotel.city.slug}/hotels/${hotel.slug}`;
-      else if (hotel) path = `/hotels/${hotel.slug}`;
+      if (hotel && hotel.city) {
+        path = `/cities/${ensureCitySuffix(hotel.city.slug)}/hotels/${hotel.slug}`;
+      } else if (hotel) {
+        path = `/hotels/${hotel.slug}`;
+      }
     }
   } catch (e) {
     console.error('[SEO-PATH-RESOLVE] Error:', e);
