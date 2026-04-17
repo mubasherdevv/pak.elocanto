@@ -290,7 +290,7 @@ export default function HomePage() {
             Most Trusted Classifieds in Pakistan
           </div>
           <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.1, marginBottom: 20 }}>
-            {seo.title || (
+            {seo?.title || (
               <>Buy, Sell & Discover <span style={{ color: 'var(--primary)' }}>Everything</span> in Pakistan</>
             )}
           </h1>

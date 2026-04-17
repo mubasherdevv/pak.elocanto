@@ -584,7 +584,7 @@ export default function AdsListingPage() {
             )}
             
             <h1 style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, marginBottom: 8 }}>
-              {seo.title || (hotelSlug ? (
+              {seo?.title || (hotelSlug ? (
                 cityHotels.find(h => h.slug === hotelSlug)?.name + (cityInfo ? ` in ${cityInfo.name}` : '')
               ) : areaSlug ? (
                 cityAreas.find(a => a.slug === areaSlug)?.name + (cityInfo ? `, ${cityInfo.name}` : '')
@@ -731,7 +731,7 @@ export default function AdsListingPage() {
                 PREMIUM SELECTION
               </span>
               <h1 style={{ fontSize: 'clamp(24px, 6vw, 42px)', fontWeight: 900, lineHeight: 1.2, marginBottom: 16 }}>
-                {seo.title || (activeCategory ? activeCategory.name : 'FIND THE PERFECT MATCH &ndash; ADS CURATED JUST FOR YOU')}
+                {seo?.title || (activeCategory ? activeCategory.name : 'FIND THE PERFECT MATCH &ndash; ADS CURATED JUST FOR YOU')}
               </h1>
               <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>
                 {activeCategory?.description || 'Explore thousands of verified listings tailored to your professional needs.'}
@@ -1352,7 +1352,7 @@ export default function AdsListingPage() {
       )}
 
       {/* Dynamic WhatsApp Widget */}
-      {seo.whatsappNumber && <WhatsAppWidget number={seo.whatsappNumber} />}
+      {seo?.whatsappNumber && <WhatsAppWidget number={seo.whatsappNumber} />}
     </div>
   );
 }
