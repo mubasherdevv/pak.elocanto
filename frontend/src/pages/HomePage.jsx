@@ -73,16 +73,19 @@ export default function HomePage() {
   }, [featuredAds]);
 
   const { seo } = usePageSeo('home');
+  const seoReady = seo !== null;
 
   return (
     <div style={{ background: 'var(--white)', paddingBottom: 64 }}>
-      <Helmet>
-        <title>{seo.title}</title>
-        <meta name="description" content={seo.metaDescription} />
-        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
-        <meta property="og:title" content={seo.title} />
-        <meta property="og:type" content="website" />
-      </Helmet>
+      {seoReady && (
+        <Helmet>
+          <title>{seo.title}</title>
+          <meta name="description" content={seo.metaDescription} />
+          {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+          <meta property="og:title" content={seo.title} />
+          <meta property="og:type" content="website" />
+        </Helmet>
+      )}
       <style>{`
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }

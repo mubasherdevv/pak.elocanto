@@ -427,14 +427,15 @@ export default function AdsListingPage() {
     description: `Browse the latest ads in ${seoContext.placeholderName}. Find the best deals on Elocanto.`
   });
 
-  // Handle {name} placeholder in client-side title
-  const finalSeoTitle = seo?.title || `{name} | ${siteName}`;
-  const displayTitle = finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName);
+  // Handle {name} placeholder in client-side title — only after API responds
+  const seoReady = seo !== null;
+  const finalSeoTitle = seoReady ? (seo?.title || `{name} | ${siteName}`) : '';
+  const displayTitle = seoReady ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) : '';
   
-  const finalSeoDesc = seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.';
-  const displayDesc = finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName);
+  const finalSeoDesc = seoReady ? (seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
+  const displayDesc = seoReady ? finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName) : '';
 
-  const displayKeywords = (seo?.keywords || '').replace(/{name}/gi, seoContext.placeholderName);
+  const displayKeywords = seoReady ? (seo?.keywords || '').replace(/{name}/gi, seoContext.placeholderName) : '';
 
 
   const trackedKey = useRef(null);
@@ -465,11 +466,13 @@ export default function AdsListingPage() {
 
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 64 }}>
+      {seoReady && (
       <Helmet>
         <title>{displayTitle}</title>
         <meta name="description" content={displayDesc} />
-        {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, seoContext.name)} />}
+        {displayKeywords && <meta name="keywords" content={displayKeywords} />}
       </Helmet>
+      )}
       <style>{`
         .filter-overlay {
           position: fixed;

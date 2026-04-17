@@ -86,12 +86,12 @@ export default function AdDetailPage() {
   // Define SEO context for consistency
   const placeholderName = ad?.title || '';
   const { seo } = usePageSeo('ad', ad?._id, { 
-    title: ad ? `${ad.title} | Elocanto` : 'Ad Details',
+    title: ad ? `${ad.title} | Elocanto` : 'Loading Ad...',
     description: ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.'
   });
 
   // Handle {name} placeholder for consistency
-  const displayTitle = (seo?.title || (ad ? `${ad.title} | Elocanto` : 'Ad Details')).replace(/{name}/gi, placeholderName);
+  const displayTitle = (seo?.title || (ad ? `${ad.title} | Elocanto` : 'Loading Ad...')).replace(/{name}/gi, placeholderName);
   const displayDesc = (seo?.metaDescription || (ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.')).replace(/{name}/gi, placeholderName);
 
   const toggleFav = async () => {

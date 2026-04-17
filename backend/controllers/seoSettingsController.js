@@ -147,7 +147,104 @@ export const saveSeoSettings = async (req, res) => {
     res.status(200).json(setting);
   } catch (error) {
     console.error('[SEO-SAVE] Error:', error);
-    res.status(500).json({ message: error.message });
+  }
+};
+
+// --- SHARED SSR & API LOGIC ---
+
+/**
+ * Common SEO Resolver logic used by both SSR (server.js) and API (getPublicSeo)
+ */
+export const resolveSeoMetadata = async (normalizedPath, pageType = null, referenceId = null) => {
+  try {
+    // 1. Try Path Match (Most specific)
+    let seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+
+    // 2. Try Entity Match (If path didn't work)
+    if (!seo && pageType && referenceId && referenceId !== 'null' && referenceId !== 'undefined') {
+      seo = await SeoSettings.findOne({ pageType, referenceId, isActive: true }).lean();
+    }
+
+    if (seo) {
+      return {
+        title: seo.title,
+        metaDescription: seo.metaDescription,
+        keywords: seo.keywords || '',
+        ogTitle: seo.ogTitle || seo.title,
+        ogDescription: seo.ogDescription || seo.metaDescription,
+        whatsappNumber: seo.whatsappNumber || '',
+        isActive: true,
+        source: 'custom'
+      };
+    }
+
+    // 3. Dynamic Fallback: Match based on URL patterns
+    
+    // Ad Detail Pattern: /ads/:slug
+    if (normalizedPath.startsWith('/ads/') && normalizedPath.split('/').length === 3) {
+      const slug = normalizedPath.split('/')[2];
+      const ad = await Ad.findOne({ slug }).lean();
+      if (ad) {
+        return {
+          title: ad.title || 'Escort Listing | Elocanto',
+          metaDescription: ad.description?.substring(0, 160) || 'Secure destination to buy and sell.',
+          keywords: '',
+          isActive: true,
+          source: 'dynamic-ad'
+        };
+      }
+    }
+
+    // City Pattern: /cities/:slug
+    if (normalizedPath.startsWith('/cities/') && normalizedPath.split('/').length === 3) {
+      const slug = normalizedPath.split('/')[2];
+      const city = await City.findOne({ slug }).lean();
+      if (city) {
+        return {
+          title: `${city.name} Escorts & Call Girls Service 24/7 | Elocanto`,
+          metaDescription: `Premium call girls and escort services in ${city.name}. Reliable and verified listings.`,
+          keywords: `${city.name} escorts, ${city.name} call girls`,
+          isActive: true,
+          source: 'dynamic-city'
+        };
+      }
+    }
+
+    // Area/Hotel Pattern: /cities/:citySlug/areas/:areaSlug OR /cities/:citySlug/hotels/:hotelSlug
+    const parts = normalizedPath.split('/');
+    if (parts.length === 5 && parts[1] === 'cities') {
+      const type = parts[3];
+      const slug = parts[4];
+      
+      if (type === 'areas') {
+        const area = await Area.findOne({ slug }).lean();
+        if (area) {
+          return {
+            title: `${area.name} Escorts - Call Girls Service in ${area.name} | Elocanto`,
+            metaDescription: `Find top-rated call girls and independent escorts in ${area.name}.`,
+            keywords: `${area.name} escorts`,
+            isActive: true,
+            source: 'dynamic-area'
+          };
+        }
+      } else if (type === 'hotels') {
+        const hotel = await Hotel.findOne({ slug }).lean();
+        if (hotel) {
+          return {
+            title: `${hotel.name} Escorts - Exclusive Call Girls Service | Elocanto`,
+            metaDescription: `Verified escorts and call girls services available at ${hotel.name}.`,
+            keywords: `${hotel.name} escorts`,
+            isActive: true,
+            source: 'dynamic-hotel'
+          };
+        }
+      }
+    }
+
+    return null; // Let the caller decide the final site-wide fallback
+  } catch (error) {
+    console.error('[SEO-RESOLVE] Error:', error);
+    return null;
   }
 };
 
@@ -166,46 +263,38 @@ export const deleteSeoSetting = async (req, res) => {
   }
 };
 
-// @desc    Fetch SEO by specific URL path (New Frontend/SSR)
-// @route   GET /api/seo-settings/path?path=/example
-export const getSeoByPath = async (req, res) => {
+// @desc    Fetch SEO by specific URL path (Universal Endpoint)
+// @route   GET /api/seo-settings/public
+export const getPublicSeo = async (req, res) => {
   try {
-    const { path: rawPath } = req.query;
-    if (!rawPath) return res.status(400).json({ message: 'Path is required' });
-
-    const normalizedPath = normalizePath(rawPath);
-    const seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true });
+    const { pagePath, pageType, referenceId } = req.query;
     
-    if (seo) return res.json(seo);
-    res.status(404).json({ message: 'No SEO found for this path' });
+    // Normalize path just like SSR
+    let normalizedPath = '/';
+    if (pagePath) {
+      normalizedPath = pagePath.split('?')[0].toLowerCase().replace(/\/+$/, '');
+      if (!normalizedPath.startsWith('/')) normalizedPath = '/' + normalizedPath;
+      if (normalizedPath === '') normalizedPath = '/';
+    }
+
+    const result = await resolveSeoMetadata(normalizedPath, pageType, referenceId);
+    
+    if (result) return res.json(result);
+    res.status(404).json({ message: 'No SEO found' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// @desc    Fetch SEO by Type/Ref (Legacy Frontend compatibility)
-// @route   GET /api/seo-settings/public?pageType=home
-export const getSeoSettings = async (req, res) => {
-  try {
-    const { pageType, referenceId } = req.query;
-    let query = { pageType, isActive: true };
-    
-    if (!referenceId || referenceId === 'null' || referenceId === 'undefined') {
-      query.referenceId = null;
-    } else {
-      query.referenceId = referenceId;
-    }
+// Legacy alias for compatibility
+export const getSeoSettings = getPublicSeo;
+export const getSeoByPath = getPublicSeo;
 
-    let settings = await SeoSettings.findOne(query);
-
-    // Fallback if specific ref not found
-    if (!settings && referenceId && referenceId !== 'null') {
-      settings = await SeoSettings.findOne({ pageType, referenceId: null, isActive: true });
-    }
-
-    if (settings) return res.json(settings);
-    res.status(404).json({ message: 'Not found' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+export default { 
+  getSeoSettings, 
+  getSeoSettingById, 
+  saveSeoSettings, 
+  deleteSeoSetting, 
+  getPublicSeo, 
+  resolveSeoMetadata 
 };

@@ -11,12 +11,8 @@ import { useSettings } from '../context/SettingsContext';
 export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
   const { settings } = useSettings();
   
-  const [seo, setSeo] = useState({
-    title: fallbacks.title || settings?.defaultMetaTitle || settings?.siteName || 'Marketplace',
-    metaDescription: fallbacks.description || settings?.defaultMetaDescription || 'Buy and sell locally.',
-    keywords: fallbacks.keywords || settings?.defaultKeywords || '',
-    whatsappNumber: ''
-  });
+  // Start as null — this tells pages "SEO not loaded yet, keep SSR title"
+  const [seo, setSeo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,10 +20,10 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
       try {
         setLoading(true);
         const { data } = await api.get('/seo-settings/public', {
-          params: { pageType, referenceId }
+          params: { pageType, referenceId, pagePath: window.location.pathname }
         });
 
-        if (data && data.isActive) {
+        if (data && (data.isActive || data.source)) {
           setSeo({
             title: data.title,
             metaDescription: data.metaDescription,
@@ -35,7 +31,7 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
             whatsappNumber: data.whatsappNumber || ''
           });
         } else {
-          // Fall back to provided fallbacks OR global settings
+          // API returned nothing — now use fallbacks
           setSeo({
             title: fallbacks.title || settings?.defaultMetaTitle || settings?.siteName || 'Marketplace',
             metaDescription: fallbacks.description || settings?.defaultMetaDescription || 'Buy and sell locally.',
@@ -45,6 +41,13 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
         }
       } catch (error) {
         console.error('SEO Fetch Error:', error);
+        // On error, use fallbacks so page isn't stuck
+        setSeo({
+          title: fallbacks.title || settings?.defaultMetaTitle || settings?.siteName || 'Marketplace',
+          metaDescription: fallbacks.description || settings?.defaultMetaDescription || 'Buy and sell locally.',
+          keywords: fallbacks.keywords || settings?.defaultKeywords || '',
+          whatsappNumber: ''
+        });
       } finally {
         setLoading(false);
       }

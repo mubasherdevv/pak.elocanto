@@ -37,6 +37,8 @@ import Subcategory from './models/Subcategory.js';
 import SubSubCategory from './models/SubSubCategory.js';
 import Ad from './models/Ad.js';
 
+import { resolveSeoMetadata } from './controllers/seoSettingsController.js';
+
 import { generalRateLimiter, loginRateLimiter, forgotPasswordRateLimiter } from './middleware/rateLimiter.js';
 
 import userRoutes from './routes/userRoutes.js';
@@ -222,7 +224,26 @@ const getSeoMetadata = async (reqPath) => {
       };
     }
 
-    console.log(`[SEO-SSR] ⚠️ No exact path match. Using site-wide defaults.`);
+    // 2. Dynamic Fallback: Use shared resolver logic
+    console.log(`[SEO-SSR] ⚠️ No custom SEO. Checking for dynamic fallbacks...`);
+    
+    // Resolve entity info from path if possible (simplified for SSR)
+    const result = await resolveSeoMetadata(normalizedPath);
+    
+    if (result) {
+      console.log(`[SEO-SSR] 📍 Fallback Resolved: ${result.title} (Source: ${result.source})`);
+      return {
+        title: result.title,
+        description: result.metaDescription,
+        keywords: result.keywords || '',
+        ogTitle: result.ogTitle || result.title,
+        ogDescription: result.ogDescription || result.metaDescription,
+        url: `https://pk.elocanto.com${normalizedPath}`,
+        status: 200
+      };
+    }
+
+    console.log(`[SEO-SSR] ⚠️ No dynamic fallback found. Using site-wide defaults.`);
     const siteSettings = await getSettings();
     
     return {
