@@ -297,17 +297,48 @@ export const restoreBackup = async (backupFile) => {
 
     const backupData = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
 
-    const mongoUri = process.env.MONGO_URI;
-    const conn = mongoose.connection.useDb('admin');
+    const dbName = mongoose.connection.db.databaseName;
+    const conn = mongoose.connection.useDb(dbName);
+
+    console.log(`[BACKUP] Restoring to database: ${dbName}`);
+
+    // Helper to convert strings back to ObjectIds and Dates where needed
+    const convertTypes = (doc) => {
+      const processed = { ...doc };
+      for (const [key, value] of Object.entries(processed)) {
+        if (!value) continue;
+
+        // Convert 24-char hex strings to ObjectIds for known ID fields
+        if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+          if (key === '_id' || key.toLowerCase().endsWith('id') || ['seller', 'category', 'subcategory', 'subsubcategory', 'area', 'hotel'].includes(key)) {
+            try { processed[key] = new mongoose.Types.ObjectId(value); } catch (e) {}
+          }
+        }
+        
+        // Convert ISO date strings to Date objects
+        if (typeof value === 'string' && key.toLowerCase().endsWith('at') && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
+          try { processed[key] = new Date(value); } catch (e) {}
+        }
+      }
+      return processed;
+    };
 
     for (const [collectionName, documents] of Object.entries(backupData)) {
-      if (collectionName === 'uploads') continue;
+      if (collectionName === 'uploads' || collectionName === 'website_links') continue;
       
       try {
         const collection = conn.collection(collectionName);
+        console.log(`[BACKUP] Cleaning ${collectionName}...`);
         await collection.deleteMany({});
+        
         if (documents.length > 0) {
-          await collection.insertMany(documents);
+          const processedDocs = documents.map(doc => {
+            // Remove website_link and full_image_links as they are virtual/derived
+            const { website_link, full_image_links, ...rest } = doc;
+            return convertTypes(rest);
+          });
+          
+          await collection.insertMany(processedDocs);
         }
         console.log(`[BACKUP] Restored ${documents.length} docs to ${collectionName}`);
       } catch (err) {
