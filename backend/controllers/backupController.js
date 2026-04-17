@@ -145,3 +145,42 @@ export const restoreFromBackup = async (req, res) => {
     });
   }
 };
+export const uploadBackup = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    const backupDir = path.resolve(process.cwd(), 'backups');
+    const destinationPath = path.join(backupDir, req.file.filename);
+
+    // Initial check is done by multer, but let's confirm the file exists in destination
+    if (!fs.existsSync(destinationPath)) {
+       // Multer should have already placed it there, but safety first
+       return res.status(500).json({ message: 'Backup file failed to save' });
+    }
+
+    // Log the activity
+    await ActivityLog.create({
+      adminId: req.user?._id,
+      actionType: 'CREATE_BACKUP',
+      description: `Manual backup uploaded: ${req.file.originalname}`,
+      targetType: 'Settings'
+    });
+
+    res.json({
+      success: true,
+      message: 'Backup uploaded successfully. It is now available in the list.',
+      filename: req.file.filename
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload backup',
+      error: error.message
+    });
+  }
+};

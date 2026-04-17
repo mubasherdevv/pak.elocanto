@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { EnvelopeIcon, LockClosedIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, user, loading, error } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +25,13 @@ export default function LoginPage() {
     <div className="page-wrapper flex-center" style={{ background: '#f7f8fa' }}>
       <div style={{ background: 'white', borderRadius: 24, padding: 40, width: '100%', maxWidth: 440, border: '1px solid #e5e7eb', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ display: 'inline-block', background: '#3e6fe1', color: 'white', borderRadius: 12, padding: '4px 12px', fontWeight: 900, marginBottom: 16 }}>OLX</div>
+          <Link to="/" style={{ display: 'inline-block', marginBottom: 16 }}>
+            {settings?.logo ? (
+              <img src={settings.logo} alt={settings?.siteName} style={{ maxHeight: 60, width: 'auto' }} />
+            ) : (
+              <div style={{ background: '#3e6fe1', color: 'white', borderRadius: 12, padding: '4px 12px', fontWeight: 900 }}>{settings?.siteName || 'OLX'}</div>
+            )}
+          </Link>
           <h1 style={{ fontSize: 24, fontWeight: 800 }}>Welcome Back</h1>
           <p style={{ color: '#6b7280', marginTop: 8 }}>Log in to manage your ads and messages</p>
         </div>

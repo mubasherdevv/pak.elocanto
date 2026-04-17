@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import { EnvelopeIcon, LockClosedIcon, ExclamationCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function ForgotPasswordPage() {
@@ -13,6 +14,7 @@ export default function ForgotPasswordPage() {
   const [resendTimer, setResendTimer] = useState(0);
   const [message, setMessage] = useState('');
   const { forgotPassword, resetPassword, resendVerification, loading, error } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const handleSendCode = async (e) => {
@@ -58,7 +60,13 @@ export default function ForgotPasswordPage() {
         {step === 1 ? (
           <>
             <div style={{ textAlign: 'center', marginBottom: 32 }}>
-              <div style={{ display: 'inline-block', background: '#3e6fe1', color: 'white', borderRadius: 12, padding: '4px 12px', fontWeight: 900, marginBottom: 16 }}>OLX</div>
+              <Link to="/" style={{ display: 'inline-block', marginBottom: 16 }}>
+                {settings?.logo ? (
+                  <img src={settings.logo} alt={settings?.siteName} style={{ maxHeight: 60, width: 'auto' }} />
+                ) : (
+                  <div style={{ background: '#3e6fe1', color: 'white', borderRadius: 12, padding: '4px 12px', fontWeight: 900 }}>{settings?.siteName || 'OLX'}</div>
+                )}
+              </Link>
               <h1 style={{ fontSize: 24, fontWeight: 800 }}>Forgot Password?</h1>
               <p style={{ color: '#6b7280', marginTop: 8 }}>Enter your email to reset your password</p>
             </div>

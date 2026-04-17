@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../lib/api';
 import {
   CloudArrowUpIcon,
@@ -58,6 +58,8 @@ export default function AdminSettingsPage() {
   const [selectedBackup, setSelectedBackup] = useState(null);
   const [backupMsg, setBackupMsg] = useState('');
   const [backupError, setBackupError] = useState('');
+  const [uploadingBackup, setUploadingBackup] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Indexing states
   const [manualUrl, setManualUrl] = useState('');
@@ -229,6 +231,39 @@ export default function AdminSettingsPage() {
       }
     };
 
+    const handleUploadBackup = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (!file.name.toLowerCase().endsWith('.zip')) {
+        setBackupError('Please select a valid .zip backup file');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('backup', file);
+
+      setUploadingBackup(true);
+      setBackupMsg('');
+      setBackupError('');
+
+      try {
+        const { data } = await api.post('/admin/backup/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        setBackupMsg(data.message || 'Backup uploaded successfully!');
+        fetchBackups();
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      } catch (err) {
+        console.error('Upload error:', err);
+        setBackupError(err.response?.data?.message || 'Failed to upload backup');
+      } finally {
+        setUploadingBackup(false);
+      }
+    };
+
     const handleDelete = async (backupName) => {
       if (!window.confirm(`Delete "${backupName}"?`)) return;
       try {
@@ -275,14 +310,31 @@ export default function AdminSettingsPage() {
             <h2 className="text-lg font-black text-gray-900">Database Backup & Restore</h2>
             <p className="text-sm text-gray-500 mt-1">Create, manage, and restore database backups</p>
           </div>
-          <button
-            onClick={handleCreateBackup}
-            disabled={creatingBackup}
-            className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-black rounded-2xl shadow-lg shadow-green-500/20 transition-all disabled:opacity-50"
-          >
-            <ArrowPathIcon className={`w-5 h-5 ${creatingBackup ? 'animate-spin' : ''}`} />
-            {creatingBackup ? 'Creating...' : 'Create Backup Now'}
-          </button>
+          <div className="flex gap-2">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleUploadBackup}
+              accept=".zip"
+              className="hidden"
+            />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingBackup}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
+            >
+              <CloudArrowUpIcon className={`w-5 h-5 ${uploadingBackup ? 'animate-bounce' : ''}`} />
+              {uploadingBackup ? 'Uploading...' : 'Add Backup'}
+            </button>
+            <button
+              onClick={handleCreateBackup}
+              disabled={creatingBackup}
+              className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-black rounded-2xl shadow-lg shadow-green-500/20 transition-all disabled:opacity-50"
+            >
+              <ArrowPathIcon className={`w-5 h-5 ${creatingBackup ? 'animate-spin' : ''}`} />
+              {creatingBackup ? 'Creating...' : 'Create Backup Now'}
+            </button>
+          </div>
         </div>
 
         {backupMsg && (
