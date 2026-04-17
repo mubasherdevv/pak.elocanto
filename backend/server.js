@@ -3,11 +3,13 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
+import { fileURLToPath } from 'url';
 dotenv.config();
 console.log('MongoDB URI:', process.env.MONGO_URI);
 
 import path from 'path';
 import fs from 'fs';
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import { getCache, setCache } from './utils/cache.js';
 
@@ -104,6 +106,9 @@ app.use('/api', (req, res, next) => {
 
 // Serve uploaded files with caching
 const __dirname2 = path.resolve();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
 app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
   maxAge: '30d',
   etag: true,
@@ -137,241 +142,112 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/seo-settings', seoSettingsRoutes);
 app.use('/api/admin/backup', backupRoutes);
 
-// Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  const frontendDistPath = path.join(__dirname2, '../frontend/dist');
-  console.log('Production mode: Serving static frontend from:', frontendDistPath);
+// Serve static assets from the frontend build folder
+console.log('[SSR] Serving static frontend from:', frontendDistPath);
 
-  // Serve static assets with long-term caching (immutable)
-  app.use('/assets', express.static(path.join(frontendDistPath, 'assets'), {
-    maxAge: '1y',
-    immutable: true,
-    index: false,
-    dotfiles: 'deny',
-    setHeaders: (res, filePath) => {
-      // Ensure specific MIME types have correct caching
-      if (filePath.endsWith('.woff2') || filePath.endsWith('.woff') || filePath.endsWith('.ttf')) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
-      if (filePath.endsWith('.svg') || filePath.endsWith('.png') || filePath.endsWith('.webp')) {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
+// Serve static assets with long-term caching (immutable)
+app.use('/assets', express.static(path.join(frontendDistPath, 'assets'), {
+  maxAge: '1y',
+  immutable: true,
+  index: false,
+  dotfiles: 'deny',
+  setHeaders: (res, filePath) => {
+    // Ensure specific MIME types have correct caching
+    if (filePath.endsWith('.woff2') || filePath.endsWith('.woff') || filePath.endsWith('.ttf')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
-  }));
-
-  // Serve the favicon and other top-level static files with reasonable caching
-  app.use(express.static(frontendDistPath, {
-    maxAge: '1d',
-    etag: true,
-    index: false,
-    dotfiles: 'deny',
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache'); // Always revalidate HTML
-      }
+    if (filePath.endsWith('.svg') || filePath.endsWith('.png') || filePath.endsWith('.webp')) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
-  }));
+  }
+}));
 
-  const getSettings = async () => {
-    const cached = getCache('site_settings');
-    if (cached) return cached;
-    const settings = await Settings.findOne({}).lean();
-    if (settings) setCache('site_settings', settings, 3600);
-    return settings;
-  };
+// Serve the favicon and other top-level static files with reasonable caching
+app.use(express.static(frontendDistPath, {
+  maxAge: '1d',
+  etag: true,
+  index: false,
+  dotfiles: 'deny',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache'); // Always revalidate HTML
+    }
+  }
+}));
 
-// Valid Static Frontend Routes (Non-Dynamic)
-const VALID_STATIC_ROUTES = [
-  '/', '/ads', '/login', '/register', '/forgot-password', 
-  '/post-ad', '/dashboard', '/profile', '/messages', '/admin',
-  '/admin/ads', '/admin/users', '/admin/categories', '/admin/cities',
-  '/admin/reports', '/admin/settings', '/admin/seo', '/admin/titles-seo'
-];
+const getSettings = async () => {
+  const cached = getCache('site_settings');
+  if (cached) return cached;
+  const settings = await Settings.findOne({}).lean();
+  if (settings) setCache('site_settings', settings, 3600);
+  return settings;
+};
+
+// --- SSR SEO SYSTEM ---
 
 /**
- * Resolves SEO metadata by analyzing URL path and querying database
+ * Normalizes a request path for consistent DB lookup
  */
-const resolveSeoMetadata = async (urlPath) => {
-  console.log(`[SEO-SSR] Resolving for: ${urlPath}`);
+const normalizePath = (rawPath) => {
+  if (!rawPath) return '/';
+  let path = rawPath.split('?')[0]; // Remove query params
+  path = path.toLowerCase();
+  path = path.replace(/\/+$/, ''); // Remove trailing slashes
+  if (!path.startsWith('/')) path = '/' + path;
+  if (path === '') path = '/';
+  return path;
+};
+
+/**
+ * Resolves SEO metadata from the database based on a normalized path
+ */
+const getSeoMetadata = async (reqPath) => {
+  const normalizedPath = normalizePath(reqPath);
+  console.log(`[SEO-SSR] 🔍 Resolving for: "${reqPath}" -> Normalized: "${normalizedPath}"`);
+
   try {
-    // 1. Get Global Defaults
-    const settings = await getSettings();
-    const siteName = settings?.siteName || 'Elocanto.pk';
-    const defaultTitle = settings?.defaultMetaTitle || `${siteName} | Marketplace`;
-    const defaultDesc = settings?.defaultMetaDescription || 'Secure destination to buy and sell.';
-    const defaultKeywords = settings?.defaultKeywords || '';
+    // 1. Try to find an exact path match in SeoSettings
+    let seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
 
-    // 2. Determine Context & Check Validity
-    let context = { type: 'home', id: 'home', refId: null };
-    let isValidRoute = false;
-
-    // Static Whitelist (Absolute Matches)
-    if (VALID_STATIC_ROUTES.includes(urlPath)) {
-      isValidRoute = true;
+    if (seo) {
+      console.log(`[SEO-SSR] ✅ Match found in DB for: ${normalizedPath}`);
+      return {
+        title: seo.title,
+        description: seo.metaDescription,
+        keywords: seo.keywords || '',
+        ogTitle: seo.ogTitle || seo.title,
+        ogDescription: seo.ogDescription || seo.metaDescription,
+        url: `https://pk.elocanto.com${normalizedPath}`,
+        status: 200
+      };
     }
 
-    // Dynamic Analysis
-    const segments = urlPath.split('/').filter(Boolean);
+    console.log(`[SEO-SSR] ⚠️ No exact path match. Using site-wide defaults.`);
+    const siteSettings = await getSettings();
     
-    if (urlPath === '/' || urlPath === '') {
-      context = { type: 'home', id: 'home' };
-      isValidRoute = true;
-    } else if (urlPath === '/ads') {
-      context = { type: 'ads', id: 'ads' };
-      isValidRoute = true;
-    } else if (urlPath.startsWith('/ads/')) {
-      const slug = segments[1];
-      console.log(`[SEO-SSR] Looking for Ad with slug: ${slug}`);
-      const ad = await Ad.findOne({ slug, isActive: true }).select('_id title').lean();
-      if (ad) {
-        console.log(`[SEO-SSR] Ad found: ${ad.title}`);
-        context = { type: 'ad', id: ad.title, refId: ad._id };
-        isValidRoute = true;
-      } else {
-        console.log(`[SEO-SSR] Ad NOT found for slug: ${slug}`);
-      }
-    } else if (urlPath.startsWith('/cities/')) {
-      const citySlug = segments[1];
-      const city = await City.findOne({ slug: citySlug }).lean();
-      if (city) {
-        isValidRoute = true;
-        context = { type: 'city', id: city.name, refId: city._id };
-
-        // Sub-validation for Area/Hotel/Lists
-        if (segments.length >= 3) {
-          const subType = segments[2]; // 'areas' or 'hotels'
-          
-          if (segments.length === 3) {
-            // City Lists (e.g. /cities/lahore/hotels)
-            if (subType === 'areas') {
-              context = { type: 'city-areas', id: `${citySlug}-areas`, refId: city._id };
-              isValidRoute = true;
-            } else if (subType === 'hotels') {
-              context = { type: 'city-hotels', id: `${citySlug}-hotels`, refId: city._id };
-              isValidRoute = true;
-            }
-          } else if (segments.length >= 4) {
-            const subSlug = segments[3];
-            if (subType === 'areas') {
-              const area = await Area.findOne({ city: city._id, slug: subSlug }).lean();
-              if (area) {
-                context = { type: 'area', id: area.name, refId: area._id };
-                isValidRoute = true;
-              } else {
-                isValidRoute = false;
-              }
-            } else if (subType === 'hotels') {
-              const hotel = await Hotel.findOne({ city: city._id, slug: subSlug }).lean();
-              if (hotel) {
-                context = { type: 'hotel', id: hotel.name, refId: hotel._id };
-                isValidRoute = true;
-              } else {
-                isValidRoute = false;
-              }
-            }
-          }
-        }
-      }
-    } else if (urlPath.startsWith('/profile/')) {
-      const userId = segments[1];
-      if (userId && userId.match(/^[0-9a-fA-F]{24}$/)) {
-        const user = await User.findById(userId).select('_id').lean();
-        if (user) {
-          context = { type: 'profile', id: userId, refId: user._id };
-          isValidRoute = true;
-        }
-      }
-    } else if (urlPath.startsWith('/edit-ad/')) {
-      const adId = segments[1];
-      if (adId && adId.match(/^[0-9a-fA-F]{24}$/)) {
-        const ad = await Ad.findById(adId).select('_id').lean();
-        if (ad) {
-          context = { type: 'edit-ad', id: adId, refId: ad._id };
-          isValidRoute = true;
-        }
-      }
-    } else if (urlPath.startsWith('/messages/')) {
-      isValidRoute = true; // Messages usually require auth, keep simple for SEO
-    } else if (segments.length > 0) {
-      if (!isValidRoute) {
-        // Find the most specific match by checking segments from specific to general
-        const lastSegment = segments[segments.length - 1];
-        
-        // 1. Check Sub-Subcategory
-        const subSubCat = await SubSubCategory.findOne({ slug: lastSegment, isActive: true }).lean();
-        if (subSubCat) {
-          context = { type: 'category', id: subSubCat.name, refId: subSubCat._id };
-          isValidRoute = true;
-        } else {
-          // 2. Check Subcategory
-          const subCat = await Subcategory.findOne({ slug: lastSegment, isActive: true }).lean();
-          if (subCat) {
-            context = { type: 'category', id: subCat.name, refId: subCat._id };
-            isValidRoute = true;
-          } else {
-            // 3. Check Category
-            const cat = await Category.findOne({ slug: lastSegment, isActive: true }).lean();
-            if (cat) {
-              context = { type: 'category', id: cat.name, refId: cat._id };
-              isValidRoute = true;
-            }
-          }
-        }
-      }
-    }
-
-    // 3. Check Cache
-    const cacheKey = `seo_v2_${urlPath.replace(/\//g, '_')}`;
-    const cachedSeo = getCache(cacheKey);
-    if (cachedSeo) return { ...cachedSeo, status: isValidRoute ? 200 : 404 };
-
-    // 4. Fetch Custom SEO Settings
-    let seo = await SeoSettings.findOne({ 
-      pageType: context.type, 
-      referenceId: context.refId || null,
-      isActive: true 
-    }).lean();
-
-    // Cascading Fallback: If no specific setting found, try generic (referenceId: null)
-    if (!seo && context.refId) {
-      seo = await SeoSettings.findOne({
-        pageType: context.type,
-        referenceId: null,
-        isActive: true
-      }).lean();
-    }
-
-    const placeholderName = context.id || '';
-
-    // Dynamic Default construction based on type if no SEO found
-    let finalTitle = seo?.title;
-    if (!finalTitle) {
-      if (context.type === 'home') finalTitle = defaultTitle;
-      else if (['ad', 'category', 'city', 'area', 'hotel'].includes(context.type)) {
-        finalTitle = `{name} | ${siteName}`;
-      } else {
-        finalTitle = defaultTitle;
-      }
-    }
-
-    const result = {
-      title: finalTitle.replace(/{name}/gi, placeholderName),
-      description: (seo?.metaDescription || defaultDesc).replace(/{name}/gi, placeholderName),
-      keywords: (seo?.keywords || defaultKeywords).replace(/{name}/gi, placeholderName),
-      url: `https://pk.elocanto.com${urlPath}`
+    return {
+      title: siteSettings?.siteTitle || 'Elocanto | Classified Marketplace in Pakistan',
+      description: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+      keywords: siteSettings?.siteKeywords || '',
+      ogTitle: siteSettings?.siteTitle || 'Elocanto',
+      ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+      url: `https://pk.elocanto.com${normalizedPath}`,
+      status: 200
     };
 
-    setCache(cacheKey, result, 1800);
-    return { ...result, status: isValidRoute ? 200 : 404 };
   } catch (error) {
-    console.error('SEO Resolve Error:', error);
-    return { title: 'Marketplace', status: 404 };
+    console.error('[SEO-SSR] ❌ Resolution Error:', error);
+    return {
+      title: 'Elocanto',
+      description: 'Secure destination to buy and sell.',
+      status: 500
+    };
   }
 };
 
 // Handle SPA routing with dynamic SEO injection
 app.get('*', async (req, res) => {
-  // If the request is for a file that DOES NOT exist (has an extension), return 404
+  // Skip static assets
   const ext = path.extname(req.path);
   if (ext && !ext.match(/\.(html|js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$/i)) {
     return res.status(404).json({ message: 'Resource not found' });
@@ -380,63 +256,72 @@ app.get('*', async (req, res) => {
   try {
     const indexPath = path.resolve(frontendDistPath, 'index.html');
     if (!fs.existsSync(indexPath)) {
+      console.error(`[SSR] ❌ index.html not found: ${indexPath}`);
       return res.status(404).send('Frontend build not found');
     }
 
     let html = fs.readFileSync(indexPath, 'utf8');
-    const seo = await resolveSeoMetadata(req.path);
-    const settings = await getSettings();
+    
+    // Safety check for DB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.warn('[SSR] ⏳ Waiting for Database connection...');
+      await new Promise(resolve => {
+        const interval = setInterval(() => {
+          if (mongoose.connection.readyState === 1) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 100);
+      });
+    }
+
+    const [seo, settings] = await Promise.all([
+      getSeoMetadata(req.path),
+      getSettings()
+    ]);
 
     // GA4 Script Injection
     let analyticsScript = '';
     if (settings?.googleAnalyticsId) {
       analyticsScript = `
-        <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=${settings.googleAnalyticsId}"></script>
         <script>
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${settings.googleAnalyticsId}', {
-            page_path: window.location.pathname,
-          });
+          gtag('config', '${settings.googleAnalyticsId}', { page_path: window.location.pathname });
         </script>
       `;
     }
 
-    // Replace placeholders with dynamic data
+    // High Performance Placeholder Replacement
     html = html
-      .replace(/Elocanto \| Classified Marketplace in Pakistan/g, seo.title || 'Elocanto.pk')
-      .replace(/Elocanto\.pk is the most secure destination to buy, sell, and discover premium items across Pakistan\./g, seo.description || 'Classified Marketplace')
-      .replace(/classifieds, pakistan, buy and sell, marketplace, lahore, karachi, islamabad/g, seo.keywords || '')
-      .replace(/__CANONICAL_URL__/g, seo.url || 'https://pk.elocanto.com');
+      .replace(/{{SEO_TITLE}}/g, seo.title)
+      .replace(/{{SEO_DESCRIPTION}}/g, seo.description)
+      .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
+      .replace(/{{OG_TITLE}}/g, seo.ogTitle)
+      .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
+      .replace(/{{CANONICAL_URL}}/g, seo.url);
 
-    // Inject Analytics, GSC and Header Scripts
-    const gscMeta = settings?.googleSearchConsoleId 
-      ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` 
-      : '';
-      
-    const headerContent = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
-    if (headerContent) {
-      html = html.replace('</head>', `${headerContent}</head>`);
+    const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
+    const headerScripts = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
+
+    if (headerScripts && html.includes('</head>')) {
+      html = html.replace('</head>', `${headerScripts}</head>`);
     }
-
-    // Inject Footer Scripts
-    if (settings?.footerScripts) {
+    
+    if (settings?.footerScripts && html.includes('</body>')) {
       html = html.replace('</body>', `${settings.footerScripts}</body>`);
     }
 
-    res.status(seo.status || 200);
-    res.setHeader('Cache-Control', 'no-cache');
-    res.send(html);
+    console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
+    res.status(seo.status || 200).setHeader('Cache-Control', 'no-cache').send(html);
+    
   } catch (err) {
-    console.error('Server error during HTML generation:', err);
+    console.error('[SSR] ❌ Panic Error:', err);
     res.status(500).send('An error occurred');
   }
 });
-} else {
-  console.log('Development mode: Frontend serving disabled via backend.');
-}
 
 // Error Handlers
 app.use((req, res, next) => {
@@ -454,7 +339,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`OLX Marketplace API running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Elocanto API running on port ${PORT}`);
 });
 
 

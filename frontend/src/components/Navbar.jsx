@@ -50,7 +50,7 @@ export default function Navbar({ onMenuClick }) {
                                 color: 'var(--dark)',
                                 fontWeight: 900, fontSize: 20, letterSpacing: '-0.8px', textTransform: 'uppercase'
                             }}>
-                                {settings?.siteName || 'MarketX'}
+                                {settings?.siteName || 'Elocanto'}
                             </div>
                         </div>
                     )}

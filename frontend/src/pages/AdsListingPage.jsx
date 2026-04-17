@@ -378,7 +378,8 @@ export default function AdsListingPage() {
       return { 
         type: 'hotel', 
         id: hotel?._id, 
-        fallbackTitle: hotel ? `${hotel.name} Listings in ${cityInfo?.name || ''}` : 'Hotel Listings' 
+        placeholderName: hotel?.name || 'Hotel',
+        fallbackTitle: hotel ? `${hotel.name} in ${cityInfo?.name || ''}` : 'Hotel Listings' 
       };
     }
     if (areaSlug) {
@@ -386,42 +387,54 @@ export default function AdsListingPage() {
       return { 
         type: 'area', 
         id: area?._id, 
-        fallbackTitle: area ? `Ads in ${area.name} ${cityInfo?.name || ''}` : 'Area Listings' 
+        placeholderName: area?.name || 'Area',
+        fallbackTitle: area ? `Ads in ${area.name}, ${cityInfo?.name || ''}` : 'Area Listings' 
       };
     }
     if (citySlug) {
+      if (isHotelsPage) {
+        return { 
+          type: 'city-hotels', 
+          id: cityInfo?._id, 
+          placeholderName: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotels',
+          fallbackTitle: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotel Listings' 
+        };
+      }
       return { 
         type: 'city', 
         id: cityInfo?._id, 
+        placeholderName: cityInfo?.name || 'City',
         fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : 'City Listings' 
       };
     }
-    if (isHotelsPage) {
-      return { 
-        type: 'city-hotels', 
-        id: cityInfo?._id, 
-        fallbackTitle: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotel Listings' 
-      };
-    }
     if (categorySlug) {
+      const name = activeSubSub?.name || activeSub?.name || activeCategory?.name || 'Category';
       return { 
         type: 'category', 
-        id: activeCategory?._id, 
-        fallbackTitle: activeCategory ? `${activeCategory.name} for Sale` : 'Category Listings' 
+        id: activeSubSub?._id || activeSub?._id || activeCategory?._id, 
+        placeholderName: name,
+        fallbackTitle: `${name} Listings`
       };
     }
-    return { type: 'ads', id: null, fallbackTitle: 'Browse All Ads | Elocanto' };
+    return { type: 'ads', id: null, placeholderName: 'Marketplace', fallbackTitle: 'Browse All Ads' };
   };
 
   const seoContext = getSeoContext();
+  const siteName = settings?.siteName || 'Elocanto.pk';
+  
   const { seo } = usePageSeo(seoContext.type, seoContext.id, {
     title: seoContext.fallbackTitle,
-    description: `Browse the latest ads in ${seoContext.fallbackTitle.replace(' | Elocanto', '')}. Find the best deals on Elocanto.`
+    description: `Browse the latest ads in ${seoContext.placeholderName}. Find the best deals on Elocanto.`
   });
 
   // Handle {name} placeholder in client-side title
-  const displayTitle = seo?.title?.replace(/{name}/gi, seoContext.name) || seoContext.fallbackTitle;
-  const displayDesc = seo?.metaDescription?.replace(/{name}/gi, seoContext.name) || seo.metaDescription;
+  const finalSeoTitle = seo?.title || `{name} | ${siteName}`;
+  const displayTitle = finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName);
+  
+  const finalSeoDesc = seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.';
+  const displayDesc = finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName);
+
+  const displayKeywords = (seo?.keywords || '').replace(/{name}/gi, seoContext.placeholderName);
 
 
   const trackedKey = useRef(null);

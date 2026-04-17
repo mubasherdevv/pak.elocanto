@@ -2,15 +2,18 @@ import express from 'express';
 import { 
   getSeoSettings, 
   getAllSeoSettings, 
+  getSeoSettingById,
   saveSeoSettings, 
-  deleteSeoSetting 
+  deleteSeoSetting,
+  getSeoByPath
 } from '../controllers/seoSettingsController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public route to fetch SEO for a page
-router.get('/public', getSeoSettings);
+// Public routes
+router.get('/public', getSeoSettings); // Legacy compat
+router.get('/path', getSeoByPath);     // Professional path-based
 
 // Protected admin routes
 router.use(protect);
@@ -20,6 +23,8 @@ router.route('/')
   .get(getAllSeoSettings)
   .post(saveSeoSettings);
 
-router.delete('/:id', deleteSeoSetting);
+router.route('/:id')
+  .get(getSeoSettingById)
+  .delete(deleteSeoSetting);
 
 export default router;

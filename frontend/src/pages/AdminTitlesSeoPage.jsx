@@ -12,7 +12,8 @@ import {
   FolderIcon,
   MagnifyingGlassIcon,
   ChevronDownIcon,
-  UsersIcon
+  UsersIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 

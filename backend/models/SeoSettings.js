@@ -2,14 +2,21 @@ import mongoose from 'mongoose';
 
 const seoSettingsSchema = new mongoose.Schema(
   {
+    pagePath: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      lowercase: true
+    },
     pageType: {
       type: String,
       required: true,
-      enum: ['home', 'ads', 'ad', 'city', 'city-hotels', 'city-areas', 'area', 'hotel', 'category', 'profile'],
+      enum: ['home', 'ads', 'ad', 'city', 'city-hotels', 'city-areas', 'area', 'hotel', 'category', 'profile', 'custom'],
     },
     referenceId: {
-      type: mongoose.Schema.Types.ObjectId,
-      default: null, // Null for homepage and generic ads page
+      type: String, 
+      default: null, // String ID for compatibility across all entities
     },
     title: {
       type: String,
@@ -26,6 +33,14 @@ const seoSettingsSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    ogTitle: {
+      type: String,
+      trim: true,
+    },
+    ogDescription: {
+      type: String,
+      trim: true,
+    },
     whatsappNumber: {
       type: String,
       trim: true,
@@ -39,7 +54,7 @@ const seoSettingsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexing for faster lookups
+// Indexing for faster entity-based lookups
 seoSettingsSchema.index({ pageType: 1, referenceId: 1 });
 
 const SeoSettings = mongoose.model('SeoSettings', seoSettingsSchema);
