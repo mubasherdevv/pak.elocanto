@@ -396,6 +396,13 @@ export default function AdsListingPage() {
         fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : 'City Listings' 
       };
     }
+    if (isHotelsPage) {
+      return { 
+        type: 'city-hotels', 
+        id: cityInfo?._id, 
+        fallbackTitle: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotel Listings' 
+      };
+    }
     if (categorySlug) {
       return { 
         type: 'category', 
@@ -411,6 +418,10 @@ export default function AdsListingPage() {
     title: seoContext.fallbackTitle,
     description: `Browse the latest ads in ${seoContext.fallbackTitle.replace(' | Elocanto', '')}. Find the best deals on Elocanto.`
   });
+
+  // Handle {name} placeholder in client-side title
+  const displayTitle = seo?.title?.replace(/{name}/gi, seoContext.name) || seoContext.fallbackTitle;
+  const displayDesc = seo?.metaDescription?.replace(/{name}/gi, seoContext.name) || seo.metaDescription;
 
 
   const trackedKey = useRef(null);
@@ -442,9 +453,9 @@ export default function AdsListingPage() {
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 64 }}>
       <Helmet>
-        <title>{seo.title}</title>
-        <meta name="description" content={seo.metaDescription} />
-        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+        <title>{displayTitle}</title>
+        <meta name="description" content={displayDesc} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, seoContext.name)} />}
       </Helmet>
       <style>{`
         .filter-overlay {

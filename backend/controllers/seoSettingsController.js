@@ -16,7 +16,13 @@ export const getSeoSettings = async (req, res) => {
       query.referenceId = referenceId;
     }
 
-    const settings = await SeoSettings.findOne(query);
+    let settings = await SeoSettings.findOne(query);
+
+    // Cascading Fallback: If no specific setting, try generic (referenceId: null)
+    if (!settings && referenceId && referenceId !== 'null') {
+      settings = await SeoSettings.findOne({ pageType, referenceId: null, isActive: true });
+    }
+
     res.json(settings);
   } catch (error) {
     res.status(500).json({ message: error.message });

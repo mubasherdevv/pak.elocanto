@@ -230,7 +230,7 @@ const resolveSeoMetadata = async (urlPath) => {
       const city = await City.findOne({ slug: citySlug }).lean();
       if (city) {
         isValidRoute = true;
-        context = { type: 'city', id: citySlug, refId: city._id };
+        context = { type: 'city', id: city.name, refId: city._id };
 
         // Sub-validation for Area/Hotel/Lists
         if (segments.length >= 3) {
@@ -250,7 +250,7 @@ const resolveSeoMetadata = async (urlPath) => {
             if (subType === 'areas') {
               const area = await Area.findOne({ city: city._id, slug: subSlug }).lean();
               if (area) {
-                context = { type: 'area', id: subSlug, refId: area._id };
+                context = { type: 'area', id: area.name, refId: area._id };
                 isValidRoute = true;
               } else {
                 isValidRoute = false;
@@ -258,7 +258,7 @@ const resolveSeoMetadata = async (urlPath) => {
             } else if (subType === 'hotels') {
               const hotel = await Hotel.findOne({ city: city._id, slug: subSlug }).lean();
               if (hotel) {
-                context = { type: 'hotel', id: subSlug, refId: hotel._id };
+                context = { type: 'hotel', id: hotel.name, refId: hotel._id };
                 isValidRoute = true;
               } else {
                 isValidRoute = false;
@@ -295,19 +295,19 @@ const resolveSeoMetadata = async (urlPath) => {
         // 1. Check Sub-Subcategory
         const subSubCat = await SubSubCategory.findOne({ slug: lastSegment, isActive: true }).lean();
         if (subSubCat) {
-          context = { type: 'category', id: lastSegment, refId: subSubCat._id };
+          context = { type: 'category', id: subSubCat.name, refId: subSubCat._id };
           isValidRoute = true;
         } else {
           // 2. Check Subcategory
           const subCat = await Subcategory.findOne({ slug: lastSegment, isActive: true }).lean();
           if (subCat) {
-            context = { type: 'category', id: lastSegment, refId: subCat._id };
+            context = { type: 'category', id: subCat.name, refId: subCat._id };
             isValidRoute = true;
           } else {
             // 3. Check Category
             const cat = await Category.findOne({ slug: lastSegment, isActive: true }).lean();
             if (cat) {
-              context = { type: 'category', id: lastSegment, refId: cat._id };
+              context = { type: 'category', id: cat.name, refId: cat._id };
               isValidRoute = true;
             }
           }
@@ -321,16 +321,26 @@ const resolveSeoMetadata = async (urlPath) => {
     if (cachedSeo) return { ...cachedSeo, status: isValidRoute ? 200 : 404 };
 
     // 4. Fetch Custom SEO Settings
-    const seo = await SeoSettings.findOne({ 
+    let seo = await SeoSettings.findOne({ 
       pageType: context.type, 
       referenceId: context.refId || null,
       isActive: true 
     }).lean();
 
+    // Cascading Fallback: If no specific setting found, try generic (referenceId: null)
+    if (!seo && context.refId) {
+      seo = await SeoSettings.findOne({
+        pageType: context.type,
+        referenceId: null,
+        isActive: true
+      }).lean();
+    }
+
+    const placeholderName = context.id || '';
     const result = {
-      title: seo?.title?.replace('{name}', context.id || '') || defaultTitle,
-      description: seo?.metaDescription || defaultDesc,
-      keywords: seo?.keywords || defaultKeywords,
+      title: (seo?.title || defaultTitle).replace(/{name}/gi, placeholderName),
+      description: (seo?.metaDescription || defaultDesc).replace(/{name}/gi, placeholderName),
+      keywords: (seo?.keywords || defaultKeywords).replace(/{name}/gi, placeholderName),
       url: `https://pk.elocanto.com${urlPath}`
     };
 

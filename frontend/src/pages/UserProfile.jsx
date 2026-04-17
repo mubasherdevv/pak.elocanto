@@ -17,6 +17,8 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import NotFoundPage from './NotFoundPage';
+import { Helmet } from 'react-helmet-async';
+import { usePageSeo } from '../hooks/usePageSeo';
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -68,6 +70,8 @@ export default function UserProfile() {
     }
   };
 
+  const { seo } = usePageSeo('profile', profileUser?._id, { title: profileUser?.name || 'User Profile' });
+
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     if (isOwnProfile && updateProfile) {
@@ -89,6 +93,13 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <Helmet>
+        <title>{seo.title}</title>
+        <meta name="description" content={seo.metaDescription} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
+        <meta property="og:title" content={seo.title} />
+        <meta property="og:description" content={seo.metaDescription} />
+      </Helmet>
       {/* Profile Header Section */}
       <section className="bg-[#1a2332] py-12 px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8 items-center">
