@@ -32,7 +32,12 @@ export const getSitemap = async (req, res) => {
       City.find().select('slug updatedAt').lean(),
       Area.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt').lean(),
       Hotel.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt').lean(),
-      Ad.find({ isApproved: true, isActive: true }).select('slug updatedAt').lean()
+      Ad.find({ isApproved: true, isActive: true })
+        .populate('category', 'slug')
+        .populate('subcategory', 'slug')
+        .populate('subSubCategory', 'slug')
+        .select('slug updatedAt category subcategory subSubCategory')
+        .lean()
     ]);
 
     // Helper to format date
@@ -92,11 +97,22 @@ export const getSitemap = async (req, res) => {
       }
     });
 
-    // 7. Ads
+    // 7. All Ad Detail Pages (Intelligent SEO URLs)
     ads.forEach(ad => {
       const slug = ad.slug || ad._id;
       if (slug) {
-        urls.push(`  <url><loc>${BASE_URL}/ads/${escapeXml(slug)}</loc>${formatDate(ad.updatedAt)}<priority>0.6</priority></url>`);
+        let path = '';
+        if (ad.category?.slug && ad.subcategory?.slug && ad.subSubCategory?.slug) {
+          path = `/${ad.category.slug}/${ad.subcategory.slug}/${ad.subSubCategory.slug}/${slug}`;
+        } else if (ad.category?.slug && ad.subcategory?.slug) {
+          path = `/${ad.category.slug}/${ad.subcategory.slug}/${slug}`;
+        } else if (ad.category?.slug) {
+          path = `/${ad.category.slug}/${slug}`;
+        } else {
+          path = `/ads/${slug}`;
+        }
+        
+        urls.push(`  <url><loc>${BASE_URL}${escapeXml(path)}</loc>${formatDate(ad.updatedAt)}<priority>0.6</priority></url>`);
       }
     });
 
