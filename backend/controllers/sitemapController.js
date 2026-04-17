@@ -50,6 +50,8 @@ export const getSitemap = async (req, res) => {
       }
     };
 
+    const urls = [];
+    
     // Base URLs
     urls.push(`  <url><loc>${BASE_URL}/</loc><priority>1.0</priority></url>`);
     urls.push(`  <url><loc>${BASE_URL}/ads</loc><priority>0.8</priority></url>`);
