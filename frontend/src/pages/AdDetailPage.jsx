@@ -83,7 +83,16 @@ export default function AdDetailPage() {
     window.scrollTo(0, 0);
   }, [slug, user, navigate]);
   
-  const { seo } = usePageSeo('ad', ad?._id, { title: ad?.title });
+  // Define SEO context for consistency
+  const placeholderName = ad?.title || '';
+  const { seo } = usePageSeo('ad', ad?._id, { 
+    title: ad ? `${ad.title} | Elocanto` : 'Ad Details',
+    description: ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.'
+  });
+
+  // Handle {name} placeholder for consistency
+  const displayTitle = (seo?.title || (ad ? `${ad.title} | Elocanto` : 'Ad Details')).replace(/{name}/gi, placeholderName);
+  const displayDesc = (seo?.metaDescription || (ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.')).replace(/{name}/gi, placeholderName);
 
   const toggleFav = async () => {
     if (!user) return navigate('/login');
@@ -312,11 +321,11 @@ export default function AdDetailPage() {
   return (
     <div className="page-wrapper" style={{ background: isMobile ? '#f8fafc' : '#f7f8fa' }}>
       <Helmet>
-        <title>{seo.title}</title>
-        <meta name="description" content={seo.metaDescription} />
-        {seo.keywords && <meta name="keywords" content={seo.keywords} />}
-        <meta property="og:title" content={seo.title} />
-        <meta property="og:description" content={seo.metaDescription} />
+        <title>{displayTitle}</title>
+        <meta name="description" content={displayDesc} />
+        {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, placeholderName)} />}
+        <meta property="og:title" content={displayTitle} />
+        <meta property="og:description" content={displayDesc} />
       </Helmet>
 
       {isMobile ? (

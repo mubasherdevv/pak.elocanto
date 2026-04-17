@@ -220,9 +220,9 @@ const resolveSeoMetadata = async (urlPath) => {
       isValidRoute = true;
     } else if (urlPath.startsWith('/ads/')) {
       const slug = segments[1];
-      const ad = await Ad.findOne({ slug, isActive: true }).select('_id').lean();
+      const ad = await Ad.findOne({ slug, isActive: true }).select('_id title').lean();
       if (ad) {
-        context = { type: 'ad', id: slug, refId: ad._id };
+        context = { type: 'ad', id: ad.title, refId: ad._id };
         isValidRoute = true;
       }
     } else if (urlPath.startsWith('/cities/')) {
