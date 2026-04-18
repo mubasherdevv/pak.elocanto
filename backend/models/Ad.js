@@ -70,6 +70,7 @@ const adSchema = mongoose.Schema(
     }],
     slug: { type: String },
     rejectionReason: { type: String },
+    website: { type: String, trim: true },
   },
   { timestamps: true }
 );

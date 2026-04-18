@@ -165,7 +165,7 @@ export const getAdById = asyncHandler(async (req, res) => {
   
   // 1. Try finding by slug exactly (Normalized)
   let ad = await Ad.findOne({ slug: cleanSlug })
-    .populate('seller', 'name profilePhoto city phone bio createdAt')
+    .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name image slug')
     .populate('area', 'name slug')
@@ -174,7 +174,7 @@ export const getAdById = asyncHandler(async (req, res) => {
   // 2. Fallback: Check if identifier is a raw 24-char ID
   if (!ad && identifier.match(/^[0-9a-fA-F]{24}$/)) {
     ad = await Ad.findById(identifier)
-      .populate('seller', 'name profilePhoto city phone bio createdAt')
+      .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
       .populate('category', 'name slug icon')
       .populate('subcategory', 'name image slug')
       .populate('area', 'name slug')
@@ -188,7 +188,7 @@ export const getAdById = asyncHandler(async (req, res) => {
     
     if (potentialId.match(/^[0-9a-fA-F]{24}$/)) {
       ad = await Ad.findById(potentialId)
-        .populate('seller', 'name profilePhoto city phone bio createdAt')
+        .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
         .populate('category', 'name slug icon')
         .populate('subcategory', 'name image slug')
         .populate('area', 'name slug')
@@ -226,7 +226,7 @@ export const getAdById = asyncHandler(async (req, res) => {
 // @access  Private
 export const createAd = asyncHandler(async (req, res) => {
   const settings = await getSettings();
-  const { title, description, price, category, subcategory, city, images, condition, adType, listingType, phone, brand, isNegotiable, area, hotel } = req.body;
+  const { title, description, price, category, subcategory, city, images, condition, adType, listingType, phone, brand, isNegotiable, area, hotel, website } = req.body;
   
   const finalAdType = adType || listingType || 'simple';
   const duration = finalAdType === 'featured' 
@@ -234,10 +234,23 @@ export const createAd = asyncHandler(async (req, res) => {
     : settings.simpleAdsDuration;
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + duration);
-  
+
+  // Link Moderation Logic
+  const linkMatches = description?.match(/https?:\/\/[^\s]+/g) || [];
+  const linkCount = linkMatches.length;
+  let isApproved = true;
+  let rejectionReason = '';
+
+  if (linkCount > 3 && !req.user.isAdmin) {
+    isApproved = false;
+    rejectionReason = "Description contains too many external links (max 3 allowed).";
+  }
+
   const ad = await Ad.create({
     seller: req.user._id,
     title, description, price, category, subcategory, city,
+    isApproved,
+    rejectionReason,
     images: (images || []).slice(0, settings.maxImagesPerAd),
     condition: condition || 'used',
     adType: finalAdType,
@@ -247,7 +260,8 @@ export const createAd = asyncHandler(async (req, res) => {
     isNegotiable: isNegotiable || false,
     expiresAt,
     area: area || undefined,
-    hotel: hotel || undefined
+    hotel: hotel || undefined,
+    website: website || undefined
   });
   const populated = await ad.populate([
     { path: 'seller', select: 'name profilePhoto city' },
@@ -281,7 +295,7 @@ export const updateAd = asyncHandler(async (req, res) => {
   if (ad.seller.toString() !== req.user._id.toString() && !req.user.isAdmin) {
     return res.status(403).json({ message: 'Not authorized' });
   }
-  const fields = ['title', 'description', 'price', 'category', 'subcategory', 'subSubCategory', 'city', 'images', 'condition', 'adType', 'listingType', 'isActive', 'isApproved', 'isFeatured', 'phone', 'expiresAt', 'brand', 'isNegotiable', 'area', 'hotel', 'badges'];
+  const fields = ['title', 'description', 'price', 'category', 'subcategory', 'subSubCategory', 'city', 'images', 'condition', 'adType', 'listingType', 'isActive', 'isApproved', 'isFeatured', 'phone', 'expiresAt', 'brand', 'isNegotiable', 'area', 'hotel', 'badges', 'website'];
   
   fields.forEach(f => { 
     if (req.body[f] !== undefined) {
@@ -296,6 +310,15 @@ export const updateAd = asyncHandler(async (req, res) => {
       }
     }
   });
+
+  // Link Moderation Logic on Update
+  if (req.body.description !== undefined && !req.user.isAdmin) {
+    const linkMatches = ad.description?.match(/https?:\/\/[^\s]+/g) || [];
+    if (linkMatches.length > 3) {
+      ad.isApproved = false;
+      ad.rejectionReason = "Description contains too many external links (max 3 allowed).";
+    }
+  }
 
   try {
     // Detect removed images to clean up Cloudinary

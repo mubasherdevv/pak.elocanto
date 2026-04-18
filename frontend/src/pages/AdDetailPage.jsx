@@ -12,6 +12,7 @@ import AdCard from '../components/AdCard';
 import { useAuth } from '../context/AuthContext';
 import { generateAdSlug, extractIdFromSlug } from '../utils/urlUtils';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
+import { linkifyText } from '../utils/textUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { useSettings } from '../context/SettingsContext';
@@ -240,8 +241,21 @@ export default function AdDetailPage() {
         </div>
 
         <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 16 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 800, color: '#1e293b', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Description</h3>
-          <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{ad.description}</p>
+          <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+            {linkifyText(ad.description, ad.seller?.isAdmin)}
+          </p>
+          {ad.website && (
+            <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9' }}>
+              <a 
+                href={ad.website} 
+                target="_blank" 
+                rel={ad.seller?.isAdmin ? "nofollow noopener noreferrer" : "ugc nofollow noopener noreferrer"}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#3e6fe1', fontWeight: 700, textDecoration: 'none', fontSize: 14 }}
+              >
+                <ShareIcon style={{ width: 16 }} /> Visit User Website
+              </a>
+            </div>
+          )}
         </div>
 
         {/* 5. Seller Section */}
@@ -324,8 +338,40 @@ export default function AdDetailPage() {
         <title>{displayTitle}</title>
         <meta name="description" content={displayDesc} />
         {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, placeholderName)} />}
-        <meta property="og:title" content={displayTitle} />
-        <meta property="og:description" content={displayDesc} />
+        
+        {/* OpenGraph Enhanced Previews */}
+        <meta property="og:title" content={`${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`} />
+        <meta property="og:description" content={`Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description.substring(0, 100)}...`} />
+        <meta property="og:type" content="product" />
+        <meta property="og:url" content={window.location.href} />
+        {ad.images && ad.images[0] && <meta property="og:image" content={ad.images[0]} />}
+        
+        {/* Schema.org Rich Snippet for Google Search */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": ad.title,
+            "image": ad.images,
+            "description": ad.description,
+            "brand": {
+              "@type": "Brand",
+              "name": ad.brand || "Generic"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": window.location.href,
+              "priceCurrency": "PKR",
+              "price": ad.price,
+              "availability": "https://schema.org/InStock",
+              "itemCondition": ad.condition === 'new' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition"
+            },
+            "seller": {
+              "@type": "Person",
+              "name": ad.seller?.name
+            }
+          })}
+        </script>
       </Helmet>
 
       {isMobile ? (
@@ -395,7 +441,19 @@ export default function AdDetailPage() {
 
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                 <h3 className="text-xl font-black mb-4">Description</h3>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{ad.description}</p>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{linkifyText(ad.description, ad.seller?.isAdmin)}</p>
+                {ad.website && (
+                  <div className="mt-6 pt-6 border-t border-gray-50">
+                    <a 
+                      href={ad.website} 
+                      target="_blank" 
+                      rel={ad.seller?.isAdmin ? "nofollow noopener noreferrer" : "ugc nofollow noopener noreferrer"}
+                      className="inline-flex items-center gap-2 text-primary font-black hover:underline"
+                    >
+                      <ShareIcon className="w-5" /> Visit Ad Website
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 

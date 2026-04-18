@@ -186,8 +186,10 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       const ad = await Ad.findOne({ slug }).lean();
       if (ad) {
         return {
-          title: ad.title || 'Escort Listing | Elocanto',
-          metaDescription: ad.description?.substring(0, 160) || 'Secure destination to buy and sell.',
+          title: `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`,
+          metaDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description?.substring(0, 160)}`,
+          ogTitle: `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city}`,
+          ogDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}.`,
           keywords: '',
           isActive: true,
           source: 'dynamic-ad'

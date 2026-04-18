@@ -73,7 +73,8 @@ export default function PostAdPage() {
         condition: data.condition,
         phone: data.phone || user?.phone || '',
         images: data.images || [],
-        tags: data.tags || []
+        tags: data.tags || [],
+        website: data.website || ''
       });
       setStep(2); // Start at Step 2 for editing details
     } catch (err) {
@@ -100,7 +101,8 @@ export default function PostAdPage() {
     condition: 'used',
     phone: user?.phone || '',
     images: [], // URLs
-    tags: []
+    tags: [],
+    website: ''
   });
 
   useEffect(() => {
@@ -433,6 +435,16 @@ export default function PostAdPage() {
                       placeholder="e.g. iphone, charger, original"
                       value={formData.tags.join(', ')}
                       onChange={e => setFormData({ ...formData, tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) })}
+                    />
+                  </div>
+                  <div>
+                    <label className="filter-label">Website Link (Optional - marked with UGC tag)</label>
+                    <input
+                      type="url"
+                      className="input-field"
+                      placeholder="e.g. https://your-website.com"
+                      value={formData.website}
+                      onChange={e => setFormData({ ...formData, website: e.target.value })}
                     />
                   </div>
                 </div>

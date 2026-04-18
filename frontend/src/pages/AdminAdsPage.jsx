@@ -145,7 +145,8 @@ export default function AdminAdsPage() {
         expiresAt: editingAd.expiresAt,
         badges: editingAd.badges || [],
         images: editingAd.images || [],
-        rejectionReason: editingAd.rejectionReason || ''
+        rejectionReason: editingAd.rejectionReason || '',
+        website: editingAd.website || ''
       };
       await api.put(`/ads/${editingAd._id}`, updateData);
 
@@ -682,6 +683,20 @@ export default function AdminAdsPage() {
                           className="w-full pl-14 pr-6 py-4.5 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 focus:outline-none transition-all font-black text-gray-900"
                           value={editingAd.phone || ''}
                           onChange={(e) => setEditingAd({ ...editingAd, phone: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Website (UGC)</label>
+                      <div className="relative">
+                        <ArrowTopRightOnSquareIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-300 pointer-events-none" />
+                        <input
+                          type="url"
+                          className="w-full pl-14 pr-6 py-4.5 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 focus:outline-none transition-all font-black text-gray-900"
+                          value={editingAd.website || ''}
+                          onChange={(e) => setEditingAd({ ...editingAd, website: e.target.value })}
+                          placeholder="https://..."
                         />
                       </div>
                     </div>
