@@ -14,7 +14,7 @@ import path from 'path';
 import fs from 'fs';
 import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
 import { delCache } from '../utils/cache.js';
-import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
+import { sendAdRejectionEmail, sendWarningEmail, sendSuspensionEmail } from '../utils/email.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 
 const router = express.Router();
@@ -73,7 +73,14 @@ router.get('/analytics', protect, admin, async (req, res) => {
 router.get('/reports', protect, admin, async (req, res) => {
   const reports = await Report.find({})
     .populate('reporter', 'name email')
-    .populate('ad', 'title images price');
+    .populate({
+      path: 'ad',
+      select: 'title images price',
+      populate: {
+        path: 'seller',
+        select: 'name email warnings trustScore'
+      }
+    });
   res.json(reports);
 });
 
@@ -87,6 +94,50 @@ router.put('/reports/:id', protect, admin, asyncHandler(async (req, res) => {
     report.status = req.body.status || report.status;
     report.adminNotes = req.body.adminNotes || report.adminNotes;
     
+    // Handle official warning
+    if (req.body.issueWarning && report.ad) {
+      const ad = await Ad.findById(report.ad);
+      if (ad) {
+        const seller = await User.findById(ad.seller);
+        if (seller) {
+          seller.warnings += 1;
+          seller.trustScore = Math.max(0, seller.trustScore - 15);
+          
+          if (seller.warnings >= 3) {
+            seller.isSuspended = true;
+            await sendSuspensionEmail(seller);
+          } else {
+            await sendWarningEmail(seller, ad, seller.warnings, req.body.adminNotes);
+          }
+          await seller.save();
+        }
+      }
+    }
+
+    // Handle ad deletion if requested
+    if (req.body.deleteAd && report.ad) {
+      const ad = await Ad.findById(report.ad);
+      if (ad) {
+        const seller = await User.findById(ad.seller);
+        if (seller) {
+          // Additional penalty for deletion
+          seller.trustScore = Math.max(0, seller.trustScore - 10);
+          await seller.save();
+        }
+        
+        await ad.deleteOne();
+        report.adminNotes = req.body.adminNotes || 'Ad deleted by admin.';
+        
+        await ActivityLog.create({
+          adminId: req.user._id,
+          actionType: 'DELETE_AD',
+          description: `Deleted reported ad: ${ad.title}`,
+          targetType: 'Ad',
+          targetId: ad._id
+        });
+      }
+    }
+
     const updatedReport = await report.save();
     
     await ActivityLog.create({

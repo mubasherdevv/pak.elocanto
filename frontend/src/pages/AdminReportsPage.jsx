@@ -520,12 +520,18 @@ function ReportsContent() {
     if (window.confirm('Delete this reported ad? This will also resolve the report.')) {
       try {
         if (!token) return;
-        await api.delete(`/ads/${adId}`);
-        await api.put(`/admin/reports/${reportId}`, { status: 'resolved', adminNotes: 'Ad deleted by admin.' });
+        setLoading(true);
+        // Single call to handle both ad deletion and report resolution
+        await api.put(`/admin/reports/${reportId}`, { 
+          status: 'resolved', 
+          deleteAd: true,
+          adminNotes: 'Ad deleted by admin through reports panel.' 
+        });
         fetchReports();
       } catch (err) {
         console.error('Error deleting ad from report:', err);
-        alert('Failed to delete ad');
+        alert(err.response?.data?.message || 'Failed to delete ad');
+        setLoading(false);
       }
     }
   };
@@ -545,30 +551,68 @@ function ReportsContent() {
 
       <div className="grid grid-cols-1 gap-6">
         {reports.length > 0 ? reports.map((report) => (
-          <div key={report._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100">
-            <div className="p-6 md:w-1/3">
-              <div className="flex items-center gap-2 text-xs font-black text-orange-500 uppercase tracking-widest mb-4">
-                <MegaphoneIcon className="w-4 h-4" />
-                Reported Content
-              </div>
-              <div className="flex gap-4">
-                <div className="w-20 h-20 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0">
-                  {report.ad?.images?.[0] ? (
-                    <img src={report.ad.images[0]} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
-                      <ExclamationTriangleIcon className="w-8 h-8" />
-                    </div>
-                  )}
+          <div key={report._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-gray-100 relative">
+            <div className="p-6 md:w-1/3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-black text-orange-500 uppercase tracking-widest mb-4">
+                  <MegaphoneIcon className="w-4 h-4" />
+                  Reported Content
                 </div>
-                <div className="min-w-0">
-                  <h3 className="font-bold text-gray-900 truncate">{report.ad?.title || 'Ad Removed/Missing'}</h3>
-                  <p className="text-sm font-black text-orange-500 mt-1">Rs {report.ad?.price.toLocaleString()}</p>
-                  <button onClick={() => window.open(`/ads/${report.ad?._id}`, '_blank')} className="text-xs font-bold text-blue-500 hover:underline mt-2 flex items-center gap-1">
-                    <EyeIcon className="w-3 h-3" /> View Listing
-                  </button>
+                <div className="flex gap-4">
+                  <div className="w-20 h-20 rounded-2xl bg-gray-50 overflow-hidden flex-shrink-0">
+                    {report.ad?.images?.[0] ? (
+                      <img src={report.ad.images[0]} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
+                        <ExclamationTriangleIcon className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-900 truncate">{report.ad?.title || 'Ad Removed/Missing'}</h3>
+                    {report.ad && (
+                       <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm font-black text-orange-500">Rs {report.ad?.price.toLocaleString()}</p>
+                          <span className="w-1 h-1 bg-gray-200 rounded-full"></span>
+                          <span className="text-[10px] text-gray-400 font-bold uppercase">ID: {report.ad._id.slice(-6).toUpperCase()}</span>
+                       </div>
+                    )}
+                  </div>
                 </div>
               </div>
+
+              {/* Seller Reputation Context */}
+              {report.ad?.seller && (
+                <div className="mt-6 pt-6 border-t border-gray-50">
+                   <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">
+                      <ShieldCheckIcon className="w-3.5 h-3.5" />
+                      Seller Reputation
+                   </div>
+                   <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                         <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9px] font-black text-gray-400">TRUST SCORE</span>
+                            <span className={`text-[9px] font-black ${
+                               report.ad.seller.trustScore > 80 ? 'text-emerald-500' : 
+                               report.ad.seller.trustScore > 50 ? 'text-amber-500' : 'text-red-500'
+                            }`}>{report.ad.seller.trustScore}%</span>
+                         </div>
+                         <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
+                            <div className={`h-full ${
+                               report.ad.seller.trustScore > 80 ? 'bg-emerald-500' : 
+                               report.ad.seller.trustScore > 50 ? 'bg-amber-500' : 'bg-red-500'
+                            }`} style={{ width: `${report.ad.seller.trustScore}%` }}></div>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                         <span className="text-[9px] font-black text-gray-400 block">WARNINGS</span>
+                         <span className={`text-sm font-black ${report.ad.seller.warnings > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                            {report.ad.seller.warnings}
+                         </span>
+                      </div>
+                   </div>
+                </div>
+              )}
             </div>
 
             <div className="p-6 md:w-1/3">
@@ -608,26 +652,49 @@ function ReportsContent() {
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-6">
-                <button 
-                  onClick={() => handleStatusChange(report._id, 'resolved')}
-                  className="flex-1 bg-white border border-gray-100 py-3 rounded-2xl px-4 text-xs font-black text-green-600 hover:bg-green-50 transition-colors shadow-sm"
-                >
-                  Resolve
-                </button>
-                <button 
-                  onClick={() => handleStatusChange(report._id, 'dismissed')}
-                  className="flex-1 bg-white border border-gray-100 py-3 rounded-2xl px-4 text-xs font-black text-gray-400 hover:bg-gray-50 transition-colors shadow-sm"
-                >
-                  Dismiss
-                </button>
-                <button 
-                  onClick={() => deleteAd(report.ad?._id, report._id)}
-                  className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-100 transition-colors shadow-sm border border-red-100"
-                  title="Delete Ad"
-                >
-                  <TrashIcon className="w-5 h-5" />
-                </button>
+              <div className="flex flex-col gap-2 mt-6">
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleStatusChange(report._id, 'resolved')}
+                    className="flex-1 bg-white border border-gray-100 py-3 rounded-2xl px-4 text-xs font-black text-green-600 hover:bg-green-50 transition-colors shadow-sm"
+                  >
+                    Resolve
+                  </button>
+                  <button 
+                    onClick={() => handleStatusChange(report._id, 'dismissed')}
+                    className="flex-1 bg-white border border-gray-100 py-3 rounded-2xl px-4 text-xs font-black text-gray-400 hover:bg-gray-50 transition-colors shadow-sm"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+                
+                <div className="flex gap-2">
+                   <button 
+                     onClick={async () => {
+                        const note = window.prompt("Enter warning reason:", "Violation of platform guidelines.");
+                        if (note === null) return;
+                        try {
+                           setLoading(true);
+                           await api.put(`/admin/reports/${report._id}`, {
+                              status: 'resolved',
+                              issueWarning: true,
+                              adminNotes: note
+                           });
+                           fetchReports();
+                        } catch (err) { alert('Failed to issue warning'); setLoading(false); }
+                     }}
+                     className="flex-1 bg-amber-500 text-white py-3 rounded-2xl px-4 text-xs font-black hover:bg-amber-600 transition-colors shadow-lg"
+                   >
+                     Issue Official Warning
+                   </button>
+                   <button 
+                     onClick={() => deleteAd(report.ad?._id, report._id)}
+                     className="p-3 bg-red-50 text-red-600 rounded-2xl hover:bg-red-100 transition-colors shadow-sm border border-red-100 flex-shrink-0"
+                     title="Delete Ad"
+                   >
+                     <TrashIcon className="w-5 h-5" />
+                   </button>
+                </div>
               </div>
             </div>
           </div>

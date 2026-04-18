@@ -151,6 +151,88 @@ export const sendAdRejectionEmail = async (user, ad, reason) => {
   return sendEmail(user.email, subject, html);
 };
 
+export const sendReportAlertEmail = async (user, ad, reason) => {
+  const settings = await getSettings();
+  const siteName = settings?.siteName || 'Elocanto';
+  
+  const subject = `Notice: Your ad "${ad.title}" has been reported`;
+  
+  const html = `
+    <div style="font-family: inherit; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 16px; background: white;">
+      <div style="padding: 24px; background: #fef3c7; border-radius: 16px 16px 0 0;">
+        <h2 style="color: #92400e; margin: 0;">Reputation Alert</h2>
+      </div>
+      <div style="padding: 32px;">
+        <p>Hello ${user.name},</p>
+        <p>We received a report from the community regarding your advertisement: <strong>"${ad.title}"</strong>.</p>
+        <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; color: #6b7280; font-size: 12px; text-transform: uppercase;">Reason Given:</p>
+          <p style="margin: 4px 0 0 0; font-weight: bold;">${reason}</p>
+        </div>
+        <p>Our moderation team is currently reviewing this report. No action is required from you at this moment, but we recommend reviewing our community guidelines.</p>
+        <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">This is an automated notification from ${siteName}.</p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail(user.email, subject, html);
+};
+
+export const sendWarningEmail = async (user, ad, warningNumber, adminNotes) => {
+  const settings = await getSettings();
+  const siteName = settings?.siteName || 'Elocanto';
+  const siteUrl = settings?.siteUrl || 'https://pk.elocanto.com';
+  
+  const subject = `Official Warning #${warningNumber}: Account Moderation Notice`;
+  
+  const html = `
+    <div style="font-family: inherit; max-width: 600px; margin: 0 auto; border: 2px solid #ef4444; border-radius: 16px; background: white;">
+      <div style="padding: 24px; background: #fee2e2; border-radius: 14px 14px 0 0;">
+        <h2 style="color: #b91c1c; margin: 0;">Official Warning #${warningNumber}</h2>
+      </div>
+      <div style="padding: 32px;">
+        <p>Hello ${user.name},</p>
+        <p>Following a review of reported activity on your account, an official warning has been issued. This warning is related to your advertisement: <strong>"${ad.title}"</strong>.</p>
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0;">
+          <p style="margin: 0; color: #b91c1c; font-weight: bold;">Moderator Notes:</p>
+          <p style="margin: 4px 0 0 0;">${adminNotes || 'Violation of platform community guidelines.'}</p>
+        </div>
+        <p style="font-weight: bold; color: #1f2937;">Important Notice:</p>
+        <p>Please be aware that your account will be <strong>automatically suspended</strong> upon receiving 3 warnings. We value your presence on ${siteName} and encourage you to adhere to our listing policies.</p>
+        <div style="text-align: center; margin-top: 32px;">
+          <a href="${siteUrl}/dashboard" style="background: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Review My Dashboard</a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return sendEmail(user.email, subject, html);
+};
+
+export const sendSuspensionEmail = async (user) => {
+  const settings = await getSettings();
+  const siteName = settings?.siteName || 'Elocanto';
+  
+  const subject = `URGENT: Your account on ${siteName} has been suspended`;
+  
+  const html = `
+    <div style="font-family: inherit; max-width: 600px; margin: 0 auto; border: 2px solid #111827; border-radius: 16px; background: white;">
+      <div style="padding: 24px; background: #111827; color: white; border-radius: 14px 14px 0 0;">
+        <h2 style="margin: 0;">Account Suspended</h2>
+      </div>
+      <div style="padding: 32px;">
+        <p>Hello ${user.name},</p>
+        <p>We are writing to inform you that your account on <strong>${siteName}</strong> has been suspended due to repeated violations of our community guidelines and the accumulation of multiple warnings.</p>
+        <p>While your account is suspended, you will not be able to post new ads or manage existing listings.</p>
+        <p>If you believe this is a mistake, you may contact our support team to appeal this decision.</p>
+        <p style="margin-top: 32px; color: #6b7280;">Best regards,<br>${siteName} Trust & Safety Team</p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail(user.email, subject, html);
+};
+
 export const reinitTransporter = async () => {
   console.log('Brevo integration active.');
 };

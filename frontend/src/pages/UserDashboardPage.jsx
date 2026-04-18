@@ -5,7 +5,7 @@ import {
   UserCircleIcon, ShoppingBagIcon, HeartIcon,
   ChatBubbleLeftRightIcon, Cog6ToothIcon, PencilIcon,
   TrashIcon, EyeIcon, ChevronRightIcon, ArrowTopRightOnSquareIcon, CalendarIcon, ChartBarIcon, ArrowTrendingUpIcon,
-  FlagIcon
+  FlagIcon, ExclamationTriangleIcon, ShieldCheckIcon
 } from '@heroicons/react/24/outline';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useAuth } from '../context/AuthContext';
@@ -272,11 +272,70 @@ export default function UserDashboardPage() {
 
         {/* Content Area */}
         <div className="min-w-0">
+          {user.isSuspended && (
+            <div className="mb-8 bg-red-600 text-white p-6 rounded-[32px] shadow-2xl animate-bounce-subtle border-4 border-red-400">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <ExclamationTriangleIcon className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black uppercase tracking-tight">Account Suspended</h2>
+                  <p className="font-bold text-red-100 mt-1">Your account has been restricted due to multiple violations. You cannot post or edit ads.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'ads' && (
             <div className="fade-in">
               <div className="hidden lg:flex justify-between items-center gap-4 mb-8">
                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">Account Overview</h1>
-                <Link to="/post-ad" className="bg-orange-500 text-white px-8 py-3 rounded-2xl font-black shadow-lg hover:scale-105 transition-all">+ Post New Ad</Link>
+                {!user.isSuspended && <Link to="/post-ad" className="bg-orange-500 text-white px-8 py-3 rounded-2xl font-black shadow-lg hover:scale-105 transition-all text-sm">+ Post New Ad</Link>}
+              </div>
+
+              {/* Moderation Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                 <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
+                      (user.trustScore ?? 100) > 80 ? 'bg-emerald-500 text-white' : 
+                      (user.trustScore ?? 100) > 50 ? 'bg-amber-500 text-white' : 
+                      'bg-red-500 text-white'
+                    }`}>
+                       <ShieldCheckIcon className="w-8 h-8" />
+                    </div>
+                    <div>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Seller Trust Score</p>
+                       <div className="flex items-center gap-3">
+                          <p className="text-2xl font-black text-gray-900">{user.trustScore ?? 100}%</p>
+                          <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                             <div className={`h-full transition-all duration-1000 ${
+                                (user.trustScore ?? 100) > 80 ? 'bg-emerald-500' : 
+                                (user.trustScore ?? 100) > 50 ? 'bg-amber-500' : 
+                                'bg-red-500'
+                             }`} style={{ width: `${user.trustScore ?? 100}%` }}></div>
+                          </div>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
+                      (user.warnings ?? 0) > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'
+                    }`}>
+                       <ExclamationTriangleIcon className="w-8 h-8" />
+                    </div>
+                    <div>
+                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Official Warnings</p>
+                       <p className={`text-2xl font-black ${(user.warnings ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                          {user.warnings ?? 0} / 3
+                       </p>
+                    </div>
+                    {(user.warnings ?? 0) > 0 && (
+                       <div className="ml-auto bg-red-50 px-3 py-1 rounded-full text-[9px] font-black text-red-600 uppercase animate-pulse">
+                          Warning Active
+                       </div>
+                    )}
+                 </div>
               </div>
 
               {/* Desktop Stats */}

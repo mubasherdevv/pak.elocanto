@@ -1,6 +1,8 @@
 import asyncHandler from '../middleware/asyncHandler.js';
 import Report from '../models/Report.js';
 import Ad from '../models/Ad.js';
+import User from '../models/User.js';
+import { sendReportAlertEmail } from '../utils/email.js';
 
 // @desc    Create new report
 // @route   POST /api/reports
@@ -27,6 +29,16 @@ export const createReport = asyncHandler(async (req, res) => {
     reason,
     message,
   });
+
+  // Notify Seller
+  try {
+    const seller = await User.findById(ad.seller);
+    if (seller) {
+      await sendReportAlertEmail(seller, ad, reason);
+    }
+  } catch (err) {
+    console.error('Failed to notify seller of report:', err);
+  }
 
   res.status(201).json(report);
 });
