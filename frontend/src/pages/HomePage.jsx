@@ -584,7 +584,7 @@ export default function HomePage() {
       </section>
 
       <HowItWorks />
-      
+
       {/* CTA Section */}
       <section className="container-custom">
         <div style={{ background: 'var(--dark)', borderRadius: 32, padding: 'clamp(32px, 6vw, 48px) clamp(24px, 6vw, 56px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32, position: 'relative', overflow: 'hidden' }}>

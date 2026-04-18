@@ -46,9 +46,9 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Full-Width Background Strip (Pati)
+    // Create Full-Surface Background Overlay (Pati)
     const bgWidth = imageWidth;
-    const bgHeight = Math.floor(lHeight * 1.15); // Tighter fit around logo as requested
+    const bgHeight = imageHeight; // Full image height as requested
 
     const bgBuffer = await sharp({
       create: {
@@ -217,9 +217,9 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Full-Width Background Strip (Pati)
+    // Create Full-Surface Background Overlay (Pati)
     const bgWidth = imageWidth;
-    const bgHeight = Math.floor(lHeight * 1.15);
+    const bgHeight = imageHeight;
 
     const bgBuffer = await sharp({
       create: {
