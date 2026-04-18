@@ -140,11 +140,9 @@ export default function Footer() {
             <span className="text-orange-500 font-extrabold">{settings?.siteName || 'Elocanto'}</span>© {new Date().getFullYear()}
           </p>
           <div className="flex items-center gap-6">
-            <span className="text-gray-600 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              Secure Trusted Site
-            </span>
-            <Link to="#" className="text-orange-500 text-[10px] uppercase font-black hover:underline tracking-widest">Help Center</Link>
+            <a href="https://www.dmca.com/Protection/Status.aspx?ID=82b2353a-aefb-4842-b2e5-d2a246073140&refurl=https://pk.elocanto.com/" title="DMCA.com Protection Status" className="dmca-badge">
+              <img src="https://images.dmca.com/Badges/dmca_protected_sml_120m.png?ID=8e5a07b4-40b8-49dd-81cd-b3cfc6313101" alt="DMCA.com Protection Status" className="h-6 w-auto" />
+            </a>
           </div>
         </div>
 
