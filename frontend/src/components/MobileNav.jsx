@@ -6,14 +6,7 @@ export default function MobileNav({ onMenuClick }) {
   const path = location.pathname;
 
   return (
-    <div className="sm:hidden" style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0,
-      background: 'white', // Changed to white for better contrast
-      display: 'flex', justifyContent: 'space-around', alignItems: 'center',
-      padding: '12px 10px 16px',
-      zIndex: 200, boxShadow: '0 -10px 30px rgba(0,0,0,0.08)',
-      borderTop: '1px solid #f1f5f9'
-    }}>
+    <div className="fixed bottom-0 left-0 right-0 bg-white flex justify-around items-center p-[12px_10px_16px] z-[200] border-t border-[#f1f5f9] shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
       <Link to="/" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, color: path === '/' ? 'var(--primary)' : 'var(--gray-400)', textDecoration: 'none', flex: 1 }}>
         <HomeIcon style={{ width: 22, height: 22 }} />
         <span style={{ fontSize: 9, fontWeight: 800 }}>HOME</span>

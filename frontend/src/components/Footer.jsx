@@ -136,16 +136,24 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-          <p className="text-gray-500 text-xs font-medium italic">
-            © {new Date().getFullYear()} <span className="text-orange-500 font-black tracking-tight">{settings?.siteName || 'Elocanto'}</span> – Pakistan's #1 Classifieds Platform.
+          <p className="text-gray-400 text-xs font-semibold">
+            <span className="text-orange-500 font-extrabold">{settings?.siteName || 'Elocanto'}</span>© {new Date().getFullYear()}
           </p>
           <div className="flex items-center gap-6">
             <span className="text-gray-600 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
               Secure Trusted Site
             </span>
-            <Link to="/contact" className="text-orange-500 text-[10px] uppercase font-black hover:underline tracking-widest">Help Center</Link>
+            <Link to="#" className="text-orange-500 text-[10px] uppercase font-black hover:underline tracking-widest">Help Center</Link>
           </div>
+        </div>
+
+        {/* Legal Disclaimer */}
+        <div className="mt-8 text-center border-t border-white/5 pt-6">
+
+          <p className="text-gray-200 text-[12px] leading-relaxed max-w-4xl mx-auto opacity-90">
+            All content on this website is original and protected under copyright law. Unauthorized copying will result in legal action.
+          </p>
         </div>
       </div>
     </footer>

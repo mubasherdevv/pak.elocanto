@@ -34,7 +34,7 @@ export default function PublicLayout() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen pb-[70px] sm:pb-0 relative">
+    <div className="flex flex-col min-h-screen pb-[80px] relative">
       <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
       
       {/* Mobile Sidebar Overlay */}

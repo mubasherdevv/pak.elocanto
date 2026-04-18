@@ -4,7 +4,7 @@ import {
   MapPinIcon, CalendarIcon, EyeIcon, PhoneIcon,
   ChatBubbleLeftRightIcon, HeartIcon, ShareIcon,
   ExclamationCircleIcon, ChevronRightIcon,
-  FlagIcon, XMarkIcon, ClockIcon
+  FlagIcon, XMarkIcon, ClockIcon, UserIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import api from '../lib/api';
@@ -322,9 +322,13 @@ export default function AdDetailPage() {
               {showPhone ? ad.phone || ad.seller.phone : 'Show Phone'}
             </button>
           </div>
-          <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9' }}>
-            <p style={{ fontSize: 12, color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
-              <ClockIcon style={{ width: 14, color: '#475569' }} />
+          <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <UserIcon style={{ width: 14, color: '#94a3b8' }} />
+              Author: {ad.seller.name}
+            </p>
+            <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <ClockIcon style={{ width: 14, color: '#94a3b8' }} />
               {ad.updatedAt && new Date(ad.updatedAt).getTime() > new Date(ad.createdAt).getTime() + 1000 ? 'Updated' : 'Posted'}: {new Date(ad.updatedAt || ad.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
             </p>
           </div>
@@ -527,8 +531,12 @@ export default function AdDetailPage() {
                     <PhoneIcon className="w-5" />
                     {showPhone ? ad.phone || ad.seller.phone : 'Show Phone Number'}
                   </button>
-                  <div className="pt-4 border-t border-gray-50 flex justify-center">
-                    <p className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                  <div className="pt-4 border-t border-gray-50 flex flex-col items-center gap-2">
+                    <p className="text-[12px] font-bold text-gray-500 flex items-center justify-center gap-2">
+                      <UserIcon className="w-4 h-4 text-gray-400" />
+                      Author: {ad.seller.name}
+                    </p>
+                    <p className="text-[12px] font-bold text-gray-500 flex items-center justify-center gap-2">
                       <ClockIcon className="w-4 h-4 text-gray-400" />
                       {ad.updatedAt && new Date(ad.updatedAt).getTime() > new Date(ad.createdAt).getTime() + 1000 ? 'Updated' : 'Posted'}: {new Date(ad.updatedAt || ad.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                     </p>
