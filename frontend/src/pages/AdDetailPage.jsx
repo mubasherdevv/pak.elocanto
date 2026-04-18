@@ -3,7 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   MapPinIcon, CalendarIcon, EyeIcon, PhoneIcon,
   ChatBubbleLeftRightIcon, HeartIcon, ShareIcon,
-  ExclamationCircleIcon, ChevronRightIcon
+  ExclamationCircleIcon, ChevronRightIcon,
+  FlagIcon, XMarkIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import api from '../lib/api';
@@ -32,6 +33,9 @@ export default function AdDetailPage() {
   const [recommendedAds, setRecommendedAds] = useState([]);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isSafetyOpen, setIsSafetyOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reportData, setReportData] = useState({ reason: '', message: '' });
+  const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -117,6 +121,28 @@ export default function AdDetailPage() {
     } else {
       navigator.clipboard.writeText(window.location.href);
       alert('Link copied to clipboard!');
+    }
+  };
+
+  const handleReport = async (e) => {
+    e.preventDefault();
+    if (!user) return navigate('/login');
+    if (!reportData.reason) return alert('Please select a reason for reporting.');
+
+    try {
+      setReporting(true);
+      await api.post('/reports', {
+        adId: ad._id,
+        reason: reportData.reason,
+        message: reportData.message
+      });
+      alert('Thank you! Your report has been submitted and will be reviewed by our team.');
+      setIsReportOpen(false);
+      setReportData({ reason: '', message: '' });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit report');
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -414,6 +440,9 @@ export default function AdDetailPage() {
                     <button onClick={handleShare} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
                       <ShareIcon style={{ width: 22 }} />
                     </button>
+                    <button onClick={() => setIsReportOpen(true)} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors group" title="Report this ad">
+                      <FlagIcon className="w-5 text-gray-500 group-hover:text-red-500 transition-colors" />
+                    </button>
                   </div>
                 </div>
 
@@ -498,6 +527,54 @@ export default function AdDetailPage() {
 
           <div className="mt-16 space-y-12">
             <HorizontalAdsSection title="Recommended Ads" ads={recommendedAds} />
+          </div>
+        </div>
+      )}
+      {/* Report Modal */}
+      {isReportOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden animate-fade-in shadow-2xl">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-black text-gray-900">Report this Ad</h3>
+              <button onClick={() => setIsReportOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleReport} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Reason for report</label>
+                <select 
+                  required
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 font-bold"
+                  value={reportData.reason}
+                  onChange={e => setReportData({...reportData, reason: e.target.value})}
+                >
+                  <option value="">Select a reason</option>
+                  <option value="Duplicate ad">Duplicate ad</option>
+                  <option value="Inappropriate content">Inappropriate content</option>
+                  <option value="Copyright">Copyright Violation</option>
+                  <option value="Spam">Spam</option>
+                  <option value="Fraudulent">Fraudulent / Scam</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Message (Optional)</label>
+                <textarea 
+                  className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 min-h-[100px] text-sm"
+                  placeholder="Tell us more details..."
+                  value={reportData.message}
+                  onChange={e => setReportData({...reportData, message: e.target.value})}
+                ></textarea>
+              </div>
+              <button 
+                type="submit"
+                disabled={reporting}
+                className="w-full bg-red-500 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"
+              >
+                {reporting ? 'Submitting...' : 'Submit Report'}
+              </button>
+            </form>
           </div>
         </div>
       )}

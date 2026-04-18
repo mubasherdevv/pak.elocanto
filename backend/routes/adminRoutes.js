@@ -15,6 +15,7 @@ import fs from 'fs';
 import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
 import { delCache } from '../utils/cache.js';
 import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
+import asyncHandler from '../middleware/asyncHandler.js';
 
 const router = express.Router();
 
@@ -79,19 +80,21 @@ router.get('/reports', protect, admin, async (req, res) => {
 // @desc    Update report status
 // @route   PUT /api/admin/reports/:id
 // @access  Private/Admin
-router.put('/reports/:id', protect, admin, async (req, res) => {
+router.put('/reports/:id', protect, admin, asyncHandler(async (req, res) => {
   const report = await Report.findById(req.params.id);
   if (report) {
     const oldStatus = report.status;
     report.status = req.body.status || report.status;
     report.adminNotes = req.body.adminNotes || report.adminNotes;
+    
     const updatedReport = await report.save();
     
     await ActivityLog.create({
       adminId: req.user._id,
       actionType: 'UPDATE_SETTINGS',
       description: `Updated report status from ${oldStatus} to ${report.status}`,
-      targetType: 'Report'
+      targetType: 'Report',
+      targetId: report._id
     });
     
     res.json(updatedReport);
@@ -99,7 +102,7 @@ router.put('/reports/:id', protect, admin, async (req, res) => {
     res.status(404);
     throw new Error('Report not found');
   }
-});
+}));
 
 // @desc    Get site settings
 // @route   GET /api/admin/settings

@@ -580,7 +580,13 @@ function ReportsContent() {
               <p className="text-xs text-gray-500 font-medium">{report.reporter?.email}</p>
               <div className="mt-4 p-4 bg-red-50 rounded-2xl">
                 <p className="text-xs font-black text-red-600 uppercase tracking-widest mb-1">Reason for report</p>
-                <p className="text-sm text-gray-700 font-medium leading-relaxed italic">"{report.reason}"</p>
+                <p className="text-sm text-gray-700 font-bold leading-relaxed italic">"{report.reason}"</p>
+                {report.message && (
+                  <div className="mt-3 pt-3 border-t border-red-200">
+                    <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Custom Message</p>
+                    <p className="text-sm text-gray-700 leading-relaxed font-medium">{report.message}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -643,6 +649,7 @@ export default function AdminReportsPage() {
   const tabs = [
     { id: 'admin-logs', name: 'Admin Activity Logs', icon: ShieldCheckIcon },
     { id: 'user-logs', name: 'User Activity Logs', icon: UserCircleIcon },
+    { id: 'ad-reports', name: 'Ad Status Reports', icon: MegaphoneIcon },
   ];
 
   return (
@@ -666,6 +673,7 @@ export default function AdminReportsPage() {
 
       {activeTab === 'admin-logs' && <AdminLogsTab />}
       {activeTab === 'user-logs' && <UserLogsTab />}
+      {activeTab === 'ad-reports' && <ReportsContent />}
     </div>
   );
 }

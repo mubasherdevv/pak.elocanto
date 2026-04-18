@@ -4,7 +4,8 @@ import api from '../lib/api';
 import {
   UserCircleIcon, ShoppingBagIcon, HeartIcon,
   ChatBubbleLeftRightIcon, Cog6ToothIcon, PencilIcon,
-  TrashIcon, EyeIcon, ChevronRightIcon, ArrowTopRightOnSquareIcon, CalendarIcon, ChartBarIcon, ArrowTrendingUpIcon
+  TrashIcon, EyeIcon, ChevronRightIcon, ArrowTopRightOnSquareIcon, CalendarIcon, ChartBarIcon, ArrowTrendingUpIcon,
+  FlagIcon
 } from '@heroicons/react/24/outline';
 import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +29,8 @@ export default function UserDashboardPage() {
   const [settings, setSettings] = useState(null);
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [myReports, setMyReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
 
 
   const [profileData, setProfileData] = useState({
@@ -45,6 +48,7 @@ export default function UserDashboardPage() {
     fetchSettings();
     if (activeTab === 'ads') fetchMyAds();
     if (activeTab === 'favorites') fetchFavorites();
+    if (activeTab === 'reports') fetchMyReports();
 
     const handleVisibilityChange = () => {
       if (!document.hidden) {
@@ -60,6 +64,7 @@ export default function UserDashboardPage() {
     if (activeTab === 'ads') fetchMyAds();
     if (activeTab === 'favorites') fetchFavorites();
     if (activeTab === 'analytics') fetchAnalytics();
+    if (activeTab === 'reports') fetchMyReports();
   }, [activeTab]);
 
   const fetchAnalytics = async () => {
@@ -104,6 +109,18 @@ export default function UserDashboardPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMyReports = async () => {
+    try {
+      setReportsLoading(true);
+      const { data } = await api.get('/reports/my');
+      setMyReports(data);
+    } catch (err) {
+      console.error('Error fetching reports:', err);
+    } finally {
+      setReportsLoading(false);
     }
   };
 
@@ -160,6 +177,7 @@ export default function UserDashboardPage() {
     { id: 'ads', label: 'My Ads', icon: <ShoppingBagIcon className="w-5 h-5" /> },
     { id: 'analytics', label: 'Analytics', icon: <ChartBarIcon className="w-5 h-5" /> },
     { id: 'favorites', label: 'Favorites', icon: <HeartIcon className="w-5 h-5" /> },
+    { id: 'reports', label: 'Reported Ads', icon: <FlagIcon className="w-5 h-5" /> },
     { id: 'settings', label: 'Settings', icon: <Cog6ToothIcon className="w-5 h-5" /> },
   ];
 
@@ -593,6 +611,88 @@ export default function UserDashboardPage() {
                     </div>
                   )}
                 </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'reports' && (
+            <div className="fade-in space-y-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-black text-gray-900 tracking-tight">Reported Ads</h2>
+                <p className="text-sm font-medium text-gray-500 mt-1">Timeline of advertisements you've flagged for review.</p>
+              </div>
+
+              {reportsLoading ? (
+                <div className="py-20 flex justify-center"><div className="spinner"></div></div>
+              ) : myReports.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-[40px] border border-gray-100 shadow-sm">
+                  <FlagIcon className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-500 font-bold">You haven't reported any ads yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {myReports.map((report) => (
+                    <div key={report._id} className="bg-white rounded-[32px] border border-gray-100 p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-all group">
+                      <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0">
+                        {report.ad ? (
+                          <img 
+                            src={getOptimizedImageUrl(report.ad.images?.[0], 400)} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                            onError={(e) => { e.target.src = report.ad?.images?.[0]; }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 font-bold text-xs">Ad Removed</div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="text-lg font-black text-gray-900 truncate">
+                              {report.ad?.title || 'This advertisement has been removed'}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-black text-gray-400 uppercase">Reported {timeAgo(report.createdAt)}</span>
+                              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                                report.status === 'pending' ? 'bg-amber-50 text-amber-600' :
+                                report.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {report.status}
+                              </span>
+                            </div>
+                          </div>
+                          {report.ad && (
+                            <Link to={`/ads/${report.ad.slug}`} className="p-2 bg-gray-50 rounded-xl hover:bg-orange-500 hover:text-white transition-all">
+                              <ArrowTopRightOnSquareIcon className="w-5 h-5" />
+                            </Link>
+                          )}
+                        </div>
+                        <div className="bg-gray-50 rounded-2xl p-4">
+                          <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Your Reason</p>
+                          <p className="text-sm text-gray-700 font-bold leading-relaxed italic">"{report.reason}"</p>
+                          {report.message && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Your Message</p>
+                              <p className="text-sm text-gray-600 leading-relaxed font-medium">{report.message}</p>
+                            </div>
+                          )}
+                        </div>
+                        {report.adminNotes && (
+                          <div className="mt-4 flex items-start gap-3 bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Cog6ToothIcon className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black text-blue-400 uppercase mb-1">Admin Response</p>
+                              <p className="text-sm text-blue-700 font-medium">{report.adminNotes}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

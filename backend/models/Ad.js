@@ -147,7 +147,7 @@ adSchema.pre('deleteOne', { document: true, query: false }, async function () {
         if (publicId) {
           // Fire and forget, don't block deletion if one image fails
           deleteFromCloudinary(publicId).catch(err => 
-            console.error(`[MIDDLEWARE] Cleanup error for ad ${lastId}:`, err.message)
+            console.error(`[MIDDLEWARE] Cleanup error for ad ${lastId}:`, err?.message || err || 'Unknown error')
           );
         }
       }

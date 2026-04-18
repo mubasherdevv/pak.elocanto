@@ -64,7 +64,7 @@ const activityLogSchema = new mongoose.Schema({
   },
   targetType: {
     type: String,
-    enum: ['Ad', 'Category', 'Subcategory', 'SubSubCategory', 'User', 'Settings', 'SeoContent', null],
+    enum: ['Ad', 'Category', 'Subcategory', 'SubSubCategory', 'User', 'Settings', 'SeoContent', 'Report', null],
     default: null
   },
   description: {

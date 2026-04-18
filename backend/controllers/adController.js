@@ -22,7 +22,7 @@ const getSettings = async () => {
 
   let settings = await Settings.findOne({}).lean();
   if (!settings) settings = await Settings.create({});
-  
+
   setCache('site_settings', settings, 3600);
   return settings;
 };
@@ -35,8 +35,8 @@ export const getAds = asyncHandler(async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || settings.featuredAdsPerPage || 12;
   const page = parseInt(req.query.page) || 1;
 
-  const query = { 
-    isActive: true, 
+  const query = {
+    isActive: true,
     isApproved: true,
     expiresAt: { $gt: new Date() }
   };
@@ -108,9 +108,9 @@ export const getAds = asyncHandler(async (req, res) => {
 // @access  Public
 export const getFeaturedAds = asyncHandler(async (req, res) => {
   const settings = await getSettings();
-  const query = { 
-    isFeatured: true, 
-    isActive: true, 
+  const query = {
+    isFeatured: true,
+    isActive: true,
     isApproved: true,
     expiresAt: { $gt: new Date() }
   };
@@ -121,7 +121,7 @@ export const getFeaturedAds = asyncHandler(async (req, res) => {
   }
 
   const limit = parseInt(req.query.limit) || settings.featuredAdsLimit || 10;
-  
+
   const ads = await Ad.find(query)
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -140,8 +140,8 @@ export const getFeaturedAds = asyncHandler(async (req, res) => {
 export const getLatestAds = asyncHandler(async (req, res) => {
   const settings = await getSettings();
   const limit = settings.latestAdsLimit || 12;
-  const ads = await Ad.find({ 
-    isActive: true, 
+  const ads = await Ad.find({
+    isActive: true,
     isApproved: true,
     expiresAt: { $gt: new Date() }
   })
@@ -162,7 +162,7 @@ export const getAdById = asyncHandler(async (req, res) => {
   if (!identifier) return res.status(400).json({ message: 'No identifier provided' });
 
   const cleanSlug = identifier.toLowerCase().trim();
-  
+
   // 1. Try finding by slug exactly (Normalized)
   let ad = await Ad.findOne({ slug: cleanSlug })
     .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
@@ -185,7 +185,7 @@ export const getAdById = asyncHandler(async (req, res) => {
   if (!ad && identifier.includes('-')) {
     const parts = identifier.split('-');
     const potentialId = parts[parts.length - 1];
-    
+
     if (potentialId.match(/^[0-9a-fA-F]{24}$/)) {
       ad = await Ad.findById(potentialId)
         .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
@@ -195,7 +195,7 @@ export const getAdById = asyncHandler(async (req, res) => {
         .populate('hotel', 'name slug');
     }
   }
-  
+
   if (!ad) return res.status(404).json({ message: 'Ad not found' });
 
   // Restrict public view of unapproved ads. Admin or Seller can see.
@@ -227,10 +227,10 @@ export const getAdById = asyncHandler(async (req, res) => {
 export const createAd = asyncHandler(async (req, res) => {
   const settings = await getSettings();
   const { title, description, price, category, subcategory, city, images, condition, adType, listingType, phone, brand, isNegotiable, area, hotel, website } = req.body;
-  
+
   const finalAdType = adType || listingType || 'simple';
-  const duration = finalAdType === 'featured' 
-    ? settings.featuredAdsDuration 
+  const duration = finalAdType === 'featured'
+    ? settings.featuredAdsDuration
     : settings.simpleAdsDuration;
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + duration);
@@ -268,7 +268,7 @@ export const createAd = asyncHandler(async (req, res) => {
     { path: 'category', select: 'name slug icon' },
     { path: 'subcategory', select: 'name image slug' }
   ]);
-  
+
   await ActivityLog.create({
     userId: req.user._id,
     actionType: 'POST_AD',
@@ -276,13 +276,13 @@ export const createAd = asyncHandler(async (req, res) => {
     targetId: ad._id,
     targetType: 'Ad'
   });
-  
+
   // Auto-Indexing for newly created ads (if approved)
   if (ad.isApproved && settings.enableGoogleIndexing) {
     const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
     publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
   }
-  
+
   res.status(201).json(populated);
 });
 
@@ -296,8 +296,8 @@ export const updateAd = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: 'Not authorized' });
   }
   const fields = ['title', 'description', 'price', 'category', 'subcategory', 'subSubCategory', 'city', 'images', 'condition', 'adType', 'listingType', 'isActive', 'isApproved', 'isFeatured', 'phone', 'expiresAt', 'brand', 'isNegotiable', 'area', 'hotel', 'badges', 'website'];
-  
-  fields.forEach(f => { 
+
+  fields.forEach(f => {
     if (req.body[f] !== undefined) {
       if (['subcategory', 'subSubCategory', 'area', 'hotel'].includes(f) && req.body[f] === '') {
         ad[f] = null;
@@ -332,7 +332,7 @@ export const updateAd = asyncHandler(async (req, res) => {
         for (const imgUrl of removedImages) {
           const publicId = extractPublicId(imgUrl);
           if (publicId) {
-            deleteFromCloudinary(publicId).catch(err => 
+            deleteFromCloudinary(publicId).catch(err =>
               console.error(`[CLEANUP] Failed to delete image ${publicId}:`, err.message)
             );
           }
@@ -346,7 +346,7 @@ export const updateAd = asyncHandler(async (req, res) => {
     const rejectionReason = req.body.rejectionReason;
 
     const updated = await ad.save();
-    
+
     // Send rejection email if applicable
     // We send it if isApproved is false and a reason is newly provided or the ad's approval is being revoked
     if (req.body.isApproved === false && rejectionReason) {
@@ -356,7 +356,7 @@ export const updateAd = asyncHandler(async (req, res) => {
           .catch(err => console.error('[EMAIL] Failed to send rejection email:', err));
       }
     }
-    
+
     if (req.user.isAdmin) {
       await ActivityLog.create({
         adminId: req.user._id,
@@ -374,14 +374,14 @@ export const updateAd = asyncHandler(async (req, res) => {
         targetType: 'Ad'
       });
     }
-    
+
     // Auto-Indexing on Update
     const settings = await getSettings();
     if (updated.isApproved && settings.enableGoogleIndexing) {
       const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${updated.slug}`;
       publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
     }
-    
+
     res.json(updated);
   } catch (err) {
     res.status(400).json({ message: err.message || 'Failed to update ad' });
@@ -399,7 +399,7 @@ export const deleteAd = asyncHandler(async (req, res) => {
   }
   const adTitle = ad.title;
   const isAdmin = req.user.isAdmin;
-  
+
   // DOUBLE LAYER CLEANUP: Explicitly cleanup images before calling ad.deleteOne()
   // This serves as a backup to the middleware in Ad.js
   if (ad.images && ad.images.length > 0 && isConfigured) {
@@ -407,7 +407,7 @@ export const deleteAd = asyncHandler(async (req, res) => {
     for (const imgUrl of ad.images) {
       const pid = extractPublicId(imgUrl);
       if (pid) {
-        deleteFromCloudinary(pid).catch(err => 
+        deleteFromCloudinary(pid).catch(err =>
           console.error(`[CLEANUP-BACKUP] Failed for image ${pid}:`, err.message)
         );
       }
@@ -415,7 +415,7 @@ export const deleteAd = asyncHandler(async (req, res) => {
   }
 
   await ad.deleteOne();
-  
+
   if (isAdmin) {
     await ActivityLog.create({
       adminId: req.user._id,
@@ -431,14 +431,14 @@ export const deleteAd = asyncHandler(async (req, res) => {
       targetType: 'Ad'
     });
   }
-  
+
   // Auto-Indexing for Deletion
   const settings = await getSettings();
   if (settings.enableGoogleIndexing) {
     const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
     publishToGoogleIndexing(adUrl, 'URL_DELETED').catch(err => console.error('[Indexing] Error:', err));
   }
-  
+
   res.json({ message: 'Ad removed' });
 });
 
@@ -456,9 +456,9 @@ export const getMyAds = asyncHandler(async (req, res) => {
 // @route   GET /api/ads/seller/:sellerId
 // @access  Public
 export const getSellerAds = asyncHandler(async (req, res) => {
-  const ads = await Ad.find({ 
-    seller: req.params.sellerId, 
-    isActive: true, 
+  const ads = await Ad.find({
+    seller: req.params.sellerId,
+    isActive: true,
     isApproved: true,
     expiresAt: { $gt: new Date() }
   })
@@ -556,10 +556,10 @@ export const getSellerAnalytics = asyncHandler(async (req, res) => {
     const d = new Date(startDate);
     d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().split('T')[0];
-    
+
     const views = viewsData.find(v => v._id === dateStr)?.count || 0;
     const impressions = impressionsData.find(v => v._id === dateStr)?.count || 0;
-    
+
     stats.push({
       date: dateStr,
       displayDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),

@@ -126,10 +126,13 @@ app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
 
 // API Routes
 app.get('/sitemap.xml', getSitemap);
+import reportRoutes from './routes/reportRoutes.js';
+
 app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/subcategories', subcategoryRoutes);
 app.use('/api/ads', adRoutes);
+app.use('/api/reports', reportRoutes); // Added reports route
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/admin', adminRoutes);

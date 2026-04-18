@@ -9,7 +9,6 @@ const reportSchema = mongoose.Schema(
     },
     ad: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: 'Ad',
     },
     reason: {
@@ -21,6 +20,9 @@ const reportSchema = mongoose.Schema(
       required: true,
       enum: ['pending', 'resolved', 'dismissed'],
       default: 'pending',
+    },
+    message: {
+      type: String,
     },
     adminNotes: {
       type: String,
