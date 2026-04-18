@@ -9,11 +9,21 @@ export const getAreas = asyncHandler(async (req, res) => {
   const { city, showOnHome } = req.query;
   let filter = {};
 
+  console.log(`[getAreas] City Slug: "${city}"`);
   if (city) {
-    const cityDoc = await City.findOne({ slug: city });
+    let cityDoc = await City.findOne({ slug: city });
+    if (!cityDoc) {
+      console.log(`[getAreas] Slug lookup failed for "${city}". Trying name fallback...`);
+      const nameMatch = city.replace(/-/g, ' ');
+      cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+    }
+
     if (cityDoc) {
+      console.log(`[getAreas] Found City: "${cityDoc.name}" (${cityDoc._id})`);
+      // Use $or to be safe for both String and ObjectId during transition
       filter.city = cityDoc._id;
     } else {
+      console.log(`[getAreas] City not found for "${city}"`);
       return res.json([]);
     }
   }
@@ -23,6 +33,7 @@ export const getAreas = asyncHandler(async (req, res) => {
   }
 
   const areas = await Area.find(filter).populate('city', 'name slug').sort({ name: 1 });
+  console.log(`[getAreas] Found ${areas.length} areas for filter:`, filter);
   res.json(areas);
 });
 
@@ -30,7 +41,8 @@ export const getAreas = asyncHandler(async (req, res) => {
 // @route   GET /api/areas/:slug
 // @access  Public
 export const getAreaBySlug = asyncHandler(async (req, res) => {
-  const area = await Area.findOne({ slug: req.params.slug }).populate('city', 'name slug');
+  const slug = req.params.slug.toLowerCase();
+  const area = await Area.findOne({ slug }).populate('city', 'name slug');
   if (area) {
     res.json(area);
   } else {
@@ -117,7 +129,11 @@ export const bulkCreateAreas = asyncHandler(async (req, res) => {
       continue;
     }
 
-    const area = await Area.create({ name, city: cityId });
+    const area = await Area.create({ 
+      name, 
+      city: new mongoose.Types.ObjectId(cityId),
+      showOnHome: false 
+    });
     created.push(area);
   }
 

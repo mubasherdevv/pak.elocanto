@@ -57,7 +57,13 @@ export const getAds = asyncHandler(async (req, res) => {
   if (req.query.city) filterPromises.push(City.findOne({ slug: req.query.city }).lean());
   else filterPromises.push(Promise.resolve(null));
 
-  const [cat, sub, cityDoc] = await Promise.all(filterPromises);
+  if (req.query.area) filterPromises.push(Area.findOne({ slug: req.query.area }).lean());
+  else filterPromises.push(Promise.resolve(null));
+
+  if (req.query.hotel) filterPromises.push(Hotel.findOne({ slug: req.query.hotel }).lean());
+  else filterPromises.push(Promise.resolve(null));
+
+  const [cat, sub, cityDoc, areaDoc, hotelDoc] = await Promise.all(filterPromises);
 
   if (cat) query.category = cat._id;
   if (sub) query.subcategory = sub._id;
@@ -66,6 +72,9 @@ export const getAds = asyncHandler(async (req, res) => {
   } else if (req.query.city) {
     query.city = { $regex: req.query.city, $options: 'i' };
   }
+
+  if (areaDoc) query.area = areaDoc._id;
+  if (hotelDoc) query.hotel = hotelDoc._id;
 
   // Listing Type / Ad Type Filtering
   const listingType = req.query.listingType || req.query.adType;

@@ -10,7 +10,13 @@ export const getHotels = asyncHandler(async (req, res) => {
   let filter = {};
 
   if (city) {
-    const cityDoc = await City.findOne({ slug: city });
+    let cityDoc = await City.findOne({ slug: city });
+    if (!cityDoc) {
+      // Fallback: search by name if slug fails
+      const nameMatch = city.replace(/-/g, ' ');
+      cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+    }
+
     if (cityDoc) {
       filter.city = cityDoc._id;
     } else {
@@ -30,7 +36,8 @@ export const getHotels = asyncHandler(async (req, res) => {
 // @route   GET /api/hotels/:slug
 // @access  Public
 export const getHotelBySlug = asyncHandler(async (req, res) => {
-  const hotel = await Hotel.findOne({ slug: req.params.slug }).populate('city', 'name slug');
+  const slug = req.params.slug.toLowerCase();
+  const hotel = await Hotel.findOne({ slug }).populate('city', 'name slug');
   if (hotel) {
     res.json(hotel);
   } else {
@@ -117,7 +124,11 @@ export const bulkCreateHotels = asyncHandler(async (req, res) => {
       continue;
     }
 
-    const hotel = await Hotel.create({ name, city: cityId });
+    const hotel = await Hotel.create({ 
+      name, 
+      city: new mongoose.Types.ObjectId(cityId),
+      showOnHome: false 
+    });
     created.push(hotel);
   }
 

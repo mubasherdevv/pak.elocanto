@@ -27,7 +27,20 @@ export const getCities = asyncHandler(async (req, res) => {
 // @route   GET /api/cities/slug/:slug
 // @access  Public
 export const getCityBySlug = asyncHandler(async (req, res) => {
-  const city = await City.findOne({ slug: req.params.slug });
+  let city = await City.findOne({ slug: req.params.slug });
+  
+  // If not found by slug, maybe it doesn't have a slug but exists by name?
+  if (!city) {
+    // Try finding by name if slug-like match
+    const nameMatch = req.params.slug.replace(/-/g, ' ');
+    city = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+    
+    if (city && !city.slug) {
+      city.slug = city.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      await city.save();
+    }
+  }
+
   if (city) {
     res.json(city);
   } else {
