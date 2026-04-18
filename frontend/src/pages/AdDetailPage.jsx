@@ -4,7 +4,7 @@ import {
   MapPinIcon, CalendarIcon, EyeIcon, PhoneIcon,
   ChatBubbleLeftRightIcon, HeartIcon, ShareIcon,
   ExclamationCircleIcon, ChevronRightIcon,
-  FlagIcon, XMarkIcon
+  FlagIcon, XMarkIcon, ClockIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolid } from '@heroicons/react/24/solid';
 import api from '../lib/api';
@@ -88,10 +88,10 @@ export default function AdDetailPage() {
     if (slug) fetchAd();
     window.scrollTo(0, 0);
   }, [slug, user, navigate]);
-  
+
   // Define SEO context for consistency
   const placeholderName = ad?.title || '';
-  const { seo } = usePageSeo('ad', ad?._id, { 
+  const { seo } = usePageSeo('ad', ad?._id, {
     title: ad ? `${ad.title} | Elocanto` : 'Loading Ad...',
     description: ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.'
   });
@@ -212,13 +212,14 @@ export default function AdDetailPage() {
       </div>
 
       <div style={{ padding: 16 }}>
+
         {/* 2. Price & Title Section */}
         <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 16 }}>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>PKR {ad.price?.toLocaleString()}</h1>
           <h2 style={{ fontSize: 16, color: '#475569', marginTop: 8, lineHeight: 1.4, fontWeight: 500 }}>{ad.title}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#94a3b8', fontSize: 12, marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <MapPinIcon style={{ width: 14 }} /> 
+              <MapPinIcon style={{ width: 14 }} />
               <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
               {ad.area && (
                 <>
@@ -233,6 +234,7 @@ export default function AdDetailPage() {
                 </>
               )}
             </div>
+
             <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#cbd5e1' }}></div>
             <div>{new Date(ad.createdAt).toLocaleDateString()}</div>
             <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#cbd5e1' }}></div>
@@ -277,9 +279,9 @@ export default function AdDetailPage() {
           </p>
           {ad.website && (
             <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9' }}>
-              <a 
-                href={ad.website} 
-                target="_blank" 
+              <a
+                href={ad.website}
+                target="_blank"
                 rel={ad.seller?.isAdmin ? "nofollow noopener noreferrer" : "ugc nofollow noopener noreferrer"}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#3e6fe1', fontWeight: 700, textDecoration: 'none', fontSize: 14 }}
               >
@@ -309,16 +311,22 @@ export default function AdDetailPage() {
             </div>
           </div>
           <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-            <button 
-              onClick={handleWhatsApp} 
+            <button
+              onClick={handleWhatsApp}
               style={{ flex: 1, height: 44, borderRadius: 12, background: '#25D366', border: 'none', color: 'white', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             >
-              <svg viewBox="0 0 24 24" style={{ width: 18, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+              <svg viewBox="0 0 24 24" style={{ width: 18, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
               WhatsApp
             </button>
             <button onClick={() => setShowPhone(!showPhone)} style={{ flex: 1, height: 44, borderRadius: 12, background: '#0f172a', border: 'none', color: 'white', fontWeight: 700, fontSize: 14 }}>
               {showPhone ? ad.phone || ad.seller.phone : 'Show Phone'}
             </button>
+          </div>
+          <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9' }}>
+            <p style={{ fontSize: 12, color: '#0f172a', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+              <ClockIcon style={{ width: 14, color: '#475569' }} />
+              {ad.updatedAt && new Date(ad.updatedAt).getTime() > new Date(ad.createdAt).getTime() + 1000 ? 'Updated' : 'Posted'}: {new Date(ad.updatedAt || ad.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+            </p>
           </div>
         </div>
 
@@ -349,11 +357,11 @@ export default function AdDetailPage() {
 
       {/* 3. Sticky Bottom Actions */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', borderTop: '1px solid #f1f5f9', padding: '10px 16px', display: 'flex', gap: 12, zIndex: 100, boxShadow: '0 -4px 20px rgba(0,0,0,0.05)' }}>
-        <button 
-          onClick={handleWhatsApp} 
+        <button
+          onClick={handleWhatsApp}
           style={{ flex: 1, height: 48, borderRadius: 14, background: '#25D366', border: 'none', color: 'white', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
         >
-          <svg viewBox="0 0 24 24" style={{ width: 20, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          <svg viewBox="0 0 24 24" style={{ width: 20, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
           WhatsApp
         </button>
         <button onClick={() => setShowPhone(!showPhone)} style={{ flex: 1, height: 48, borderRadius: 14, background: '#0f172a', border: 'none', color: 'white', fontWeight: 800, fontSize: 15, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -369,14 +377,14 @@ export default function AdDetailPage() {
         <title>{displayTitle}</title>
         <meta name="description" content={displayDesc} />
         {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, placeholderName)} />}
-        
+
         {/* OpenGraph Enhanced Previews */}
         <meta property="og:title" content={`${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`} />
         <meta property="og:description" content={`Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description.substring(0, 100)}...`} />
         <meta property="og:type" content="product" />
         <meta property="og:url" content={window.location.href} />
         {ad.images && ad.images[0] && <meta property="og:image" content={ad.images[0]} />}
-        
+
         {/* Schema.org Rich Snippet for Google Search */}
         <script type="application/ld+json">
           {JSON.stringify({
@@ -456,7 +464,7 @@ export default function AdDetailPage() {
 
                 <div className="flex items-center gap-6 mt-8 pt-8 border-t border-gray-50 text-sm text-gray-500">
                   <span className="flex items-center gap-2">
-                    <MapPinIcon className="w-5" /> 
+                    <MapPinIcon className="w-5" />
                     <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-primary transition-colors">{ad.city}</Link>
                     {ad.area && (
                       <>
@@ -481,9 +489,9 @@ export default function AdDetailPage() {
                 <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{linkifyText(ad.description, ad.seller?.isAdmin)}</p>
                 {ad.website && (
                   <div className="mt-6 pt-6 border-t border-gray-50">
-                    <a 
-                      href={ad.website} 
-                      target="_blank" 
+                    <a
+                      href={ad.website}
+                      target="_blank"
                       rel={ad.seller?.isAdmin ? "nofollow noopener noreferrer" : "ugc nofollow noopener noreferrer"}
                       className="inline-flex items-center gap-2 text-primary font-black hover:underline"
                     >
@@ -507,18 +515,24 @@ export default function AdDetailPage() {
                   </Link>
                 </div>
                 <div className="space-y-3">
-                  <button 
-                    onClick={handleWhatsApp} 
+                  <button
+                    onClick={handleWhatsApp}
                     className="w-full h-12 rounded-xl flex items-center justify-center gap-2 font-black text-white hover:scale-[1.02] transition-all shadow-lg"
                     style={{ background: '#25D366' }}
                   >
-                    <svg viewBox="0 0 24 24" style={{ width: 22, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    <svg viewBox="0 0 24 24" style={{ width: 22, fill: 'currentColor' }}><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" /></svg>
                     WhatsApp Seller
                   </button>
                   <button onClick={() => setShowPhone(!showPhone)} className="w-full h-12 rounded-xl border-2 border-gray-900 font-bold flex items-center justify-center gap-2 hover:bg-gray-50">
                     <PhoneIcon className="w-5" />
                     {showPhone ? ad.phone || ad.seller.phone : 'Show Phone Number'}
                   </button>
+                  <div className="pt-4 border-t border-gray-50 flex justify-center">
+                    <p className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                      <ClockIcon className="w-4 h-4 text-gray-400" />
+                      {ad.updatedAt && new Date(ad.updatedAt).getTime() > new Date(ad.createdAt).getTime() + 1000 ? 'Updated' : 'Posted'}: {new Date(ad.updatedAt || ad.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -551,11 +565,11 @@ export default function AdDetailPage() {
             <form onSubmit={handleReport} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Reason for report</label>
-                <select 
+                <select
                   required
                   className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 font-bold"
                   value={reportData.reason}
-                  onChange={e => setReportData({...reportData, reason: e.target.value})}
+                  onChange={e => setReportData({ ...reportData, reason: e.target.value })}
                 >
                   <option value="">Select a reason</option>
                   <option value="Duplicate ad">Duplicate ad</option>
@@ -569,26 +583,26 @@ export default function AdDetailPage() {
               {!user && (
                 <div>
                   <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Your Email Address</label>
-                  <input 
+                  <input
                     type="email"
                     required
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 font-bold"
                     placeholder="email@example.com"
                     value={reportData.guestEmail}
-                    onChange={e => setReportData({...reportData, guestEmail: e.target.value})}
+                    onChange={e => setReportData({ ...reportData, guestEmail: e.target.value })}
                   />
                 </div>
               )}
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Message (Optional)</label>
-                <textarea 
+                <textarea
                   className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 min-h-[100px] text-sm"
                   placeholder="Tell us more details..."
                   value={reportData.message}
-                  onChange={e => setReportData({...reportData, message: e.target.value})}
+                  onChange={e => setReportData({ ...reportData, message: e.target.value })}
                 ></textarea>
               </div>
-              <button 
+              <button
                 type="submit"
                 disabled={reporting}
                 className="w-full bg-red-500 text-white py-4 rounded-2xl font-black text-lg hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 disabled:opacity-50"

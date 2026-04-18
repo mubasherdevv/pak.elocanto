@@ -203,9 +203,8 @@ export const getAdById = asyncHandler(async (req, res) => {
     return res.status(403).json({ message: 'This advertisement is pending approval.' });
   }
 
-  // Increment views
-  ad.views += 1;
-  await ad.save();
+  // Increment views without updating updatedAt timestamp
+  await Ad.updateOne({ _id: ad._id }, { $inc: { views: 1 } }, { timestamps: false });
 
   // Get other ads by same seller
   const sellerAds = await Ad.find({

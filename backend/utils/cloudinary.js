@@ -36,13 +36,16 @@ export { isConfigured };
  * Uploads a buffer to Cloudinary
  * @param {Buffer} buffer - The image buffer to upload
  * @param {String} folder - The folder in Cloudinary to store the image
+ * @param {String} publicId - The public_id of the image
+ * @param {Object} extraOptions - Additional Cloudinary upload options (context, tags, etc.)
  * @returns {Promise<Object>} - The Cloudinary upload result
  */
-export const uploadBuffer = (buffer, folder = 'ads', publicId = null) => {
+export const uploadBuffer = (buffer, folder = 'ads', publicId = null, extraOptions = {}) => {
   return new Promise((resolve, reject) => {
     const options = {
       folder: folder,
       resource_type: 'auto',
+      ...extraOptions
     };
 
     if (publicId) {

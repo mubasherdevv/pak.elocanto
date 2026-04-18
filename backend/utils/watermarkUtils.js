@@ -91,6 +91,7 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
 
   // Optimize and Save
   const outputBuffer = await sharp(inputPath)
+    .withMetadata()
     .composite([compositeOptions])
     .webp({ quality: 80, effort: 6 }) // Efficient compression
     .toBuffer();
@@ -229,6 +230,7 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
   }
 
   return sharp(imageBuffer)
+    .withMetadata()
     .composite([compositeOptions])
     .webp({ quality: 85 })
     .toBuffer();

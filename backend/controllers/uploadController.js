@@ -59,18 +59,28 @@ export const uploadImages = asyncHandler(async (req, res) => {
         cloudinaryFolder = `ads/${folderParts.join('/')}`;
       }
 
-      // Generate a descriptive filename (public_id)
-      const fileNameParts = [...folderParts];
-      if (title) fileNameParts.push(slugify(title));
-      const publicId = `${fileNameParts.join('-')}-${Date.now()}`;
+      // Generate a descriptive filename (public_id) using title + random 2-3 digit number
+      const randomNum = Math.floor(10 + Math.random() * 989); // 10 to 999
+      const baseSlug = slugify(title) || 'ad-image';
+      const publicId = `${baseSlug}-${randomNum}`;
+
+      // Construct SEO Metadata (Cloudinary Context)
+      const context = {
+        alt: title || 'Ad Image',
+        caption: `${category}${subcategory ? ' > ' + subcategory : ''}`,
+        subject: city || 'Pakistan'
+      };
+
+      // Construct Tags
+      const tags = ['ad', slugify(category), slugify(city)].filter(Boolean);
 
       console.log(`[UPLOAD] Applying watermark to buffer...`);
       // Apply watermark to the buffer
       const watermarkedBuffer = await addWatermarkToBuffer(file.buffer);
 
       console.log(`[UPLOAD] Uploading to Cloudinary (Folder: ${cloudinaryFolder}, Name: ${publicId})...`);
-      // Upload the watermarked buffer to Cloudinary
-      const result = await uploadBuffer(watermarkedBuffer, cloudinaryFolder, publicId);
+      // Upload the watermarked buffer to Cloudinary with SEO metadata
+      const result = await uploadBuffer(watermarkedBuffer, cloudinaryFolder, publicId, { context, tags });
       
       console.log(`[UPLOAD] Success: ${result.secure_url}`);
       urls.push(result.secure_url);
