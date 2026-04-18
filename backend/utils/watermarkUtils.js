@@ -13,10 +13,10 @@ export const WATERMARK_POSITION = {
 };
 
 const DEFAULT_OPTIONS = {
-  position: WATERMARK_POSITION.BOTTOM_RIGHT,
-  watermarkWidth: 140, // 120-150px range
-  opacity: 0.85,
-  padding: 20,
+  position: WATERMARK_POSITION.CENTER,
+  watermarkWidth: 400, // Increased as requested
+  opacity: 0.8,
+  padding: 0,
 };
 
 export const addWatermark = async (inputPath, outputPath, options = {}) => {
@@ -34,18 +34,43 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     const imageWidth = metadata.width || 1200;
     const imageHeight = metadata.height || 800;
 
-    // Dynamic Scaling: Watermark should not exceed 30% of image width
-    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.3));
+    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.6));
     
-    // Maintain transparency and resize logo
-    const wmBuffer = await sharp(WATERMARK_PATH)
+    // Scale logo
+    const logoBuffer = await sharp(WATERMARK_PATH)
       .resize({ width: targetWmWidth, withoutEnlargement: true })
       .ensureAlpha()
       .toBuffer();
 
-    const wmMeta = await sharp(wmBuffer).metadata();
-    const wmWidth = wmMeta.width || opts.watermarkWidth;
-    const wmHeight = wmMeta.height || 50;
+    const logoMeta = await sharp(logoBuffer).metadata();
+    const lWidth = logoMeta.width || targetWmWidth;
+    const lHeight = logoMeta.height || 100;
+
+    // Create Full-Width Background Strip (Pati)
+    const bgWidth = imageWidth;
+    const bgHeight = Math.floor(lHeight * 1.15); // Tighter fit around logo as requested
+
+    const bgBuffer = await sharp({
+      create: {
+        width: bgWidth,
+        height: bgHeight,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0.75 }
+      }
+    })
+    .blur(8) // Increased blur for softer, premium look
+    .png()
+    .toBuffer();
+
+    // Composite Logo onto Strip
+    const finalWmBuffer = await sharp(bgBuffer)
+      .composite([{ input: logoBuffer, gravity: 'center' }])
+      .png()
+      .toBuffer();
+
+    const wmMeta = await sharp(finalWmBuffer).metadata();
+    const wmWidth = wmMeta.width || bgWidth;
+    const wmHeight = wmMeta.height || bgHeight;
 
     let gravity = 'southeast';
     let left = imageWidth - wmWidth - opts.padding;
@@ -89,11 +114,20 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     };
   }
 
-  // Optimize and Save
+  // Optimize and Save with SEO Obfuscation
+  // 1. Subtle modulation (brightness/saturation) to change file signature
+  // 2. Tiny blur to soften pixels
+  // 3. 0.1 degree rotation to re-sample the pixel grid (unique fingerprint)
   const outputBuffer = await sharp(inputPath)
     .withMetadata()
+    .modulate({
+      brightness: 1.02, 
+      saturation: 1.05
+    })
+    .blur(0.5)
+    .rotate(0.1, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .composite([compositeOptions])
-    .webp({ quality: 80, effort: 6 }) // Efficient compression
+    .webp({ quality: 80, effort: 6 }) 
     .toBuffer();
 
   // Ensure output directory exists (Final check)
@@ -172,17 +206,41 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     const imageWidth = metadata.width || 1200;
     const imageHeight = metadata.height || 800;
 
-    // Dynamic Scaling: Watermark should not exceed 30% of image width
-    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.3));
+    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.6));
 
-    const wmBuffer = await sharp(WATERMARK_PATH)
+    const logoBuffer = await sharp(WATERMARK_PATH)
       .resize({ width: targetWmWidth, withoutEnlargement: true })
       .ensureAlpha()
       .toBuffer();
 
-    const wmMeta = await sharp(wmBuffer).metadata();
-    const wmWidth = wmMeta.width || opts.watermarkWidth;
-    const wmHeight = wmMeta.height || 50;
+    const logoMeta = await sharp(logoBuffer).metadata();
+    const lWidth = logoMeta.width || targetWmWidth;
+    const lHeight = logoMeta.height || 100;
+
+    // Create Full-Width Background Strip (Pati)
+    const bgWidth = imageWidth;
+    const bgHeight = Math.floor(lHeight * 1.15);
+
+    const bgBuffer = await sharp({
+      create: {
+        width: bgWidth,
+        height: bgHeight,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0.75 }
+      }
+    })
+    .blur(8)
+    .png()
+    .toBuffer();
+
+    const finalWmBuffer = await sharp(bgBuffer)
+      .composite([{ input: logoBuffer, gravity: 'center' }])
+      .png()
+      .toBuffer();
+
+    const wmMeta = await sharp(finalWmBuffer).metadata();
+    const wmWidth = wmMeta.width || bgWidth;
+    const wmHeight = wmMeta.height || bgHeight;
 
     let left = opts.padding;
     let top = opts.padding;
@@ -212,11 +270,12 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     }
 
     compositeOptions = {
-      input: wmBuffer,
+      input: finalWmBuffer,
       left,
       top,
     };
   } else {
+
     const text = opts.text || getSiteName();
     const metadata = await sharp(imageBuffer).metadata();
     const fontSize = Math.max(16, Math.floor(metadata.width / 40));
@@ -229,8 +288,15 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     };
   }
 
+  // SEO Obfuscation & Final watermark
   return sharp(imageBuffer)
     .withMetadata()
+    .modulate({
+      brightness: 1.01,
+      saturation: 1.03
+    })
+    .blur(0.5)
+    .rotate(0.05, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .composite([compositeOptions])
     .webp({ quality: 85 })
     .toBuffer();
