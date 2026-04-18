@@ -25,6 +25,7 @@ import {
   PlusIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
+import toast from 'react-hot-toast';
 
 import { useAuth } from '../context/AuthContext';
 import { generateAdSlug } from '../utils/urlUtils';
@@ -103,11 +104,11 @@ export default function AdminAdsPage() {
     if (window.confirm('Are you sure you want to delete this advertisement?')) {
       try {
         await api.delete(`/ads/${id}`);
-
+        toast.success('Advertisement deleted');
         fetchData();
       } catch (err) {
         console.error('Error deleting ad:', err);
-        alert('Failed to delete ad');
+        toast.error('Failed to delete ad');
       }
     }
   };
@@ -120,11 +121,11 @@ export default function AdminAdsPage() {
       newExpiresAt.setDate(newExpiresAt.getDate() + duration);
       await api.put(`/ads/${ad._id}`, { expiresAt: newExpiresAt, isActive: true });
 
-      alert(`Ad renewed for ${duration} days!`);
+      toast.success(`Ad renewed for ${duration} days!`);
       fetchData();
     } catch (err) {
       console.error('Error renewing ad:', err);
-      alert('Failed to renew ad');
+      toast.error('Failed to renew ad');
     }
   };
 
@@ -153,10 +154,11 @@ export default function AdminAdsPage() {
 
       setView('list');
       setEditingAd(null);
+      toast.success('Advertisement updated successfully');
       fetchData();
     } catch (err) {
       console.error('Error updating ad:', err);
-      alert(err.response?.data?.message || 'Failed to update ad');
+      toast.error(err.response?.data?.message || 'Failed to update ad');
     } finally {
       setUpdateLoading(false);
     }
@@ -168,7 +170,7 @@ export default function AdminAdsPage() {
     
     const maxImages = settings?.maxImagesPerAd || 10;
     if ((editingAd.images || []).length + files.length > maxImages) {
-      return alert(`Maximum ${maxImages} images allowed`);
+      return toast.error(`Maximum ${maxImages} images allowed`);
     }
 
     try {
@@ -195,7 +197,7 @@ export default function AdminAdsPage() {
       }));
     } catch (err) {
       console.error('Admin upload error:', err);
-      alert(err.response?.data?.message || 'Failed to upload images');
+      toast.error(err.response?.data?.message || 'Failed to upload images');
     } finally {
       setUpdateLoading(false);
     }
@@ -204,11 +206,11 @@ export default function AdminAdsPage() {
   const toggleFeatured = async (id, currentStatus) => {
     try {
       await api.put(`/ads/${id}`, { isFeatured: !currentStatus });
-
+      toast.success(currentStatus ? 'Removed from gallery' : 'Pinned to gallery');
       fetchData();
     } catch (err) {
       console.error('Error toggling featured status:', err);
-      alert('Failed to update featured status');
+      toast.error('Failed to update status');
     }
   };
 
@@ -452,9 +454,9 @@ export default function AdminAdsPage() {
                               onClick={async () => {
                                 try {
                                   await api.put(`/ads/${ad._id}`, { isApproved: true });
-
+                                  toast.success('Ad approved successfully');
                                   fetchData();
-                                } catch (err) { alert('Failed to approve'); }
+                                } catch (err) { toast.error('Failed to approve'); }
                               }}
                               className="p-3 bg-green-500 text-white rounded-2xl hover:bg-green-600 shadow-sm transition-all"
                               title="Quick Approve"
@@ -996,10 +998,11 @@ export default function AdminAdsPage() {
                       isActive: false,
                       rejectionReason: tempRejectionReason 
                     });
+                    toast.success('Ad rejected and seller notified');
                     setRejectionModalOpen(false);
                     fetchData();
                   } catch (err) {
-                    alert('Failed to reject ad');
+                    toast.error('Failed to reject ad');
                   } finally {
                     setUpdateLoading(false);
                   }

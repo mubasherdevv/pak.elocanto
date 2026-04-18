@@ -16,6 +16,7 @@ import {
   UserCircleIcon,
   CalendarDaysIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -509,10 +510,11 @@ function ReportsContent() {
     try {
       if (!token) return;
       await api.put(`/admin/reports/${id}`, { status });
+      toast.success(`Report ${status} successfully`);
       fetchReports();
     } catch (err) {
       console.error('Error updating report status:', err);
-      alert('Failed to update status');
+      toast.error('Failed to update status');
     }
   };
 
@@ -527,10 +529,11 @@ function ReportsContent() {
           deleteAd: true,
           adminNotes: 'Ad deleted by admin through reports panel.' 
         });
+        toast.success('Ad deleted and report resolved');
         fetchReports();
       } catch (err) {
         console.error('Error deleting ad from report:', err);
-        alert(err.response?.data?.message || 'Failed to delete ad');
+        toast.error(err.response?.data?.message || 'Failed to delete ad');
         setLoading(false);
       }
     }
@@ -620,8 +623,8 @@ function ReportsContent() {
                 <UserIcon className="w-4 h-4" />
                 Reporter Detail
               </div>
-              <p className="font-bold text-gray-900">{report.reporter?.name}</p>
-              <p className="text-xs text-gray-500 font-medium">{report.reporter?.email}</p>
+              <p className="font-bold text-gray-900">{report.reporter?.name || 'Guest Reporter'}</p>
+              <p className="text-xs text-gray-500 font-medium">{report.reporter?.email || report.guestEmail}</p>
               <div className="mt-4 p-4 bg-red-50 rounded-2xl">
                 <p className="text-xs font-black text-red-600 uppercase tracking-widest mb-1">Reason for report</p>
                 <p className="text-sm text-gray-700 font-bold leading-relaxed italic">"{report.reason}"</p>
@@ -680,8 +683,9 @@ function ReportsContent() {
                               issueWarning: true,
                               adminNotes: note
                            });
+                           toast.success('Warning issued to seller');
                            fetchReports();
-                        } catch (err) { alert('Failed to issue warning'); setLoading(false); }
+                        } catch (err) { toast.error('Failed to issue warning'); setLoading(false); }
                      }}
                      className="flex-1 bg-amber-500 text-white py-3 rounded-2xl px-4 text-xs font-black hover:bg-amber-600 transition-colors shadow-lg"
                    >

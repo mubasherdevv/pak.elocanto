@@ -5,7 +5,7 @@ import { createReport, getReports, getMyReports } from '../controllers/reportCon
 const router = express.Router();
 
 router.route('/')
-  .post(protect, createReport)
+  .post(createReport)
   .get(protect, admin, getReports);
 
 router.get('/my', protect, getMyReports);

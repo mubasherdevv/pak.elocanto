@@ -18,6 +18,7 @@ import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { useSettings } from '../context/SettingsContext';
 import { usePageSeo } from '../hooks/usePageSeo';
+import toast from 'react-hot-toast';
 
 export default function AdDetailPage() {
   const params = useParams();
@@ -34,7 +35,7 @@ export default function AdDetailPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [isSafetyOpen, setIsSafetyOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportData, setReportData] = useState({ reason: '', message: '' });
+  const [reportData, setReportData] = useState({ reason: '', message: '', guestEmail: '' });
   const [reporting, setReporting] = useState(false);
 
   useEffect(() => {
@@ -126,21 +127,22 @@ export default function AdDetailPage() {
 
   const handleReport = async (e) => {
     e.preventDefault();
-    if (!user) return navigate('/login');
-    if (!reportData.reason) return alert('Please select a reason for reporting.');
+    if (!reportData.reason) return toast.error('Please select a reason for reporting.');
+    if (!user && !reportData.guestEmail) return toast.error('Please provide your email address.');
 
     try {
       setReporting(true);
       await api.post('/reports', {
         adId: ad._id,
         reason: reportData.reason,
-        message: reportData.message
+        message: reportData.message,
+        guestEmail: !user ? reportData.guestEmail : undefined
       });
-      alert('Thank you! Your report has been submitted and will be reviewed by our team.');
+      toast.success('Your report has been submitted and will be reviewed.');
       setIsReportOpen(false);
-      setReportData({ reason: '', message: '' });
+      setReportData({ reason: '', message: '', guestEmail: '' });
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to submit report');
+      toast.error(err.response?.data?.message || 'Failed to submit report');
     } finally {
       setReporting(false);
     }
@@ -198,6 +200,9 @@ export default function AdDetailPage() {
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={handleShare} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
               <ShareIcon style={{ width: 20 }} />
+            </button>
+            <button onClick={() => setIsReportOpen(true)} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
+              <FlagIcon style={{ width: 20 }} />
             </button>
             <button onClick={toggleFav} style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', color: 'white', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)' }}>
               {favorited ? <HeartSolid style={{ width: 20, color: '#ef4444' }} /> : <HeartIcon style={{ width: 20 }} />}
@@ -433,15 +438,18 @@ export default function AdDetailPage() {
                     <h1 className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</h1>
                     <h2 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h2>
                   </div>
-                  <div className="flex gap-3">
-                    <button onClick={toggleFav} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
-                      {favorited ? <HeartSolid style={{ width: 24, color: '#ef4444' }} /> : <HeartIcon style={{ width: 24 }} />}
+                  <div className="flex gap-4">
+                    <button onClick={toggleFav} className="px-5 py-2.5 rounded-2xl border-2 border-gray-50 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-100 transition-all font-black text-[11px] uppercase tracking-widest text-gray-700 shadow-sm bg-white">
+                      {favorited ? <HeartSolid style={{ width: 18, color: '#ef4444' }} /> : <HeartIcon style={{ width: 18, color: '#94a3b8' }} />}
+                      {favorited ? 'Saved' : 'Save'}
                     </button>
-                    <button onClick={handleShare} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
-                      <ShareIcon style={{ width: 22 }} />
+                    <button onClick={handleShare} className="px-5 py-2.5 rounded-2xl border-2 border-gray-50 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-100 transition-all font-black text-[11px] uppercase tracking-widest text-gray-700 shadow-sm bg-white">
+                      <ShareIcon style={{ width: 18, color: '#94a3b8' }} />
+                      Share
                     </button>
-                    <button onClick={() => setIsReportOpen(true)} className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors group" title="Report this ad">
-                      <FlagIcon className="w-5 text-gray-500 group-hover:text-red-500 transition-colors" />
+                    <button onClick={() => setIsReportOpen(true)} className="px-5 py-2.5 rounded-2xl border-2 border-gray-50 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-100 transition-all font-black text-[11px] uppercase tracking-widest text-gray-500 hover:text-red-500 shadow-sm bg-white group">
+                      <FlagIcon className="w-4 h-4 text-gray-400 group-hover:text-red-500" />
+                      Report
                     </button>
                   </div>
                 </div>
@@ -558,6 +566,19 @@ export default function AdDetailPage() {
                   <option value="Other">Other</option>
                 </select>
               </div>
+              {!user && (
+                <div>
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Your Email Address</label>
+                  <input 
+                    type="email"
+                    required
+                    className="w-full px-4 py-3 rounded-2xl border-2 border-gray-50 focus:border-red-500 focus:outline-none bg-gray-50/50 font-bold"
+                    placeholder="email@example.com"
+                    value={reportData.guestEmail}
+                    onChange={e => setReportData({...reportData, guestEmail: e.target.value})}
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Message (Optional)</label>
                 <textarea 

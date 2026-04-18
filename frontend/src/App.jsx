@@ -40,6 +40,8 @@ const AdminTitlesSeoPage = lazy(() => import('./pages/AdminTitlesSeoPage'));
 const UnifiedAdRouter = lazy(() => import('./components/UnifiedAdRouter'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
+import { Toaster } from 'react-hot-toast';
+
 function GlobalHelmet() {
   const { settings } = useSettings();
   const defaultTitle = settings?.defaultMetaTitle || settings?.siteName || 'Marketplace';
@@ -63,6 +65,7 @@ function App() {
       <SettingsProvider>
       <GlobalHelmet />
       <AuthProvider>
+        <Toaster position="top-right" toastOptions={{ duration: 4000, style: { borderRadius: '16px', fontWeight: 'bold' } }} />
         <AdProvider>
 
         <Router>

@@ -26,6 +26,7 @@ import {
   BoltIcon,
   BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 
 import { useAuth } from '../context/AuthContext';
@@ -117,9 +118,10 @@ export default function AdminUsersPage() {
       setView('list');
       setEditingUser(null);
       setFormData({ name: '', email: '', password: '', phone: '', city: '', isAdmin: false, permissions: [] });
+      toast.success(editingUser ? 'User profile updated' : 'Administrator access created');
       fetchUsers();
     } catch (err) {
-      alert(err.response?.data?.message || 'Operation failed');
+      toast.error(err.response?.data?.message || 'Operation failed');
     }
   };
 
@@ -127,9 +129,10 @@ export default function AdminUsersPage() {
     if (window.confirm('Are you sure you want to delete this user?')) {
       try {
         await api.delete(`/users/admin/${id}`);
+        toast.success('User account deleted');
         fetchUsers();
       } catch (err) {
-        alert('Failed to delete user');
+        toast.error('Failed to delete user');
       }
     }
   };
@@ -137,9 +140,11 @@ export default function AdminUsersPage() {
   const toggleBan = async (id) => {
     try {
       await api.put(`/users/admin/${id}/ban`, {});
+      toast.success('User status updated');
       fetchUsers();
     } catch (err) {
       console.error('Error toggling ban:', err);
+      toast.error('Failed to update user status');
     }
   };
 
@@ -809,10 +814,11 @@ export default function AdminUsersPage() {
                 onClick={async () => {
                   try {
                     await api.put(`/users/admin/${badgeUser._id}`, { badges: selectedBadges });
+                    toast.success('User badges updated');
                     setShowBadgeModal(false);
                     fetchUsers();
                   } catch (err) {
-                    alert('Failed to update badges');
+                    toast.error('Failed to update badges');
                   }
                 }}
                 className="flex-1 py-3 bg-[#f95e26] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#e8541f] shadow-lg shadow-orange-100 transition-all"

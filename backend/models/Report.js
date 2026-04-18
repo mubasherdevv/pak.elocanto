@@ -4,8 +4,10 @@ const reportSchema = mongoose.Schema(
   {
     reporter: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       ref: 'User',
+    },
+    guestEmail: {
+      type: String,
     },
     ad: {
       type: mongoose.Schema.Types.ObjectId,

@@ -8,7 +8,7 @@ import { sendReportAlertEmail } from '../utils/email.js';
 // @route   POST /api/reports
 // @access  Private
 export const createReport = asyncHandler(async (req, res) => {
-  const { adId, reason, message } = req.body;
+  const { adId, reason, message, guestEmail } = req.body;
 
   const ad = await Ad.findById(adId);
   if (!ad) {
@@ -16,15 +16,23 @@ export const createReport = asyncHandler(async (req, res) => {
     throw new Error('Ad not found');
   }
 
-  // Optional: Check if user already reported this ad
-  const existingReport = await Report.findOne({ reporter: req.user._id, ad: adId, status: 'pending' });
+  // Duplicate check
+  const reportQuery = { ad: adId, status: 'pending' };
+  if (req.user) {
+    reportQuery.reporter = req.user._id;
+  } else if (guestEmail) {
+    reportQuery.guestEmail = guestEmail;
+  }
+  
+  const existingReport = await Report.findOne(reportQuery);
   if (existingReport) {
     res.status(400);
-    throw new Error('You have already reported this ad and it is under review.');
+    throw new Error('This report is already under review.');
   }
 
   const report = await Report.create({
-    reporter: req.user._id,
+    reporter: req.user ? req.user._id : null,
+    guestEmail: !req.user ? guestEmail : null,
     ad: adId,
     reason,
     message,
