@@ -11,6 +11,7 @@ import { Helmet } from 'react-helmet-async';
 import { usePageSeo } from '../hooks/usePageSeo';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import WhatsAppWidget from '../components/WhatsAppWidget';
+import HowItWorks from '../components/HowItWorks';
 
 // Simple global cache for static-ish data to avoid redundant per-page fetches
 const pageCache = {
@@ -1213,6 +1214,8 @@ export default function AdsListingPage() {
           )}
         </div>
       </div>
+
+      <HowItWorks />
 
       {/* Mobile-Only Global Filter Drawer (Placed at root for global positioning) */}
       {showFilters && !isLarge && (

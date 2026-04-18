@@ -5,6 +5,7 @@ import { useAds } from '../context/AdContext';
 import AdCard from '../components/AdCard';
 import { AdCardSkeleton, CategorySkeleton } from '../components/Skeleton';
 import SeoContentSection from '../components/SeoContentSection';
+import HowItWorks from '../components/HowItWorks';
 import api from '../lib/api';
 import { Helmet } from 'react-helmet-async';
 import { usePageSeo } from '../hooks/usePageSeo';
@@ -582,7 +583,8 @@ export default function HomePage() {
         </div>
       </section>
 
-
+      <HowItWorks />
+      
       {/* CTA Section */}
       <section className="container-custom">
         <div style={{ background: 'var(--dark)', borderRadius: 32, padding: 'clamp(32px, 6vw, 48px) clamp(24px, 6vw, 56px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 32, position: 'relative', overflow: 'hidden' }}>
