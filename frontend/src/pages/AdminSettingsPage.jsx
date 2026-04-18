@@ -487,12 +487,24 @@ export default function AdminSettingsPage() {
   const renderIndexing = () => {
     const handleManualIndex = async (type = 'URL_UPDATED') => {
       if (!manualUrl) return;
+      // Split by newline or comma, trim, and filter out empty strings
+      const urls = manualUrl.split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+      
+      if (urls.length === 0) {
+        setIndexingError('No valid URLs found');
+        return;
+      }
+
       setIndexingLoading(true);
       setIndexingMsg('');
       setIndexingError('');
       try {
-        const { data } = await api.post('/admin/indexing/manual', { url: manualUrl, type });
+        const { data } = await api.post('/admin/indexing/manual', { urls, type });
         setIndexingMsg(data.message || 'Notification sent successfully!');
+        if (data.errors && data.errors.length > 0) {
+          setIndexingError(`Failed for ${data.errors.length} URLs. See console for details.`);
+          console.error('Indexing Errors:', data.errors);
+        }
       } catch (err) {
         setIndexingError(err.response?.data?.message || 'Failed to notify Google');
       } finally {
@@ -574,30 +586,41 @@ export default function AdminSettingsPage() {
             <p className="text-sm text-gray-500 mt-1">Force Google to crawl a specific URL immediately.</p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              className="flex-1 px-5 py-3 rounded-2xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none bg-white font-medium shadow-sm"
-              placeholder="https://pk.elocanto.com/ads/example-ad-slug"
+          <div className="space-y-3">
+            <textarea
+              rows="6"
+              className="w-full px-5 py-4 rounded-2xl border-2 border-gray-100 focus:border-blue-500 focus:outline-none bg-white font-mono text-sm shadow-sm"
+              placeholder={"https://pk.elocanto.com/ads/url1\nhttps://pk.elocanto.com/ads/url2\n..."}
               value={manualUrl}
               onChange={(e) => setManualUrl(e.target.value)}
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleManualIndex('URL_UPDATED')}
                 disabled={indexingLoading || !manualUrl}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-black rounded-2xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center gap-2"
+                className="flex-1 sm:flex-none px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {indexingLoading ? 'Processing...' : 'Notify Update'}
+                {indexingLoading ? 'Processing...' : 'Notify Update (Bulk)'}
               </button>
               <button
                 onClick={() => handleManualIndex('URL_DELETED')}
                 disabled={indexingLoading || !manualUrl}
-                className="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-black rounded-2xl transition-all disabled:opacity-50"
+                className="flex-1 sm:flex-none px-8 py-3 bg-red-100 hover:bg-red-200 text-red-600 font-black rounded-2xl transition-all disabled:opacity-50 flex items-center justify-center"
               >
-                Notify Delete
+                Notify Delete (Bulk)
               </button>
+              {manualUrl && (
+                <button 
+                  onClick={() => setManualUrl('')}
+                  className="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-500 font-bold rounded-2xl transition-all"
+                >
+                  Clear
+                </button>
+              )}
             </div>
+            <p className="text-[10px] text-gray-400 ml-1 font-bold">
+              Tip: Paste multiple URLs separated by new lines. Each URL will be processed sequentially.
+            </p>
           </div>
 
           {indexingMsg && (

@@ -16,6 +16,7 @@ import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
 import { delCache } from '../utils/cache.js';
 import { sendAdRejectionEmail, sendWarningEmail, sendSuspensionEmail } from '../utils/email.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
 
 const router = express.Router();
 
@@ -705,16 +706,44 @@ router.post('/maintenance/watermark-bulk', protect, admin, async (req, res) => {
 // @route   POST /api/admin/indexing/manual
 // @access  Private/Admin
 router.post('/indexing/manual', protect, admin, async (req, res) => {
-  const { url, type } = req.body;
-  if (!url) return res.status(400).json({ message: 'URL is required' });
+  const { url, urls, type } = req.body;
   
-  const result = await publishToGoogleIndexing(url, type || 'URL_UPDATED');
-  
-  if (result?.error) {
-    return res.status(500).json({ message: result.error });
+  if (!url && (!urls || !Array.isArray(urls) || urls.length === 0)) {
+    return res.status(400).json({ message: 'URL or URLs array is required' });
+  }
+
+  const urlsToProcess = urls || [url];
+  const results = [];
+  const errors = [];
+
+  // Sequential processing to avoid 429 and manage quota better
+  for (const currentUrl of urlsToProcess) {
+    if (!currentUrl) continue;
+    const result = await publishToGoogleIndexing(currentUrl, type || 'URL_UPDATED');
+    if (result?.error) {
+      errors.push({ url: currentUrl, error: result.error });
+    } else {
+      results.push({ url: currentUrl, data: result });
+    }
+  }
+
+  if (results.length === 0 && errors.length > 0) {
+    return res.status(500).json({ 
+      message: 'Failed to notify Google for all URLs', 
+      errors 
+    });
   }
   
-  res.json({ message: 'Notification sent to Google', data: result });
+  res.json({ 
+    message: `Processed ${urlsToProcess.length} URLs. Success: ${results.length}, Errors: ${errors.length}`,
+    summary: {
+      total: urlsToProcess.length,
+      success: results.length,
+      failed: errors.length
+    },
+    results,
+    errors: errors.length > 0 ? errors : undefined
+  });
 });
 
 export default router;

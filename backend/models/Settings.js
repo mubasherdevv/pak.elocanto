@@ -3,15 +3,15 @@ import mongoose from 'mongoose';
 const settingsSchema = mongoose.Schema(
   {
     // 1. General Settings
-    siteName: { type: String, default: 'MarketX' },
+    siteName: { type: String, default: 'Elocanto' },
     logo: { type: String, default: '' },
     favicon: { type: String, default: '' },
     contactEmail: { type: String, default: 'admin@marketx.pk' },
     supportPhone: { type: String, default: '' },
     isMaintenanceMode: { type: Boolean, default: false },
-    maintenanceMessage: { 
-      type: String, 
-      default: "We are currently undergoing scheduled maintenance. We'll be back shortly!" 
+    maintenanceMessage: {
+      type: String,
+      default: "We are currently undergoing scheduled maintenance. We'll be back shortly!"
     },
 
     // 2. Homepage Settings
@@ -40,9 +40,9 @@ const settingsSchema = mongoose.Schema(
 
     // 6. Seller & Badge Settings
     enableSellerBadges: { type: Boolean, default: true },
-    visibleBadges: { 
-      type: [String], 
-      default: ['Verified', 'Top Seller', 'Featured Seller'] 
+    visibleBadges: {
+      type: [String],
+      default: ['Verified', 'Top Seller', 'Featured Seller']
     },
     autoAssignBadgeRules: {
       type: mongoose.Schema.Types.Mixed,
@@ -111,12 +111,7 @@ const settingsSchema = mongoose.Schema(
     googleAnalyticsId: { type: String, default: '' },
     googleSearchConsoleId: { type: String, default: '' }, // For site verification
     headerScripts: { type: String, default: '' }, // Custom scripts for <head>
-    footerScripts: { type: String, default: '' },  // Custom scripts before </body>
-
-    // 12. Google Indexing API
-    siteUrl: { type: String, default: 'https://pk.elocanto.com' },
-    enableGoogleIndexing: { type: Boolean, default: false },
-    googleIndexingKey: { type: String, default: '' } // Service Account JSON
+    footerScripts: { type: String, default: '' }  // Custom scripts before </body>
   },
   {
     timestamps: true,

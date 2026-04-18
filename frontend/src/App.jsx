@@ -38,6 +38,12 @@ const CityManagePage = lazy(() => import('./pages/CityManagePage'));
 const AdminSeoPage = lazy(() => import('./pages/AdminSeoPage'));
 const AdminTitlesSeoPage = lazy(() => import('./pages/AdminTitlesSeoPage'));
 const UnifiedAdRouter = lazy(() => import('./components/UnifiedAdRouter'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const AntiScamPage = lazy(() => import('./pages/AntiScamPage'));
+const CopyrightPage = lazy(() => import('./pages/CopyrightPage'));
+const AboutUsPage = lazy(() => import('./pages/AboutUsPage'));
+const ContactUsPage = lazy(() => import('./pages/ContactUsPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 import { Toaster } from 'react-hot-toast';
@@ -83,6 +89,12 @@ function App() {
                 <Route path="/ads" element={<AdsListingPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/terms" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/anti-scam" element={<AntiScamPage />} />
+                <Route path="/copyright-policy" element={<CopyrightPage />} />
+                <Route path="/about-us" element={<AboutUsPage />} />
+                <Route path="/contact-us" element={<ContactUsPage />} />
                 <Route path="/profile/:userId" element={<UserProfile />} />
                 
                 {/* Protected Marketplace Routes */}

@@ -139,7 +139,13 @@ export default function Footer() {
           <p className="text-gray-400 text-xs font-semibold">
             <span className="text-orange-500 font-extrabold">{settings?.siteName || 'Elocanto'}</span>© {new Date().getFullYear()}
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6">
+            <Link to="/about-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">About</Link>
+            <Link to="/contact-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Contact</Link>
+            <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Terms</Link>
+            <Link to="/privacy" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Privacy</Link>
+            <Link to="/anti-scam" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Anti-Scam</Link>
+            <Link to="/copyright-policy" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Copyright</Link>
             <a href="https://www.dmca.com/Protection/Status.aspx?ID=82b2353a-aefb-4842-b2e5-d2a246073140&refurl=https://pk.elocanto.com/" title="DMCA.com Protection Status" className="dmca-badge">
               <img src="https://images.dmca.com/Badges/dmca_protected_sml_120m.png?ID=8e5a07b4-40b8-49dd-81cd-b3cfc6313101" alt="DMCA.com Protection Status" className="h-6 w-auto" />
             </a>
