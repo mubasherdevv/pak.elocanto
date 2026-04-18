@@ -186,7 +186,7 @@ export default function UserDashboardPage() {
   return (
     <div className="page-wrapper container-custom bg-[#f7f8fa] min-h-screen">
       <div className="dashboard-layout flex flex-col lg:grid lg:grid-cols-[280px_1fr] gap-8 py-6">
-        
+
         {/* Sidebar */}
         <aside className="flex flex-col gap-6">
           {/* Profile Card */}
@@ -195,15 +195,15 @@ export default function UserDashboardPage() {
             <div className="p-6 text-center relative z-10">
               <div className="relative inline-block mb-4">
                 {user.profilePhoto ? (
-                  <img 
+                  <img
                     key={user.profilePhoto}
-                    src={getOptimizedImageUrl(user.profilePhoto, 200)} 
-                    className="w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white mx-auto transition-transform group-hover:scale-105" 
-                    onError={(e) => { 
+                    src={getOptimizedImageUrl(user.profilePhoto, 200)}
+                    className="w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white mx-auto transition-transform group-hover:scale-105"
+                    onError={(e) => {
                       // Phase 1: Try raw if optimized fails
                       if (e.target.src.includes('/images/')) {
                         e.target.src = user.profilePhoto;
-                      } 
+                      }
                     }}
                   />
                 ) : (
@@ -247,7 +247,7 @@ export default function UserDashboardPage() {
                   className={`flex flex-col lg:flex-row items-center justify-center lg:justify-start gap-1 lg:gap-3 px-1 lg:px-6 py-3 lg:py-4 rounded-xl text-[10px] lg:text-sm font-black transition-all group ${activeTab === tab.id
                     ? 'bg-orange-500 text-white shadow-xl'
                     : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 lg:bg-white lg:border lg:border-gray-100'
-                  }`}
+                    }`}
                 >
                   <span className={`transition-transform duration-300 ${activeTab === tab.id ? 'scale-110' : 'group-hover:scale-110'}`}>
                     {tab.icon}
@@ -295,47 +295,44 @@ export default function UserDashboardPage() {
 
               {/* Moderation Stats */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                 <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
-                      (user.trustScore ?? 100) > 80 ? 'bg-emerald-500 text-white' : 
-                      (user.trustScore ?? 100) > 50 ? 'bg-amber-500 text-white' : 
-                      'bg-red-500 text-white'
+                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${(user.trustScore ?? 100) > 80 ? 'bg-emerald-500 text-white' :
+                      (user.trustScore ?? 100) > 50 ? 'bg-amber-500 text-white' :
+                        'bg-red-500 text-white'
                     }`}>
-                       <ShieldCheckIcon className="w-8 h-8" />
+                    <ShieldCheckIcon className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">User Trust Score</p>
+                    <div className="flex items-center gap-3">
+                      <p className="text-2xl font-black text-gray-900">{user.trustScore ?? 100}%</p>
+                      <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-1000 ${(user.trustScore ?? 100) > 80 ? 'bg-emerald-500' :
+                            (user.trustScore ?? 100) > 50 ? 'bg-amber-500' :
+                              'bg-red-500'
+                          }`} style={{ width: `${user.trustScore ?? 100}%` }}></div>
+                      </div>
                     </div>
-                    <div>
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Seller Trust Score</p>
-                       <div className="flex items-center gap-3">
-                          <p className="text-2xl font-black text-gray-900">{user.trustScore ?? 100}%</p>
-                          <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-                             <div className={`h-full transition-all duration-1000 ${
-                                (user.trustScore ?? 100) > 80 ? 'bg-emerald-500' : 
-                                (user.trustScore ?? 100) > 50 ? 'bg-amber-500' : 
-                                'bg-red-500'
-                             }`} style={{ width: `${user.trustScore ?? 100}%` }}></div>
-                          </div>
-                       </div>
-                    </div>
-                 </div>
+                  </div>
+                </div>
 
-                 <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
-                      (user.warnings ?? 0) > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'
+                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex items-center gap-5 group">
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${(user.warnings ?? 0) > 0 ? 'bg-red-100 text-red-600' : 'bg-blue-50 text-blue-600'
                     }`}>
-                       <ExclamationTriangleIcon className="w-8 h-8" />
+                    <ExclamationTriangleIcon className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Official Warnings</p>
+                    <p className={`text-2xl font-black ${(user.warnings ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
+                      {user.warnings ?? 0} / 3
+                    </p>
+                  </div>
+                  {(user.warnings ?? 0) > 0 && (
+                    <div className="ml-auto bg-red-50 px-3 py-1 rounded-full text-[9px] font-black text-red-600 uppercase animate-pulse">
+                      Warning Active
                     </div>
-                    <div>
-                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Official Warnings</p>
-                       <p className={`text-2xl font-black ${(user.warnings ?? 0) > 0 ? 'text-red-600' : 'text-gray-900'}`}>
-                          {user.warnings ?? 0} / 3
-                       </p>
-                    </div>
-                    {(user.warnings ?? 0) > 0 && (
-                       <div className="ml-auto bg-red-50 px-3 py-1 rounded-full text-[9px] font-black text-red-600 uppercase animate-pulse">
-                          Warning Active
-                       </div>
-                    )}
-                 </div>
+                  )}
+                </div>
               </div>
 
               {/* Desktop Stats */}
@@ -371,9 +368,8 @@ export default function UserDashboardPage() {
                     {myAds.map(ad => (
                       <div key={ad._id} className="bg-white rounded-[32px] border border-gray-100 p-4 lg:p-5 flex gap-5 hover:shadow-[0_20px_50px_rgba(0,0,0,0.04)] transition-all group relative overflow-hidden">
                         {/* Status Ribbon for Mobile/Desktop */}
-                        <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[9px] font-black uppercase tracking-widest border-l border-b ${
-                          ad.isApproved ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                        }`}>
+                        <div className={`absolute top-0 right-0 px-4 py-1.5 rounded-bl-2xl text-[9px] font-black uppercase tracking-widest border-l border-b ${ad.isApproved ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                          }`}>
                           {ad.isApproved ? 'Active' : 'Pending'}
                         </div>
 
@@ -384,11 +380,11 @@ export default function UserDashboardPage() {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                             loading="lazy"
                             decoding="async"
-                            onError={(e) => { 
+                            onError={(e) => {
                               // Phase 1: Try raw if optimized fails
                               if (e.target.src.includes('/images/')) {
                                 e.target.src = ad.images?.[0];
-                              } 
+                              }
                               // Phase 2: Show generic icon state
                               else {
                                 e.target.parentElement.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-gray-50 text-gray-200"><svg class="w-12 h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>`;
@@ -426,10 +422,10 @@ export default function UserDashboardPage() {
                                 <TrashIcon className="w-4 h-4" />
                               </button>
                             </div>
-                            
+
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
-                                <EyeIcon className="w-3.5 h-3.5" /> 
+                                <EyeIcon className="w-3.5 h-3.5" />
                                 <span>{ad.views || 0} Views</span>
                               </div>
                               <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-300">
@@ -574,7 +570,7 @@ export default function UserDashboardPage() {
                       <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[64px] group-hover:bg-emerald-500/10 transition-colors"></div>
                       <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Engagment Rate</p>
                       <h4 className="text-3xl font-black text-gray-900">
-                        {analyticsData?.summary?.totalImpressions > 0 
+                        {analyticsData?.summary?.totalImpressions > 0
                           ? ((analyticsData.summary.totalViews / analyticsData.summary.totalImpressions) * 100).toFixed(1)
                           : '0.0'
                         }%
@@ -594,48 +590,48 @@ export default function UserDashboardPage() {
                         <AreaChart data={analyticsData?.stats || []} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                           <defs>
                             <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
                             </linearGradient>
                             <linearGradient id="colorImpressions" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                          <XAxis 
-                            dataKey="displayDate" 
-                            axisLine={false} 
-                            tickLine={false} 
+                          <XAxis
+                            dataKey="displayDate"
+                            axisLine={false}
+                            tickLine={false}
                             tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }}
                             dy={10}
                           />
-                          <Tooltip 
-                            contentStyle={{ 
-                              borderRadius: '20px', 
-                              border: 'none', 
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: '20px',
+                              border: 'none',
                               boxShadow: '0 20px 50px rgba(0,0,0,0.1)',
                               padding: '12px 16px'
-                            }} 
+                            }}
                             itemStyle={{ fontSize: '12px', fontWeight: 800 }}
                           />
-                          <Area 
-                            type="monotone" 
-                            dataKey="views" 
+                          <Area
+                            type="monotone"
+                            dataKey="views"
                             name="Clicks/Views"
-                            stroke="#f97316" 
+                            stroke="#f97316"
                             strokeWidth={3}
-                            fillOpacity={1} 
-                            fill="url(#colorViews)" 
+                            fillOpacity={1}
+                            fill="url(#colorViews)"
                           />
-                          <Area 
-                            type="monotone" 
-                            dataKey="impressions" 
+                          <Area
+                            type="monotone"
+                            dataKey="impressions"
                             name="Impressions"
-                            stroke="#3b82f6" 
+                            stroke="#3b82f6"
                             strokeWidth={3}
-                            fillOpacity={1} 
-                            fill="url(#colorImpressions)" 
+                            fillOpacity={1}
+                            fill="url(#colorImpressions)"
                           />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -648,15 +644,15 @@ export default function UserDashboardPage() {
                       <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl"></div>
                       <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
                         <div className="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-white/20 bg-black/20">
-                          <img 
+                          <img
                             key={analyticsData.summary.topAd.images?.[0]}
-                            src={getOptimizedImageUrl(analyticsData.summary.topAd.images?.[0], 400)} 
-                            className="w-full h-full object-cover" 
-                            onError={(e) => { 
+                            src={getOptimizedImageUrl(analyticsData.summary.topAd.images?.[0], 400)}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
                               // Phase 1: Try raw if optimized fails
                               if (e.target.src.includes('/images/')) {
                                 e.target.src = analyticsData.summary.topAd.images?.[0];
-                              } 
+                              }
                             }}
                           />
                         </div>
@@ -694,8 +690,8 @@ export default function UserDashboardPage() {
                     <div key={report._id} className="bg-white rounded-[32px] border border-gray-100 p-6 flex flex-col md:flex-row gap-6 hover:shadow-xl transition-all group">
                       <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden bg-gray-50 flex-shrink-0">
                         {report.ad ? (
-                          <img 
-                            src={getOptimizedImageUrl(report.ad.images?.[0], 400)} 
+                          <img
+                            src={getOptimizedImageUrl(report.ad.images?.[0], 400)}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             onError={(e) => { e.target.src = report.ad?.images?.[0]; }}
                           />
@@ -712,11 +708,10 @@ export default function UserDashboardPage() {
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-black text-gray-400 uppercase">Reported {timeAgo(report.createdAt)}</span>
                               <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
-                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
-                                report.status === 'pending' ? 'bg-amber-50 text-amber-600' :
-                                report.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' :
-                                'bg-gray-100 text-gray-600'
-                              }`}>
+                              <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${report.status === 'pending' ? 'bg-amber-50 text-amber-600' :
+                                  report.status === 'resolved' ? 'bg-emerald-50 text-emerald-600' :
+                                    'bg-gray-100 text-gray-600'
+                                }`}>
                                 {report.status}
                               </span>
                             </div>
