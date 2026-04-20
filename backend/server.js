@@ -251,17 +251,49 @@ const getSeoMetadata = async (reqPath) => {
       };
     }
 
-    console.log(`[SEO-SSR] ⚠️ No dynamic fallback found. Using site-wide defaults.`);
+    console.log(`[SEO-SSR] ⚠️ No dynamic fallback found. Checking path validity...`);
+    
+    // Define patterns that MUST resolve or else they are 404
+    const entityPrefixes = ['/cities/', '/ads/', '/areas/', '/hotels/', '/category/', '/api/'];
+    const isEntityPath = entityPrefixes.some(prefix => normalizedPath.startsWith(prefix));
+    
+    // Define known valid static routes that don't need custom SEO but should be 200
+    const staticRoutes = [
+      '/', '/login', '/register', '/ads', '/ads/', '/about-us', '/contact-us', 
+      '/terms', '/privacy', '/anti-scam', '/copyright-policy', '/dashboard', 
+      '/messages', '/post-ad', '/forgot-password', '/profile'
+    ];
+    
+    const isStaticRoute = staticRoutes.some(route => 
+      normalizedPath === route || normalizedPath.startsWith('/admin') || normalizedPath.startsWith('/messages/') || normalizedPath.startsWith('/profile/')
+    );
+
     const siteSettings = await getSettings();
     
+    // If it's a known static route or homepage, return site-wide default with 200
+    if (isStaticRoute || normalizedPath === '/') {
+      return {
+        title: siteSettings?.siteTitle || 'Elocanto | Classified Marketplace in Pakistan',
+        description: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+        keywords: siteSettings?.siteKeywords || '',
+        ogTitle: siteSettings?.siteTitle || 'Elocanto',
+        ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+        url: `https://pk.elocanto.com${normalizedPath}`,
+        status: 200
+      };
+    }
+
+    // If it's an entity path (like /cities/junk) and we reached here, it didn't match anything in DB
+    // Return 404 to fix Soft 404 issue for Google Search Console
+    console.log(`[SEO-SSR] ⛔ Invalid or unknown path detected: ${normalizedPath}. Returning 404.`);
     return {
-      title: siteSettings?.siteTitle || 'Elocanto | Classified Marketplace in Pakistan',
-      description: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
-      keywords: siteSettings?.siteKeywords || '',
-      ogTitle: siteSettings?.siteTitle || 'Elocanto',
-      ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+      title: 'Page Not Found | Elocanto',
+      description: 'The page you are looking for does not exist or has been moved.',
+      keywords: '',
+      ogTitle: 'Page Not Found',
+      ogDescription: 'The page you are looking for does not exist.',
       url: `https://pk.elocanto.com${normalizedPath}`,
-      status: 200
+      status: 404
     };
 
   } catch (error) {
