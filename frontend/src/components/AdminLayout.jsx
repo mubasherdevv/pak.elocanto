@@ -16,7 +16,8 @@ import {
   DocumentTextIcon,
   TagIcon as TagIconSolid,
   ChartBarIcon,
-  LinkIcon
+  LinkIcon,
+  ChevronLeftIcon
 } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconMini } from '@heroicons/react/20/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
@@ -28,6 +29,14 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('adminSidebarCollapsed');
+    return saved === 'true';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', isCollapsed);
+  }, [isCollapsed]);
 
   const menuItems = [
     { label: 'Dashboard', icon: Squares2X2Icon, path: '/admin' },
@@ -74,12 +83,13 @@ export default function AdminLayout() {
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar for Desktop */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-[#1a2332] text-white 
-        transform transition-transform duration-300 ease-in-out md:transition-none
+        fixed inset-y-0 left-0 z-50 bg-[#1a2332] text-white 
+        transform transition-all duration-300 ease-in-out md:transition-all
         md:fixed md:translate-x-0 flex flex-col
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isCollapsed ? 'md:w-20' : 'md:w-64'}
+        ${sidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full'}
       `}>
-        <div className="p-6 flex items-center gap-3 shrink-0">
+        <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} shrink-0 relative`}>
           <Link to="/admin" className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
               {settings?.logo ? (
@@ -90,15 +100,26 @@ export default function AdminLayout() {
                 </div>
               )}
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xl font-bold tracking-tight text-white leading-none truncate">
-                {settings?.siteName || 'Elocanto'}
-              </span>
-              <span className="text-orange-500 text-[9px] uppercase tracking-[0.2em] font-black mt-1">
-                Admin Panel
-              </span>
-            </div>
+            {!isCollapsed && (
+              <div className="flex flex-col min-w-0 animate-fadeIn">
+                <span className="text-xl font-bold tracking-tight text-white leading-none truncate">
+                  {settings?.siteName || 'Elocanto'}
+                </span>
+                <span className="text-orange-500 text-[9px] uppercase tracking-[0.2em] font-black mt-1">
+                  Admin Panel
+                </span>
+              </div>
+            )}
           </Link>
+          
+          {/* Desktop Toggle Button */}
+          <button 
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="hidden md:flex absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-orange-500 rounded-full items-center justify-center shadow-lg hover:scale-110 transition-transform z-50"
+          >
+            <ChevronLeftIcon className={`w-4 h-4 text-white transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} />
+          </button>
+
           <button className="md:hidden ml-auto p-1 hover:bg-white/10 rounded-lg" onClick={() => setSidebarOpen(false)}>
             <XMarkIcon className="w-6 h-6" />
           </button>
@@ -111,25 +132,26 @@ export default function AdminLayout() {
               to={item.path}
               onClick={() => setSidebarOpen(false)}
               className={`
-                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-xl transition-all duration-200 group
                 ${location.pathname === item.path
                   ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                   : 'text-gray-400 hover:bg-white/5 hover:text-white'}
               `}
+              title={isCollapsed ? item.label : ''}
             >
-              <item.icon className={`w-5 h-5 ${location.pathname === item.path ? 'text-white' : 'group-hover:text-white'}`} />
-              <span className="font-semibold text-sm">{item.label}</span>
+              <item.icon className={`w-5 h-5 shrink-0 ${location.pathname === item.path ? 'text-white' : 'group-hover:text-white'}`} />
+              {!isCollapsed && <span className="font-semibold text-sm truncate animate-fadeIn">{item.label}</span>}
             </Link>
           ))}
         </nav>
 
         <div className="p-4 border-t border-white/5 shrink-0 space-y-2">
-          <div className="bg-white/5 rounded-2xl p-4">
-            <div className="flex items-center gap-3">
+          <div className={`bg-white/5 rounded-2xl ${isCollapsed ? 'p-2' : 'p-4'} transition-all`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
               {user?.profilePhoto ? (
                 <img 
                   src={getOptimizedImageUrl(user.profilePhoto, 100)} 
-                  className="w-10 h-10 rounded-full object-cover border-2 border-orange-500/20 shadow-lg" 
+                  className="w-10 h-10 rounded-full object-cover border-2 border-orange-500/20 shadow-lg shrink-0" 
                   alt=""
                   onError={(e) => {
                     e.target.onerror = null;
@@ -137,28 +159,31 @@ export default function AdminLayout() {
                   }}
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-lg shadow-orange-500/20">
+                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center font-bold text-white shadow-lg shadow-orange-500/20 shrink-0">
                   {user?.name?.charAt(0) || 'A'}
                 </div>
               )}
-              <div className="min-w-0">
-                <p className="text-sm font-bold truncate text-white">{user?.name || 'Administrator'}</p>
-                <p className="text-[10px] text-gray-400 truncate tracking-wider uppercase font-medium">Master Access</p>
-              </div>
+              {!isCollapsed && (
+                <div className="min-w-0 animate-fadeIn">
+                  <p className="text-sm font-bold truncate text-white">{user?.name || 'Administrator'}</p>
+                  <p className="text-[10px] text-gray-400 truncate tracking-wider uppercase font-medium">Master Access</p>
+                </div>
+              )}
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all"
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} px-4 py-3 text-gray-400 hover:text-white hover:bg-red-500/10 rounded-xl transition-all`}
+            title={isCollapsed ? 'Sign Out' : ''}
           >
-            <ArrowLeftOnRectangleIcon className="w-5 h-5" />
-            <span className="font-semibold text-sm">Sign Out</span>
+            <ArrowLeftOnRectangleIcon className="w-5 h-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm animate-fadeIn">Sign Out</span>}
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:pl-64">
+      <div className={`flex-1 flex flex-col min-w-0 overflow-hidden transition-all duration-300 ${isCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
         {/* Top Header */}
         <header className="bg-white border-b border-gray-100 flex items-center justify-between px-6 py-4">
           <button className="md:hidden p-2 text-gray-500" onClick={() => setSidebarOpen(true)}>

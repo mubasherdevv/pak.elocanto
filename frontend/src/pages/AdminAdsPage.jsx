@@ -47,7 +47,7 @@ export default function AdminAdsPage() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [settings, setSettings] = useState(null);
-  const adsPerPage = 10;
+  const adsPerPage = 20;
   
   // Rejection Modal State
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
@@ -343,112 +343,97 @@ export default function AdminAdsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="px-8 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Listing Details</th>
-                    <th className="px-8 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Category & Price</th>
-                    <th className="px-8 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Seller</th>
-                    <th className="px-8 py-6 text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
-                    <th className="px-8 py-6 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                  <tr className="bg-gray-50/50 border-b border-gray-100 italic">
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Listing</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Details</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Seller</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Status</th>
+                    <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right sticky right-0 bg-gray-50/50 shadow-[-10px_0_10px_-5px_rgba(0,0,0,0.03)] z-10 w-20">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {currentAds.map((ad) => (
                     <tr key={ad._id} className="hover:bg-gray-50/40 transition-all group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-5">
-                          <div className="relative w-20 h-20 rounded-3xl overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform group-hover:scale-105">
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform group-hover:scale-105">
                             <img
-                              src={getOptimizedImageUrl(ad.images?.[0], 200)}
+                              src={getOptimizedImageUrl(ad.images?.[0], 100)}
                               alt={ad.title}
                               className="w-full h-full object-cover"
                               onError={(e) => { 
-                                // Phase 1: Try loading the raw original path if optimized fails
                                 if (e.target.src.includes('/images/')) {
                                   e.target.src = ad.images?.[0] || '/placeholder.png';
-                                } 
-                                // Phase 2: If even raw fails, show the placeholder
-                                else if (!e.target.src.includes('placeholder.png')) {
+                                } else if (!e.target.src.includes('placeholder.png')) {
                                   e.target.src = '/placeholder.png';
                                 }
                               }}
                             />
                             {ad.isFeatured && (
-                              <div className="absolute top-1 right-1 bg-yellow-400 p-1 rounded-lg">
-                                <StarSolid className="w-3 h-3 text-white" />
+                              <div className="absolute top-0.5 right-0.5 bg-yellow-400 p-0.5 rounded-md">
+                                <StarSolid className="w-2 h-2 text-white" />
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-black text-gray-900 text-lg leading-tight truncate max-w-[250px]">{ad.title}</p>
-                            <p className="text-sm text-gray-400 font-bold mt-1 flex items-center gap-1">
-                              ID: <span className="uppercase text-[10px] bg-gray-100 px-2 py-0.5 rounded-full">{ad._id.slice(-6)}</span>
+                            <p className="font-black text-gray-900 text-sm leading-tight truncate max-w-[150px]" title={ad.title}>{ad.title}</p>
+                            <p className="text-[9px] text-gray-400 font-bold mt-0.5 uppercase bg-gray-100 px-1.5 py-0.5 rounded-full w-fit">
+                              ID: {ad._id.slice(-6)}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
+                      <td className="px-4 py-5">
                         <div className="space-y-1">
-                          <span className="text-xs font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-3 py-1 rounded-full">
-                            {ad.category?.name || 'Uncategorized'}
-                          </span>
-                          <p className="text-xl font-black text-gray-900 mt-2">Rs {ad.price.toLocaleString()}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            Posted: {timeAgo(ad.createdAt)}
-                          </p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                            Expires: {new Date(ad.expiresAt).toLocaleDateString()}
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="text-[9px] font-black text-blue-500 uppercase tracking-tighter bg-blue-50 px-2 py-0.5 rounded-md whitespace-nowrap">
+                              {ad.category?.name || 'Uncategorized'}
+                            </span>
+                          </div>
+                          <p className="text-sm font-black text-gray-900">Rs {ad.price.toLocaleString()}</p>
+                          <p className="text-[9px] text-gray-400 font-medium whitespace-nowrap">
+                            Exp: {new Date(ad.expiresAt).toLocaleDateString()}
                           </p>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-2xl bg-orange-50 overflow-hidden border border-orange-100 flex-shrink-0">
+                      <td className="px-4 py-5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-orange-50 overflow-hidden border border-orange-100 flex-shrink-0">
                             {ad.seller?.profilePhoto ? (
                               <img src={getOptimizedImageUrl(ad.seller.profilePhoto, 100)} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-orange-600 font-black text-sm">
+                              <div className="w-full h-full flex items-center justify-center text-orange-600 font-black text-[10px]">
                                 {ad.seller?.name?.charAt(0) || '?'}
                               </div>
                             )}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-900 truncate">{ad.seller?.name || 'Deleted User'}</p>
-                            <div className="flex flex-col gap-0.5 mt-0.5">
-                              <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                <EnvelopeIcon className="w-2.5 h-2.5" />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-black text-gray-900 truncate max-w-[120px]">{ad.seller?.name || 'Deleted User'}</p>
+                            <div className="flex flex-col gap-0.5 mt-1">
+                              <p className="text-[10px] text-gray-800 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                                <EnvelopeIcon className="w-3.5 h-3.5 text-blue-600" />
                                 {ad.seller?.email || 'N/A'}
                               </p>
-                              <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                <PhoneIcon className="w-2.5 h-2.5" />
+                              <p className="text-[10px] text-gray-800 font-bold flex items-center gap-1.5 whitespace-nowrap">
+                                <PhoneIcon className="w-3.5 h-3.5 text-green-600" />
                                 {ad.phone || ad.seller?.phone || 'N/A'}
-                              </p>
-                              <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1">
-                                <MapPinIcon className="w-2.5 h-2.5" />
-                                {ad.city || ad.seller?.city || 'N/A'}
                               </p>
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-8 py-6">
-                        <div className="flex flex-col gap-2">
-                          <span className={`flex items-center gap-1.5 font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full w-fit ${ad.isApproved ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
-                            }`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${ad.isApproved ? 'bg-green-500' : 'bg-orange-500'} ${!ad.isApproved ? 'animate-pulse' : ''}`}></div>
+                      <td className="px-4 py-5">
+                        <div className="flex flex-col gap-1">
+                          <span className={`inline-flex items-center gap-1 font-black text-[8px] uppercase px-2 py-0.5 rounded-full w-fit ${ad.isApproved ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'}`}>
                             {ad.isApproved ? 'Approved' : 'Pending'}
                           </span>
-                          <span className={`flex items-center gap-1.5 font-black text-[10px] uppercase tracking-widest px-3 py-1.5 rounded-full w-fit ${ad.isActive && new Date(ad.expiresAt) > new Date() ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'
-                            }`}>
-                            {ad.isActive && new Date(ad.expiresAt) > new Date() ? 'Live' : (new Date(ad.expiresAt) < new Date() ? 'Expired' : 'Hidden')}
-                          </span>
-                          <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full w-fit ${(ad.adType === 'featured' || ad.isFeatured) ? 'bg-yellow-50 text-yellow-600' : 'bg-gray-50 text-gray-600'
-                            }`}>
-                            {(ad.adType === 'featured' || ad.isFeatured) ? '★ Featured' : 'Simple'}
+                          <span className={`inline-flex items-center gap-1 font-black text-[8px] uppercase px-2 py-0.5 rounded-full w-fit ${ad.isActive && new Date(ad.expiresAt) > new Date() ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}`}>
+                            {ad.isActive && new Date(ad.expiresAt) > new Date() ? 'Live' : 'Hidden'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                      <td className="px-4 py-5 text-right sticky right-0 bg-white group-hover:bg-gray-50 transition-all z-10 shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.02)]">
+                        <div className="flex items-center justify-end gap-1.5">
                           {!ad.isApproved && (
                             <button
                               onClick={async () => {
@@ -458,10 +443,10 @@ export default function AdminAdsPage() {
                                   fetchData();
                                 } catch (err) { toast.error('Failed to approve'); }
                               }}
-                              className="p-3 bg-green-500 text-white rounded-2xl hover:bg-green-600 shadow-sm transition-all"
+                              className="p-2 bg-green-500 text-white rounded-xl hover:bg-green-600 shadow-sm transition-all"
                               title="Quick Approve"
                             >
-                              <CheckBadgeIcon className="w-5 h-5" />
+                              <CheckBadgeIcon className="w-4 h-4" />
                             </button>
                           )}
                           <button
@@ -469,45 +454,45 @@ export default function AdminAdsPage() {
                               setAdToReject(ad);
                               setRejectionModalOpen(true);
                             }}
-                            className="p-3 bg-red-100 text-red-600 rounded-2xl hover:bg-red-200 shadow-sm transition-all"
+                            className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 shadow-sm transition-all"
                             title="Reject/Hide"
                           >
-                            <NoSymbolIcon className="w-5 h-5" />
+                            <NoSymbolIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => window.open(`/ads/${generateAdSlug(ad)}`, '_blank')}
-                            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-500 hover:border-blue-100 shadow-sm transition-all"
+                            className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-500 hover:border-blue-100 shadow-sm transition-all"
                             title="View Public Page"
                           >
-                            <EyeIcon className="w-5 h-5" />
+                            <EyeIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
                               setEditingAd({ ...ad });
                               setView('edit');
                             }}
-                            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-green-500 hover:border-green-100 shadow-sm transition-all"
-                            title="Edit Advertisement"
+                            className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-green-500 hover:border-green-100 shadow-sm transition-all"
+                            title="Edit"
                           >
-                            <PencilIcon className="w-5 h-5" />
+                            <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => toggleFeatured(ad._id, ad.isFeatured)}
-                            className={`p-3 rounded-2xl border transition-all shadow-sm ${
+                            className={`p-2 rounded-xl border transition-all shadow-sm ${
                               ad.isFeatured 
                                 ? 'bg-yellow-500 text-white border-yellow-500' 
                                 : 'bg-white text-gray-400 border-gray-100 hover:text-yellow-500 hover:border-yellow-100'
                             }`}
-                            title={ad.isFeatured ? "Remove from Gallery" : "Pin to Gallery"}
+                            title={ad.isFeatured ? "Unpin" : "Pin"}
                           >
-                            {ad.isFeatured ? <StarSolid className="w-5 h-5" /> : <StarOutline className="w-5 h-5" />}
+                            {ad.isFeatured ? <StarSolid className="w-4 h-4" /> : <StarOutline className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => deleteAd(ad._id)}
-                            className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-red-500 hover:border-red-100 shadow-sm transition-all"
-                            title="Delete Permanently"
+                            className="p-2 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-red-500 hover:border-red-100 shadow-sm transition-all"
+                            title="Delete"
                           >
-                            <TrashIcon className="w-5 h-5" />
+                            <TrashIcon className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
