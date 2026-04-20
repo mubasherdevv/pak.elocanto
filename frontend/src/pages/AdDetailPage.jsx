@@ -293,7 +293,7 @@ export default function AdDetailPage() {
 
         {/* 5. Seller Section */}
         <div style={{ background: 'white', borderRadius: 24, padding: 24, boxShadow: '0 8px 30px rgba(0,0,0,0.05)', marginBottom: 16, border: '1px solid #f1f5f9' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Link to={`/profile/${ad.seller._id}`} style={{ display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none' }}>
             <div style={{ position: 'relative' }}>
               {ad.seller?.profilePhoto ? (
                 <img src={getOptimizedImageUrl(ad.seller.profilePhoto, 120)} alt={ad.seller.name} style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }} />
@@ -305,11 +305,10 @@ export default function AdDetailPage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <h4 style={{ fontWeight: 800, fontSize: 17, color: '#0f172a' }}>{ad.seller.name}</h4>
-                {/* <span style={{ background: '#dcfce7', color: '#166534', fontSize: 9, fontWeight: 900, padding: '2px 8px', borderRadius: 99, textTransform: 'uppercase' }}>Trusted Seller</span> */}
               </div>
               <p style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Member since {new Date(ad.seller.createdAt).getFullYear()}</p>
             </div>
-          </div>
+          </Link>
           <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
             <button
               onClick={handleWhatsApp}
@@ -323,10 +322,10 @@ export default function AdDetailPage() {
             </button>
           </div>
           <div style={{ marginTop: 16, pt: 16, borderTop: '1px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Link to={`/profile/${ad.seller._id}`} style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
               <UserIcon style={{ width: 14, color: '#94a3b8' }} />
               Author: {ad.seller.name}
-            </p>
+            </Link>
             <p style={{ fontSize: 11, color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               <ClockIcon style={{ width: 14, color: '#94a3b8' }} />
               {ad.updatedAt && new Date(ad.updatedAt).getTime() > new Date(ad.createdAt).getTime() + 1000 ? 'Updated' : 'Posted'}: {new Date(ad.updatedAt || ad.createdAt).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}

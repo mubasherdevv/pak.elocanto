@@ -194,7 +194,7 @@ export default function UserProfile() {
               >
                 {filteredAds.map(ad => (
                   <div key={ad._id} className="flex h-full">
-                    <AdCard ad={ad} forceFeatured={true} />
+                    <AdCard ad={ad} />
                   </div>
                 ))}
               </div>
