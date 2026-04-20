@@ -55,7 +55,7 @@ function GlobalHelmet() {
   const defaultDesc = settings?.defaultMetaDescription || 'Explore our classified marketplace.';
   const defaultKeywords = settings?.defaultKeywords || '';
 
-  const favicon = settings?.favicon || '/favicon.ico?v=2';
+  const favicon = settings?.favicon || 'https://res.cloudinary.com/dvoks2cvj/image/upload/v1776693948/favicon_yda3tu.png';
   
   return (
     <Helmet>
