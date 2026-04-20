@@ -55,6 +55,8 @@ function GlobalHelmet() {
   const defaultDesc = settings?.defaultMetaDescription || 'Explore our classified marketplace.';
   const defaultKeywords = settings?.defaultKeywords || '';
 
+  const favicon = settings?.favicon || '/favicon.ico?v=2';
+  
   return (
     <Helmet>
       <title>{defaultTitle}</title>
@@ -62,6 +64,11 @@ function GlobalHelmet() {
       {defaultKeywords && <meta name="keywords" content={defaultKeywords} />}
       <meta property="og:title" content={defaultTitle} />
       <meta property="og:description" content={defaultDesc} />
+      
+      {/* Dynamic Favicon for SEO & Google Search */}
+      <link rel="icon" type="image/x-icon" href={favicon} />
+      <link rel="shortcut icon" href={favicon} />
+      <link rel="apple-touch-icon" href={favicon} />
     </Helmet>
   );
 }
