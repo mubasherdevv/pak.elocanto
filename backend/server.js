@@ -131,6 +131,24 @@ app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
 
 // API Routes
 app.get('/sitemap.xml', getSitemap);
+app.get('/robots.txt', (req, res) => {
+  const robots = `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /messages/
+Disallow: /post-ad/
+Disallow: /edit-ad/
+Disallow: /api/
+Disallow: /profile/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://pk.elocanto.com/sitemap.xml`;
+  res.type('text/plain');
+  res.send(robots);
+});
 import reportRoutes from './routes/reportRoutes.js';
 
 app.use('/api/users', userRoutes);

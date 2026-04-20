@@ -340,7 +340,7 @@ export default function HomePage() {
                   {cat.image ? (
                     <img
                       src={getOptimizedImageUrl(cat.image, 72)}
-                      alt={cat.name}
+                      alt={`${cat.name} in Pakistan`}
                       width="72" height="72"
                       loading={index < 8 ? 'eager' : 'lazy'}
                       decoding="async"
@@ -404,7 +404,7 @@ export default function HomePage() {
                   {city.image ? (
                     <img
                       src={getOptimizedImageUrl(city.image, 120)}
-                      alt={city.name}
+                      alt={`${city.name} City in Pakistan`}
                       width="120" height="120"
                       loading="lazy"
                       decoding="async"
@@ -453,7 +453,7 @@ export default function HomePage() {
                   {area.image ? (
                     <img
                       src={getOptimizedImageUrl(area.image, 120)}
-                      alt={area.name}
+                      alt={`${area.name} Area in ${area.city?.name || 'Pakistan'}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => {
                         e.target.onerror = null;
@@ -498,7 +498,7 @@ export default function HomePage() {
                   {hotel.image ? (
                     <img
                       src={getOptimizedImageUrl(hotel.image, 120)}
-                      alt={hotel.name}
+                      alt={`${hotel.name} Hotel in ${hotel.city?.name || 'Pakistan'}`}
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => {
                         e.target.onerror = null;

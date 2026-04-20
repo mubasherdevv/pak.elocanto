@@ -140,6 +140,7 @@ export default function Footer() {
             <span className="text-orange-500 font-extrabold">{settings?.siteName || 'Elocanto'}</span>© {new Date().getFullYear()}
           </p>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6">
+            <Link to="/sitemap.xml" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Site Map</Link>
             <Link to="/about-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">About</Link>
             <Link to="/contact-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Contact</Link>
             <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Terms</Link>

@@ -8,8 +8,9 @@ export const generateAdSlug = (ad) => {
   return ad.title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
+    .replace(/[\s-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .trim();
 };
 
 export const extractIdFromSlug = (slug) => {

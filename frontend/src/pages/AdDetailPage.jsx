@@ -190,7 +190,7 @@ export default function AdDetailPage() {
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 90 }}>
       {/* 1. Image Section */}
       <div style={{ position: 'relative' }}>
-        <ImageCarousel images={ad.images} title={ad.title} fullWidth={true} />
+        <ImageCarousel images={ad.images} title={`${ad.title} in ${ad.city}, Pakistan`} fullWidth={true} />
 
         {/* Top Overlay Buttons */}
         <div style={{ position: 'absolute', top: 12, left: 12, right: 12, display: 'flex', justifyContent: 'space-between', zIndex: 10 }}>
@@ -441,7 +441,7 @@ export default function AdDetailPage() {
           <div className="ad-detail-layout grid grid-cols-[1fr_340px] gap-8">
             <div className="space-y-6">
               <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm overflow-hidden text-center">
-                <ImageCarousel images={ad.images} title={ad.title} />
+                <ImageCarousel images={ad.images} title={`${ad.title} in ${ad.city}, Pakistan`} />
               </div>
 
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">

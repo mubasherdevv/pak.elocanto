@@ -126,7 +126,7 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
         <div className="relative w-full sm:w-72 h-52 sm:h-full overflow-hidden bg-gray-50 flex items-center justify-center flex-shrink-0">
           <LazyImage
             src={getOptimizedImageUrl(ad.images?.[0], 400)}
-            alt={ad.title}
+            alt={`${ad.title} in ${locationText || 'Pakistan'}`}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             fallbackSrc={ad.images?.[0] || PLACEHOLDER}
             onError={() => setImgError(true)}
@@ -221,7 +221,7 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
       <div className="relative w-full h-[180px] overflow-hidden bg-gray-50 flex items-center justify-center">
         <LazyImage
           src={getOptimizedImageUrl(ad.images?.[0], 400)}
-          alt={ad.title}
+          alt={`${ad.title} in ${locationText || 'Pakistan'}`}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           fallbackSrc={ad.images?.[0] || PLACEHOLDER}
           onError={() => setImgError(true)}
