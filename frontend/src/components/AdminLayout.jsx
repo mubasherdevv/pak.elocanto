@@ -20,6 +20,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconMini } from '@heroicons/react/20/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
+import FloatingScrollToTop from './FloatingScrollToTop';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -177,6 +178,7 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </main>
+        <FloatingScrollToTop />
       </div>
 
       {/* Overlay for Mobile Sidebar */}

@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Helmet } from 'react-helmet-async';
 
 const CopyrightPage = () => {
-  const sections = [
+  const sections = useMemo(() => [
     {
       id: 'respect',
       title: 'Respect for Intellectual Property Rights',
@@ -89,7 +90,7 @@ const CopyrightPage = () => {
         </>
       )
     }
-  ];
+  ], []);
 
   return (
     <>

@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Helmet } from 'react-helmet-async';
 
 const AboutUsPage = () => {
-  const sections = [
+  const sections = useMemo(() => [
     {
       id: 'vision',
       title: 'Our Vision: Connecting People Through Digital Classifieds',
@@ -91,7 +92,7 @@ const AboutUsPage = () => {
         </>
       )
     }
-  ];
+  ], []);
 
   return (
     <>

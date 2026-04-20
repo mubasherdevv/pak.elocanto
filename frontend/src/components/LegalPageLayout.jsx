@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const LegalPageLayout = ({ title, description, sections }) => {
   const [activeTab, setActiveTab] = useState(sections[0]?.id);
   const isScrollingRef = useRef(false);
+  const tabsContainerRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -16,10 +17,12 @@ const LegalPageLayout = ({ title, description, sections }) => {
           const newId = sections[i].id;
           if (newId !== activeTab) {
             setActiveTab(newId);
-            // On mobile, try to scroll the active tab into view in the horizontal bar
+            // On mobile, scroll the active tab into center of the horizontal bar safely
             const tabElement = document.getElementById(`tab-${newId}`);
-            if (tabElement && window.innerWidth < 1024) {
-              tabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            const container = tabsContainerRef.current;
+            if (tabElement && container && window.innerWidth < 1024) {
+              const scrollLeft = tabElement.offsetLeft - (container.offsetWidth / 2) + (tabElement.offsetWidth / 2);
+              container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
             }
           }
           break;
@@ -67,7 +70,10 @@ const LegalPageLayout = ({ title, description, sections }) => {
         </div>
 
         {/* Mobile Sticky Navigation (Horizontal) */}
-        <div className="lg:hidden sticky top-0 z-[50] bg-white/95 backdrop-blur-md border-b border-slate-100 -mx-4 px-4 mb-12 overflow-x-auto no-scrollbar py-4 whitespace-nowrap shadow-sm">
+        <div 
+          ref={tabsContainerRef}
+          className="lg:hidden sticky top-0 z-[50] bg-white/95 backdrop-blur-md border-b border-slate-100 -mx-4 px-4 mb-12 overflow-x-auto no-scrollbar py-4 whitespace-nowrap shadow-sm"
+        >
           <div className="flex gap-4">
             {sections.map((section) => (
               <button

@@ -4,6 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import MobileNav from './MobileNav';
 import SeoContentSection from './SeoContentSection';
+import FloatingScrollToTop from './FloatingScrollToTop';
 import { XMarkIcon, HomeIcon, MagnifyingGlassIcon, PlusCircleIcon, UserIcon, ChatBubbleLeftRightIcon, HeartIcon, Cog6ToothIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
@@ -123,6 +124,7 @@ export default function PublicLayout() {
         </>
       )}
       <MobileNav onMenuClick={() => setIsSidebarOpen(true)} />
+      <FloatingScrollToTop />
     </div>
   );
 }

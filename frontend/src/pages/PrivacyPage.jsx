@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Helmet } from 'react-helmet-async';
 
 const PrivacyPage = () => {
-  const sections = [
+  const sections = useMemo(() => [
     {
       id: 'overview',
       title: 'Overview and Commitment to Privacy',
@@ -143,7 +144,7 @@ const PrivacyPage = () => {
         </>
       )
     }
-  ];
+  ], []);
 
   return (
     <>

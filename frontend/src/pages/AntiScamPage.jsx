@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Helmet } from 'react-helmet-async';
 
 const AntiScamPage = () => {
-  const sections = [
+  const sections = useMemo(() => [
     {
       id: 'commitment',
       title: 'Our Commitment to Transparency and Trust',
@@ -120,7 +121,7 @@ const AntiScamPage = () => {
         </>
       )
     }
-  ];
+  ], []);
 
   return (
     <>

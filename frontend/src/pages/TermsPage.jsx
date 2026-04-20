@@ -1,8 +1,9 @@
+import { useMemo } from 'react';
 import LegalPageLayout from '../components/LegalPageLayout';
 import { Helmet } from 'react-helmet-async';
 
 const TermsPage = () => {
-  const sections = [
+  const sections = useMemo(() => [
     {
       id: 'acceptance',
       title: 'Acceptance and Agreement to Terms',
@@ -137,7 +138,7 @@ const TermsPage = () => {
         </>
       )
     }
-  ];
+  ], []);
 
   return (
     <>
