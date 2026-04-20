@@ -1,5 +1,6 @@
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import { delCache } from '../utils/cache.js';
 
 // @desc    Get all cities
 // @route   GET /api/cities
@@ -60,6 +61,7 @@ export const createCity = asyncHandler(async (req, res) => {
   }
 
   const city = await City.create({ name, image, isPopular, showOnHome });
+  delCache('global_sitemap_xml');
   res.status(201).json(city);
 });
 
@@ -81,6 +83,7 @@ export const updateCity = asyncHandler(async (req, res) => {
     }
 
     const updatedCity = await city.save();
+    delCache('global_sitemap_xml');
     res.json(updatedCity);
   } else {
     res.status(404).json({ message: 'City not found' });
@@ -95,6 +98,7 @@ export const deleteCity = asyncHandler(async (req, res) => {
 
   if (city) {
     await city.deleteOne();
+    delCache('global_sitemap_xml');
     res.json({ message: 'City removed' });
   } else {
     res.status(404).json({ message: 'City not found' });
@@ -112,6 +116,7 @@ export const bulkDeleteCities = asyncHandler(async (req, res) => {
   }
 
   const result = await City.deleteMany({ _id: { $in: ids } });
+  delCache('global_sitemap_xml');
   res.json({ message: `${result.deletedCount} cities removed successfully.` });
 });
 

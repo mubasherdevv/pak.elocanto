@@ -80,6 +80,7 @@ const createCategory = asyncHandler(async (req, res) => {
   const category = await Category.create({ name, icon, description, parentId: parentId || null, image: image || '' });
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,
@@ -108,6 +109,7 @@ const updateCategory = asyncHandler(async (req, res) => {
   const updated = await category.save();
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,
@@ -138,6 +140,7 @@ const deleteCategory = asyncHandler(async (req, res) => {
   await category.deleteOne();
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,
@@ -160,6 +163,7 @@ const createSubSubCategory = asyncHandler(async (req, res) => {
   const subSub = await SubSubCategory.create({ name, subcategory, description, image: image || '' });
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,
@@ -188,6 +192,7 @@ const updateSubSubCategory = asyncHandler(async (req, res) => {
   const updated = await subSub.save();
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,
@@ -216,6 +221,7 @@ const deleteSubSubCategory = asyncHandler(async (req, res) => {
   await subSub.deleteOne();
   
   delCache('category_tree');
+  delCache('global_sitemap_xml');
 
   await ActivityLog.create({
     adminId: req.user._id,

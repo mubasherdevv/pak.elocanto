@@ -1,6 +1,7 @@
 import Hotel from '../models/Hotel.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import { delCache } from '../utils/cache.js';
 
 // @desc    Get all hotels (optionally filter by city slug)
 // @route   GET /api/hotels?city=city-slug
@@ -62,6 +63,7 @@ export const createHotel = asyncHandler(async (req, res) => {
   }
 
   const hotel = await Hotel.create({ name, city, showOnHome });
+  delCache('global_sitemap_xml');
   const populated = await Hotel.findById(hotel._id).populate('city', 'name slug');
   res.status(201).json(populated);
 });
@@ -81,6 +83,7 @@ export const updateHotel = asyncHandler(async (req, res) => {
   if (req.body.showOnHome !== undefined) hotel.showOnHome = req.body.showOnHome;
 
   const updated = await hotel.save();
+  delCache('global_sitemap_xml');
   const populated = await Hotel.findById(updated._id).populate('city', 'name slug');
   res.json(populated);
 });
@@ -94,6 +97,7 @@ export const deleteHotel = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Hotel not found' });
   }
   await hotel.deleteOne();
+  delCache('global_sitemap_xml');
   res.json({ message: 'Hotel removed' });
 });
 // @desc    Bulk create hotels

@@ -472,6 +472,20 @@ export default function AdsListingPage() {
         <title>{displayTitle}</title>
         <meta name="description" content={displayDesc} />
         {displayKeywords && <meta name="keywords" content={displayKeywords} />}
+        
+        {/* Breadcrumb Schema for Google Search */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": breadcrumbs.map((bc, i) => ({
+              "@type": "ListItem",
+              "position": i + 1,
+              "name": bc.name,
+              "item": bc.path.startsWith('http') ? bc.path : `https://pk.elocanto.com${bc.path}`
+            }))
+          })}
+        </script>
       </Helmet>
       )}
       <style>{`

@@ -11,7 +11,7 @@ import Settings from '../models/Settings.js';
 import SimpleAdView from '../models/SimpleAdView.js';
 import FeaturedAdView from '../models/FeaturedAdView.js';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { getCache, setCache } from '../utils/cache.js';
+import { getCache, setCache, delCache } from '../utils/cache.js';
 import { deleteFromCloudinary, extractPublicId, isConfigured } from '../utils/cloudinary.js';
 import { publishToGoogleIndexing } from '../utils/googleIndexing.js';
 import { sendAdRejectionEmail } from '../utils/email.js';
@@ -271,6 +271,10 @@ export const createAd = asyncHandler(async (req, res) => {
     hotel: hotel || undefined,
     website: website || undefined
   });
+  
+  // Clear sitemap cache
+  delCache('global_sitemap_xml');
+
   const populated = await ad.populate([
     { path: 'seller', select: 'name profilePhoto city' },
     { path: 'category', select: 'name slug icon' },
@@ -354,6 +358,10 @@ export const updateAd = asyncHandler(async (req, res) => {
     const rejectionReason = req.body.rejectionReason;
 
     const updated = await ad.save();
+    
+    // Clear sitemap cache
+    delCache('global_sitemap_xml');
+
 
     // Send rejection email if applicable
     // We send it if isApproved is false and a reason is newly provided or the ad's approval is being revoked
@@ -423,6 +431,10 @@ export const deleteAd = asyncHandler(async (req, res) => {
   }
 
   await ad.deleteOne();
+  
+  // Clear sitemap cache
+  delCache('global_sitemap_xml');
+
 
   if (isAdmin) {
     await ActivityLog.create({

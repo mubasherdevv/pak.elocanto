@@ -382,6 +382,10 @@ export default function AdDetailPage() {
         <meta name="description" content={displayDesc} />
         {seo.keywords && <meta name="keywords" content={seo.keywords.replace(/{name}/gi, placeholderName)} />}
 
+        {/* Core Web Vitals: Preconnect to critical domains */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
         {/* OpenGraph Enhanced Previews */}
         <meta property="og:title" content={`${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`} />
         <meta property="og:description" content={`Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description.substring(0, 100)}...`} />
@@ -389,7 +393,7 @@ export default function AdDetailPage() {
         <meta property="og:url" content={window.location.href} />
         {ad.images && ad.images[0] && <meta property="og:image" content={ad.images[0]} />}
 
-        {/* Schema.org Rich Snippet for Google Search */}
+        {/* Schema.org Product Rich Snippet */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org/",
@@ -413,6 +417,40 @@ export default function AdDetailPage() {
               "@type": "Person",
               "name": ad.seller?.name
             }
+          })}
+        </script>
+
+        {/* Breadcrumb Schema for Google Search */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://pk.elocanto.com/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": ad.category.name,
+                "item": `https://pk.elocanto.com/${ad.category.slug}`
+              },
+              ...(ad.subcategory ? [{
+                "@type": "ListItem",
+                "position": 3,
+                "name": ad.subcategory.name,
+                "item": `https://pk.elocanto.com/${ad.category.slug}/${ad.subcategory.slug}`
+              }] : []),
+              {
+                "@type": "ListItem",
+                "position": ad.subcategory ? 4 : 3,
+                "name": ad.title,
+                "item": window.location.href
+              }
+            ]
           })}
         </script>
       </Helmet>

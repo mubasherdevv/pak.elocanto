@@ -130,6 +130,9 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             fallbackSrc={ad.images?.[0] || PLACEHOLDER}
             onError={() => setImgError(true)}
+            aspectRatio="16/9"
+            width="400"
+            height="225"
           />
           {ad.isFeatured && (
             <div className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 uppercase tracking-widest">
@@ -225,6 +228,9 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           fallbackSrc={ad.images?.[0] || PLACEHOLDER}
           onError={() => setImgError(true)}
+          aspectRatio="1/1"
+          width="400"
+          height="400"
         />
         
         {/* Badges Overlay */}

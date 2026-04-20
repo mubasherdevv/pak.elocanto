@@ -1,6 +1,7 @@
 import Area from '../models/Area.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
+import { delCache } from '../utils/cache.js';
 
 // @desc    Get all areas (optionally filter by city slug)
 // @route   GET /api/areas?city=city-slug
@@ -67,6 +68,7 @@ export const createArea = asyncHandler(async (req, res) => {
   }
 
   const area = await Area.create({ name, city, showOnHome });
+  delCache('global_sitemap_xml');
   const populated = await Area.findById(area._id).populate('city', 'name slug');
   res.status(201).json(populated);
 });
@@ -86,6 +88,7 @@ export const updateArea = asyncHandler(async (req, res) => {
   if (req.body.showOnHome !== undefined) area.showOnHome = req.body.showOnHome;
 
   const updated = await area.save();
+  delCache('global_sitemap_xml');
   const populated = await Area.findById(updated._id).populate('city', 'name slug');
   res.json(populated);
 });
@@ -99,6 +102,7 @@ export const deleteArea = asyncHandler(async (req, res) => {
     return res.status(404).json({ message: 'Area not found' });
   }
   await area.deleteOne();
+  delCache('global_sitemap_xml');
   res.json({ message: 'Area removed' });
 });
 // @desc    Bulk create areas

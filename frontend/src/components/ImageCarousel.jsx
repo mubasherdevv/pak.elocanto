@@ -39,7 +39,8 @@ export default function ImageCarousel({ images = [], title = '', fullWidth = fal
             background: 'white',
             transition: 'opacity 0.2s ease-in-out'
           }}
-          loading="lazy"
+          loading={currentIndex === 0 ? "eager" : "lazy"}
+          fetchpriority={currentIndex === 0 ? "high" : "auto"}
           decoding="async"
           onError={(e) => { 
             // Phase 1: If optimized fails, try loading the raw original path
@@ -97,7 +98,7 @@ export default function ImageCarousel({ images = [], title = '', fullWidth = fal
                 padding: 0, cursor: 'pointer', transition: 'border-color 0.2s'
               }}
             >
-              <img src={getOptimizedImageUrl(img, 150)} alt={`thumb-${i}`}
+              <img src={getOptimizedImageUrl(img, 150)} alt={`${title} thumbnail ${i + 1}`}
                 width="70"
                 height="52"
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}

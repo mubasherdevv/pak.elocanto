@@ -5,6 +5,7 @@ import SubSubCategory from '../models/SubSubCategory.js';
 import City from '../models/City.js';
 import Area from '../models/Area.js';
 import Hotel from '../models/Hotel.js';
+import { getCache, setCache } from '../utils/cache.js';
 
 // Helper to escape XML special characters
 const escapeXml = (unsafe) => {
@@ -20,18 +21,28 @@ const escapeXml = (unsafe) => {
 export const getSitemap = async (req, res) => {
   try {
     const BASE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+    const CACHE_KEY = 'global_sitemap_xml';
 
-    // Fetch all levels of hierarchy (only necessary fields)
+    // 1. Check Cache
+    const cachedXml = getCache(CACHE_KEY);
+    if (cachedXml) {
+      res.header('Content-Type', 'application/xml; charset=utf-8');
+      return res.status(200).send(cachedXml);
+    }
+
+    console.log('[SITEMAP] 🛠️ Generating fresh sitemap...');
+
+    // 2. Fetch all levels of hierarchy (optimized with .select() and .lean())
     const [categories, subcategories, subSubCats, cities, areas, hotels, ads] = await Promise.all([
       Category.find({ isActive: true }).select('slug updatedAt').lean(),
-      Subcategory.find({ isActive: true }).populate('category', 'slug').select('slug updatedAt').lean(),
+      Subcategory.find({ isActive: true }).populate('category', 'slug').select('slug updatedAt category').lean(),
       SubSubCategory.find({ isActive: true }).populate({
         path: 'subcategory',
         populate: { path: 'category', select: 'slug' }
-      }).select('slug updatedAt').lean(),
+      }).select('slug updatedAt subcategory').lean(),
       City.find().select('slug updatedAt').lean(),
-      Area.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt').lean(),
-      Hotel.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt').lean(),
+      Area.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city').lean(),
+      Hotel.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city').lean(),
       Ad.find({ isApproved: true, isActive: true })
         .populate('category', 'slug')
         .populate('subcategory', 'slug')
@@ -99,9 +110,9 @@ export const getSitemap = async (req, res) => {
       }
     });
 
-    // 7. All Ad Detail Pages (Intelligent SEO URLs)
+    // 7. Ad Detail Pages
     ads.forEach(ad => {
-      const slug = ad.slug || ad._id;
+      const slug = ad.slug;
       if (slug) {
         let path = '';
         if (ad.category?.slug && ad.subcategory?.slug && ad.subSubCategory?.slug) {
@@ -122,6 +133,9 @@ export const getSitemap = async (req, res) => {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.join('\n')}
 </urlset>`;
+
+    // 3. Save to Cache (1 hour)
+    setCache(CACHE_KEY, xml, 3600);
 
     res.header('Content-Type', 'application/xml; charset=utf-8');
     res.status(200).send(xml);
