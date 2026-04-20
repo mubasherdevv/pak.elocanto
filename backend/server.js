@@ -59,6 +59,7 @@ import hotelRoutes from './routes/hotelRoutes.js';
 import seoSettingsRoutes from './routes/seoSettingsRoutes.js';
 import backupRoutes from './routes/backupRoutes.js';
 import { getSitemap } from './controllers/sitemapController.js';
+import redirectMiddleware from './middleware/redirectMiddleware.js';
 
 await connectDB();
 
@@ -100,6 +101,10 @@ app.use(compression({
   }
 }));
 app.use(express.json());
+
+// Apply Redirect Middleware before everything else
+app.use(redirectMiddleware);
+
 // Apply general rate limit to all /api routes except images
 app.use('/api', (req, res, next) => {
   if (req.path.startsWith('/images')) return next();

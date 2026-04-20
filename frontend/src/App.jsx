@@ -37,6 +37,7 @@ const SubcategoryAdsPage = lazy(() => import('./pages/SubcategoryAdsPage'));
 const CityManagePage = lazy(() => import('./pages/CityManagePage'));
 const AdminSeoPage = lazy(() => import('./pages/AdminSeoPage'));
 const AdminTitlesSeoPage = lazy(() => import('./pages/AdminTitlesSeoPage'));
+const AdminRedirectsPage = lazy(() => import('./pages/AdminRedirectsPage'));
 const UnifiedAdRouter = lazy(() => import('./components/UnifiedAdRouter'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
@@ -134,6 +135,7 @@ function App() {
                   <Route path="/admin/settings" element={<AdminSettingsPage />} />
                   <Route path="/admin/seo" element={<AdminSeoPage />} />
                   <Route path="/admin/titles-seo" element={<AdminTitlesSeoPage />} />
+                  <Route path="/admin/redirects" element={<AdminRedirectsPage />} />
                 </Route>
               </Route>
               {/* Catch-all 404 Route */}

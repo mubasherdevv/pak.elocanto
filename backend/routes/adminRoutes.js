@@ -12,6 +12,7 @@ import SimpleAdView from '../models/SimpleAdView.js';
 import FeaturedAdView from '../models/FeaturedAdView.js';
 import path from 'path';
 import fs from 'fs';
+import Redirect from '../models/Redirect.js';
 import { addWatermarkToBuffer } from '../utils/watermarkUtils.js';
 import { delCache } from '../utils/cache.js';
 import { sendAdRejectionEmail, sendWarningEmail, sendSuspensionEmail } from '../utils/email.js';
@@ -745,5 +746,62 @@ router.post('/indexing/manual', protect, admin, async (req, res) => {
     errors: errors.length > 0 ? errors : undefined
   });
 });
+
+// --- Redirect Management ---
+
+// @desc    Get all redirects
+// @route   GET /api/admin/redirects
+// @access  Private/Admin
+router.get('/redirects', protect, admin, asyncHandler(async (req, res) => {
+  const redirects = await Redirect.find({}).sort({ createdAt: -1 });
+  res.json(redirects);
+}));
+
+// @desc    Create/Update a redirect
+// @route   POST /api/admin/redirects
+// @access  Private/Admin
+router.post('/redirects', protect, admin, asyncHandler(async (req, res) => {
+  const { fromPath, toPath, statusCode, description, isActive } = req.body;
+
+  if (!fromPath || !toPath) {
+    res.status(400);
+    throw new Error('From Path and To Path are required');
+  }
+
+  // Normalize fromPath
+  let normalizedFrom = fromPath.toLowerCase().trim();
+  if (!normalizedFrom.startsWith('/')) normalizedFrom = '/' + normalizedFrom;
+  if (normalizedFrom.length > 1 && normalizedFrom.endsWith('/')) normalizedFrom = normalizedFrom.slice(0, -1);
+
+  const redirect = await Redirect.findOneAndUpdate(
+    { fromPath: normalizedFrom },
+    { fromPath: normalizedFrom, toPath, statusCode, description, isActive: isActive !== undefined ? isActive : true },
+    { upsert: true, new: true, runValidators: true }
+  );
+
+  // Clear cache for this path
+  delCache(`redirect:${normalizedFrom}`);
+
+  res.status(201).json(redirect);
+}));
+
+// @desc    Delete a redirect
+// @route   DELETE /api/admin/redirects/:id
+// @access  Private/Admin
+router.delete('/redirects/:id', protect, admin, asyncHandler(async (req, res) => {
+  const redirect = await Redirect.findById(req.params.id);
+  if (redirect) {
+    const fromPath = redirect.fromPath;
+    await redirect.deleteOne();
+    
+    // Clear cache
+    delCache(`redirect:${fromPath}`);
+    
+    res.json({ message: 'Redirect removed' });
+  } else {
+    res.status(404);
+    throw new Error('Redirect not found');
+  }
+}));
 
 export default router;

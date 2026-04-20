@@ -15,7 +15,8 @@ import {
   MapPinIcon,
   DocumentTextIcon,
   TagIcon as TagIconSolid,
-  ChartBarIcon
+  ChartBarIcon,
+  LinkIcon
 } from '@heroicons/react/24/outline';
 import { TagIcon as TagIconMini } from '@heroicons/react/20/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
@@ -37,6 +38,7 @@ export default function AdminLayout() {
     { label: 'Reports', icon: ExclamationTriangleIcon, path: '/admin/reports', permission: 'view_reports' },
     { label: 'SEO Content', icon: DocumentTextIcon, path: '/admin/seo', permission: 'manage_seo' },
     { label: 'Titles & Tags (SEO)', icon: TagIconSolid, path: '/admin/titles-seo', permission: 'manage_seo' },
+    { label: 'Redirects Manager', icon: LinkIcon, path: '/admin/redirects', permission: 'manage_seo' },
     { label: 'Settings', icon: Cog6ToothIcon, path: '/admin/settings', permission: 'manage_settings' },
   ];
 
