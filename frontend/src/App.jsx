@@ -55,7 +55,7 @@ function GlobalHelmet() {
   const defaultDesc = settings?.defaultMetaDescription || 'Explore our classified marketplace.';
   const defaultKeywords = settings?.defaultKeywords || '';
 
-  const favicon = settings?.favicon || 'https://res.cloudinary.com/dvoks2cvj/image/upload/v1776693948/favicon_yda3tu.png';
+  const favicon = settings?.favicon || '/favicon.ico?v=3';
   
   return (
     <Helmet>
@@ -66,9 +66,8 @@ function GlobalHelmet() {
       <meta property="og:description" content={defaultDesc} />
       
       {/* Dynamic Favicon for SEO & Google Search */}
-      <link rel="icon" type="image/x-icon" href={favicon} />
-      <link rel="shortcut icon" href={favicon} />
-      <link rel="apple-touch-icon" href={favicon} />
+      <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
+      <link rel="apple-touch-icon" href="/favicon.ico?v=3" />
     </Helmet>
   );
 }
