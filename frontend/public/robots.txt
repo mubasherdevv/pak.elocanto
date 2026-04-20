@@ -3,4 +3,8 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://pk.elocanto.com/sitemap.xml
+Sitemap: https://pk.elocanto.com/sitemap-categories.xml
+Sitemap: https://pk.elocanto.com/sitemap-cities.xml
+Sitemap: https://pk.elocanto.com/sitemap-areas.xml
+Sitemap: https://pk.elocanto.com/sitemap-hotels.xml
+Sitemap: https://pk.elocanto.com/sitemap-ads.xml

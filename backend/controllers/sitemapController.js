@@ -43,7 +43,7 @@ export const getSitemapIndex = async (req, res) => {
   <sitemap><loc>${BASE_URL}/sitemap-ads.xml</loc></sitemap>
 </sitemapindex>`;
 
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };
 
@@ -55,7 +55,7 @@ export const getCategoriesSitemap = async (req, res) => {
   const CACHE_KEY = 'sitemap_categories_xml';
   const cached = getCache(CACHE_KEY);
   if (cached) {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.type('application/xml');
     return res.status(200).send(cached);
   }
 
@@ -85,7 +85,7 @@ ${urls.join('\n')}
 </urlset>`;
 
   setCache(CACHE_KEY, xml, 3600);
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };
 
@@ -96,7 +96,7 @@ export const getCitiesSitemap = async (req, res) => {
   const CACHE_KEY = 'sitemap_cities_xml';
   const cached = getCache(CACHE_KEY);
   if (cached) {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.type('application/xml');
     return res.status(200).send(cached);
   }
 
@@ -115,7 +115,7 @@ ${urls.join('\n')}
 </urlset>`;
 
   setCache(CACHE_KEY, xml, 3600);
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };
 
@@ -126,7 +126,7 @@ export const getAreasSitemap = async (req, res) => {
   const CACHE_KEY = 'sitemap_areas_xml';
   const cached = getCache(CACHE_KEY);
   if (cached) {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.type('application/xml');
     return res.status(200).send(cached);
   }
 
@@ -144,7 +144,7 @@ ${urls.join('\n')}
 </urlset>`;
 
   setCache(CACHE_KEY, xml, 3600);
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };
 
@@ -155,7 +155,7 @@ export const getHotelsSitemap = async (req, res) => {
   const CACHE_KEY = 'sitemap_hotels_xml';
   const cached = getCache(CACHE_KEY);
   if (cached) {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.type('application/xml');
     return res.status(200).send(cached);
   }
 
@@ -173,7 +173,7 @@ ${urls.join('\n')}
 </urlset>`;
 
   setCache(CACHE_KEY, xml, 3600);
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };
 
@@ -184,7 +184,7 @@ export const getAdsSitemap = async (req, res) => {
   const CACHE_KEY = 'sitemap_ads_xml';
   const cached = getCache(CACHE_KEY);
   if (cached) {
-    res.header('Content-Type', 'application/xml; charset=utf-8');
+    res.type('application/xml');
     return res.status(200).send(cached);
   }
 
@@ -222,6 +222,6 @@ ${urls.join('\n')}
 </urlset>`;
 
   setCache(CACHE_KEY, xml, 3600);
-  res.header('Content-Type', 'application/xml; charset=utf-8');
+  res.type('application/xml');
   res.status(200).send(xml);
 };

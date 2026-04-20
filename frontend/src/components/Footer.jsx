@@ -157,13 +157,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Legal Disclaimer */}
-        <div className="mt-8 text-center border-t border-white/5 pt-6">
 
-          <p className="text-gray-200 text-[12px] leading-relaxed max-w-4xl mx-auto opacity-90">
-            All content on this website is original and protected under copyright law. Unauthorized copying will result in legal action.
-          </p>
-        </div>
       </div>
     </footer>
   );

@@ -79,6 +79,35 @@ console.log('Server starting...');
 app.get('/api/health', (req, res) => res.status(200).send('OK'));
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
+// 2. High-Priority SEO Routes (Must be early to avoid SPA fallback)
+app.get('/sitemap-categories.xml', getCategoriesSitemap);
+app.get('/sitemap-cities.xml', getCitiesSitemap);
+app.get('/sitemap-areas.xml', getAreasSitemap);
+app.get('/sitemap-hotels.xml', getHotelsSitemap);
+app.get('/sitemap-ads.xml', getAdsSitemap);
+app.get('/robots.txt', (req, res) => {
+  const robots = `User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /messages/
+Disallow: /post-ad/
+Disallow: /edit-ad/
+Disallow: /api/
+Disallow: /profile/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+
+Sitemap: https://pk.elocanto.com/sitemap-categories.xml
+Sitemap: https://pk.elocanto.com/sitemap-cities.xml
+Sitemap: https://pk.elocanto.com/sitemap-areas.xml
+Sitemap: https://pk.elocanto.com/sitemap-hotels.xml
+Sitemap: https://pk.elocanto.com/sitemap-ads.xml`;
+  res.type('text/plain');
+  res.send(robots);
+});
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -135,31 +164,6 @@ app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
   }
 }));
 
-// API Routes
-app.get('/sitemap.xml', getSitemapIndex);
-app.get('/sitemap-categories.xml', getCategoriesSitemap);
-app.get('/sitemap-cities.xml', getCitiesSitemap);
-app.get('/sitemap-areas.xml', getAreasSitemap);
-app.get('/sitemap-hotels.xml', getHotelsSitemap);
-app.get('/sitemap-ads.xml', getAdsSitemap);
-app.get('/robots.txt', (req, res) => {
-  const robots = `User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /messages/
-Disallow: /post-ad/
-Disallow: /edit-ad/
-Disallow: /api/
-Disallow: /profile/
-Disallow: /login
-Disallow: /register
-Disallow: /forgot-password
-
-Sitemap: https://pk.elocanto.com/sitemap.xml`;
-  res.type('text/plain');
-  res.send(robots);
-});
 import reportRoutes from './routes/reportRoutes.js';
 
 app.use('/api/users', userRoutes);
