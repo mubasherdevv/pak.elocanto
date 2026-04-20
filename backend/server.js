@@ -117,15 +117,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
 app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
-  maxAge: '30d',
+  maxAge: '1y',
   etag: true,
   lastModified: true,
   dotfiles: 'deny',
   index: false,
   setHeaders: (res, filePath) => {
-    if (filePath.includes('.cache')) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-    }
+    // Aggressive caching for images in uploads
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
   }
 }));
 

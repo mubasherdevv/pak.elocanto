@@ -40,11 +40,20 @@ export const getOptimizedImageUrl = (url, width) => {
   if (url.includes('/api/images/')) return url;
 
   // Detect Cloudinary or other external URLs
-  // We check for common image hosting patterns. 
-  // IMPORTANT: Cloudinary URLs should NOT be proxied unless specifically needed.
+  if (url.startsWith('http') && (url.includes('cloudinary') || url.includes('res.cloudinary.com'))) {
+    // Cloudinary Optimization Injection
+    // Standard URL: .../image/upload/v1234567/public_id.jpg
+    // Optimized: .../image/upload/f_auto,q_auto,w_width/v1234567/public_id.jpg
+    if (url.includes('/upload/')) {
+      const parts = url.split('/upload/');
+      const widthParam = width ? `,w_${width}` : '';
+      return `${parts[0]}/upload/f_auto,q_auto${widthParam}/${parts[1]}`;
+    }
+    return url;
+  }
+
   if (url.startsWith('http') && !url.includes('localhost') && !url.includes('127.0.0.1')) {
-    // If it's a truly external URL (like Cloudinary), return as is
-    // Unless it explicitly contains /uploads/ which might mean it's our own prod URL
+    // If it's a truly external but non-cloudinary URL, return as is
     const uploadsIdx = url.indexOf('/uploads/');
     if (uploadsIdx === -1) {
       return url;

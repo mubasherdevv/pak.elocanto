@@ -385,6 +385,16 @@ export default function AdDetailPage() {
         {/* Core Web Vitals: Preconnect to critical domains */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        
+        {/* LCP Optimization: Preload the first image */}
+        {ad.images?.[0] && (
+          <link 
+            rel="preload" 
+            as="image" 
+            href={getOptimizedImageUrl(ad.images[0], 800)} 
+            fetchpriority="high"
+          />
+        )}
 
         {/* OpenGraph Enhanced Previews */}
         <meta property="og:title" content={`${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`} />
