@@ -90,15 +90,22 @@ export default function AdDetailPage() {
   }, [slug, user, navigate]);
 
   // Define SEO context for consistency
-  const placeholderName = ad?.title || '';
+  // Dynamic title and description based on location context
+  let locationSuffix = '';
+  if (ad) {
+    if (ad.hotel?.name) locationSuffix += ` at ${ad.hotel.name}`;
+    if (ad.area?.name) locationSuffix += `, ${ad.area.name}`;
+    locationSuffix += `, ${ad.city}`;
+  }
+
   const { seo } = usePageSeo('ad', ad?._id, {
-    title: ad ? `${ad.title} | Elocanto` : 'Loading Ad...',
-    description: ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.'
+    title: ad ? `${ad.title} ${ad.phone || ad.seller.phone}${locationSuffix} | Elocanto` : 'Loading Ad...',
+    description: ad ? `Call: ${ad.phone || ad.seller.phone} - ${ad.title}${locationSuffix}. Check out photos, price: PKR ${ad.price?.toLocaleString()} and more details on Elocanto.` : 'View ad details on Elocanto.'
   });
 
   // Handle {name} placeholder for consistency
-  const displayTitle = (seo?.title || (ad ? `${ad.title} | Elocanto` : 'Loading Ad...')).replace(/{name}/gi, placeholderName);
-  const displayDesc = (seo?.metaDescription || (ad ? ad.description.substring(0, 160) : 'View ad details on Elocanto.')).replace(/{name}/gi, placeholderName);
+  const displayTitle = (seo?.title || (ad ? `${ad.title} ${ad.phone || ad.seller.phone}${locationSuffix} | Elocanto` : 'Loading Ad...')).replace(/{name}/gi, placeholderName);
+  const displayDesc = (seo?.metaDescription || (ad ? `Call: ${ad.phone || ad.seller.phone} - ${ad.title}${locationSuffix}. Check out photos, price: PKR ${ad.price?.toLocaleString()} and more details on Elocanto.` : 'View ad details on Elocanto.')).replace(/{name}/gi, placeholderName);
 
   const toggleFav = async () => {
     if (!user) return navigate('/login');
@@ -407,8 +414,8 @@ export default function AdDetailPage() {
           {JSON.stringify({
             "@context": "https://schema.org/",
             "@type": "Product",
-            "name": ad.title,
-            "image": ad.images,
+            "name": `${ad.title}${locationSuffix}`,
+            "image": ad.images?.map(img => img.startsWith('http') ? img : `${window.location.origin}${img}`),
             "description": ad.description,
             "brand": {
               "@type": "Brand",
@@ -424,8 +431,43 @@ export default function AdDetailPage() {
             },
             "seller": {
               "@type": "Person",
-              "name": ad.seller?.name
+              "name": ad.seller?.name,
+              "telephone": ad.phone || ad.seller.phone
             }
+          })}
+        </script>
+        
+        {/* FAQ Schema for Structured Snippets */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": `What is the price of ${ad.title}?`,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": `The price of ${ad.title} in ${ad.city} is PKR ${ad.price?.toLocaleString()}.`
+                }
+              },
+              {
+                "@type": "Question",
+                "name": `Where is ${ad.title} located?`,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": `${ad.title} is located in ${ad.hotel?.name ? ad.hotel.name + ', ' : ''}${ad.area?.name ? ad.area.name + ', ' : ''}${ad.city}, Pakistan.`
+                }
+              },
+              {
+                "@type": "Question",
+                "name": `How to contact the seller of this ad?`,
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": `You can contact the seller directly by calling or messaging at ${ad.phone || ad.seller.phone}.`
+                }
+              }
+            ]
           })}
         </script>
 
@@ -456,6 +498,24 @@ export default function AdDetailPage() {
               {
                 "@type": "ListItem",
                 "position": ad.subcategory ? 4 : 3,
+                "name": ad.city,
+                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`
+              },
+              ...(ad.area ? [{
+                "@type": "ListItem",
+                "position": ad.subcategory ? 5 : 4,
+                "name": ad.area.name,
+                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`
+              }] : []),
+              ...(ad.hotel ? [{
+                "@type": "ListItem",
+                "position": ad.area ? (ad.subcategory ? 6 : 5) : (ad.subcategory ? 5 : 4),
+                "name": ad.hotel.name,
+                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`
+              }] : []),
+              {
+                "@type": "ListItem",
+                "position": (ad.subcategory ? 4 : 3) + (ad.area ? 1 : 0) + (ad.hotel ? 1 : 0) + 1,
                 "name": ad.title,
                 "item": window.location.href
               }

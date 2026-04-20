@@ -85,6 +85,21 @@ export default function HomePage() {
           {seo.keywords && <meta name="keywords" content={seo.keywords} />}
           <meta property="og:title" content={seo.title} />
           <meta property="og:type" content="website" />
+
+          {/* WebSite Schema & Sitelinks Searchbox */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "Pk.elocanto.com",
+              "url": "https://pk.elocanto.com",
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://pk.elocanto.com/ads?keyword={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            })}
+          </script>
         </Helmet>
       )}
       <style>{`

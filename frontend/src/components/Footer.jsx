@@ -133,14 +133,18 @@ export default function Footer() {
 
           </div>
         </div>
+        <div className="mt-6 pt-6 border-t border-white/5">
+          <p className="text-white-500/80 text-[10px] md:text-[11px] leading-relaxed max-w-5xl mx-auto italic text-justify md:text-center font-medium">
+            <strong>Legal Disclaimer:</strong> The content on our platform is intended only for an adult audience. All advertisements on our pages have been posted independently by the advertiser and are therefore under their exclusive responsibility. Elocanto is not responsible for the truthfulness, legality, or respect for property rights of such content, although it performs careful checks on them. Elocanto allows visitors to access the published content without acting in any way as an intermediary, mediator, or broker between users and has no agents.
+          </p>
+        </div>
 
         {/* Bottom Bar */}
-        <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
+        <div className="mt-8 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <p className="text-gray-400 text-xs font-semibold">
             <span className="text-orange-500 font-extrabold">{settings?.siteName || 'Elocanto'}</span>© {new Date().getFullYear()}
           </p>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 md:gap-6">
-            <Link to="/sitemap.xml" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Site Map</Link>
             <Link to="/about-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">About</Link>
             <Link to="/contact-us" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Contact</Link>
             <Link to="/terms" className="text-gray-400 hover:text-white transition-colors text-[10px] uppercase font-bold tracking-widest">Terms</Link>

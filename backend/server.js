@@ -58,7 +58,14 @@ import areaRoutes from './routes/areaRoutes.js';
 import hotelRoutes from './routes/hotelRoutes.js';
 import seoSettingsRoutes from './routes/seoSettingsRoutes.js';
 import backupRoutes from './routes/backupRoutes.js';
-import { getSitemap } from './controllers/sitemapController.js';
+import { 
+  getSitemapIndex, 
+  getCategoriesSitemap, 
+  getCitiesSitemap, 
+  getAreasSitemap, 
+  getHotelsSitemap, 
+  getAdsSitemap 
+} from './controllers/sitemapController.js';
 import redirectMiddleware from './middleware/redirectMiddleware.js';
 
 await connectDB();
@@ -129,7 +136,12 @@ app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
 }));
 
 // API Routes
-app.get('/sitemap.xml', getSitemap);
+app.get('/sitemap.xml', getSitemapIndex);
+app.get('/sitemap-categories.xml', getCategoriesSitemap);
+app.get('/sitemap-cities.xml', getCitiesSitemap);
+app.get('/sitemap-areas.xml', getAreasSitemap);
+app.get('/sitemap-hotels.xml', getHotelsSitemap);
+app.get('/sitemap-ads.xml', getAdsSitemap);
 app.get('/robots.txt', (req, res) => {
   const robots = `User-agent: *
 Allow: /
