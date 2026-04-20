@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generateSlug } from '../utils/textUtils.js';
 
 const subSubCategorySchema = mongoose.Schema(
   {
@@ -18,7 +19,7 @@ const subSubCategorySchema = mongoose.Schema(
 
 subSubCategorySchema.pre('save', async function () {
   if (this.isModified('name') || this.isNew) {
-    this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.slug = generateSlug(this.name);
   }
 });
 

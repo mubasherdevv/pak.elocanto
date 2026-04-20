@@ -50,7 +50,14 @@ export const publishToGoogleIndexing = async (url, type = 'URL_UPDATED') => {
     
     if (!response.ok) {
       console.error('[Google Indexing] API Error:', data);
-      return { error: data.error?.message || 'Google API Error' };
+      const msg = data.error?.message || 'Google API Error';
+      if (msg.toLowerCase().includes('quota') || data.error?.status === 'RESOURCE_EXHAUSTED') {
+        return { error: 'Daily Google Quota Exceeded (Limit: 200 URLs). Please try again tomorrow or request a quota increase.' };
+      }
+      if (msg.toLowerCase().includes('permission') || data.error?.status === 'PERMISSION_DENIED') {
+        return { error: 'Permission Denied: Ensure the Service Account Email is added as an OWNER in Google Search Console.' };
+      }
+      return { error: msg };
     }
 
     console.log(`[Google Indexing] Success (${type}): ${url}`);

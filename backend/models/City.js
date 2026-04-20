@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generateSlug } from '../utils/textUtils.js';
 
 const citySchema = new mongoose.Schema({
   name: {
@@ -35,7 +36,7 @@ citySchema.index({ isPopular: 1 });
 citySchema.pre('save', async function () {
   if (this.isModified('name') || this.isNew) {
     if (!this.slug || this.isModified('name')) {
-      const generatedSlug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const generatedSlug = generateSlug(this.name);
       // Only set if slug wasn't manually provided/modified in this save call
       if (!this.isModified('slug')) {
         this.slug = generatedSlug;

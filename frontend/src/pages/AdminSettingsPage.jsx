@@ -66,6 +66,7 @@ export default function AdminSettingsPage() {
   const [indexingLoading, setIndexingLoading] = useState(false);
   const [indexingMsg, setIndexingMsg] = useState('');
   const [indexingError, setIndexingError] = useState('');
+  const [indexingResults, setIndexingResults] = useState(null);
 
   useEffect(() => {
     fetchSettings();
@@ -501,8 +502,9 @@ export default function AdminSettingsPage() {
       try {
         const { data } = await api.post('/admin/indexing/manual', { urls, type });
         setIndexingMsg(data.message || 'Notification sent successfully!');
+        setIndexingResults(data); // Store full results including errors
         if (data.errors && data.errors.length > 0) {
-          setIndexingError(`Failed for ${data.errors.length} URLs. See console for details.`);
+          setIndexingError(`Some URLs could not be indexed. See the error log below.`);
           console.error('Indexing Errors:', data.errors);
         }
       } catch (err) {
@@ -632,6 +634,26 @@ export default function AdminSettingsPage() {
           {indexingError && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-800 font-bold text-sm">
               {indexingError}
+            </div>
+          )}
+
+          {/* Detailed Error Log */}
+          {indexingResults?.errors && indexingResults.errors.length > 0 && (
+            <div className="mt-4 border-2 border-red-50 rounded-2xl overflow-hidden bg-white">
+              <div className="bg-red-50 px-4 py-2 text-[10px] font-black text-red-600 uppercase tracking-widest border-b border-red-100 flex justify-between items-center">
+                <span>Error Log ({indexingResults.errors.length} URLs)</span>
+                <button onClick={() => setIndexingResults(prev => ({ ...prev, errors: [] }))} className="text-[9px] hover:underline">Dismiss</button>
+              </div>
+              <div className="max-h-60 overflow-y-auto divide-y divide-red-200/30">
+                {indexingResults.errors.map((err, i) => (
+                  <div key={i} className="p-3 text-[11px] hover:bg-red-50/20 transition-colors">
+                    <div className="flex justify-between items-start gap-4">
+                      <span className="font-mono text-gray-500 break-all">{err.url}</span>
+                      <span className="text-red-600 font-black whitespace-nowrap">{err.error}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

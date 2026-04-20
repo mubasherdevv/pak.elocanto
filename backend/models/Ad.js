@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { deleteFromCloudinary, extractPublicId, isConfigured } from '../utils/cloudinary.js';
+import { generateSlug } from '../utils/textUtils.js';
 
 const adSchema = mongoose.Schema(
   {
@@ -89,12 +90,7 @@ adSchema.index({ isActive: 1, isApproved: 1, expiresAt: 1, createdAt: -1 });
 // Auto-generate slug from title
 adSchema.pre('save', async function () {
   if (this.isModified('title') || this.isNew) {
-    this.slug = this.title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric except space/dash
-      .replace(/[\s-]+/g, '-')      // Collapse spaces and dashes into a single dash
-      .replace(/^-+|-+$/g, '')      // Trim dashes from start and end
-      .substring(0, 70);            // Limit length slightly longer for SEO
+    this.slug = generateSlug(this.title).substring(0, 70); // Limit length slightly longer for SEO
   }
 
   // Synch adType and listingType for backward compatibility

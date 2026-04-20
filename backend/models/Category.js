@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generateSlug } from '../utils/textUtils.js';
 
 const categorySchema = mongoose.Schema(
   {
@@ -22,7 +23,7 @@ categorySchema.index({ parentId: 1 });
 
 categorySchema.pre('save', async function () {
   if (this.isModified('name') || this.isNew) {
-    this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.slug = generateSlug(this.name);
   }
 });
 

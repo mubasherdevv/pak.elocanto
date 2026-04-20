@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generateSlug } from '../utils/textUtils.js';
 
 const areaSchema = new mongoose.Schema(
   {
@@ -20,7 +21,7 @@ areaSchema.index({ city: 1 });
 
 areaSchema.pre('save', function () {
   if (this.isModified('name') || this.isNew) {
-    this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.slug = generateSlug(this.name);
   }
 });
 

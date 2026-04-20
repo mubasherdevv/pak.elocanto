@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generateSlug } from '../utils/textUtils.js';
 
 const hotelSchema = new mongoose.Schema(
   {
@@ -22,7 +23,7 @@ hotelSchema.index({ showOnHome: 1 });
 
 hotelSchema.pre('save', function () {
   if (this.isModified('name') || this.isNew) {
-    this.slug = this.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.slug = generateSlug(this.name);
   }
 });
 

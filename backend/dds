@@ -1,4 +1,0 @@
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb+srv://admin:password12345@cluster0.x3fb6wa.mongodb.net/ecomm?appName=Cluster0
-JWT_SECRET=ecommerce_secret_key_123
