@@ -91,6 +91,7 @@ export default function AdDetailPage() {
 
   // Define SEO context for consistency
   // Dynamic title and description based on location context
+  const placeholderName = ad?.title || '';
   let locationSuffix = '';
   if (ad) {
     if (ad.hotel?.name) locationSuffix += ` at ${ad.hotel.name}`;
