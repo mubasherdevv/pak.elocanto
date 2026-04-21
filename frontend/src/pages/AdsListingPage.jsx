@@ -473,21 +473,6 @@ export default function AdsListingPage() {
         <meta name="description" content={displayDesc} />
         {displayKeywords && <meta name="keywords" content={displayKeywords} />}
         
-        {/* Breadcrumb Schema for Google Search */}
-        {breadcrumbs.length > 0 && (
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "BreadcrumbList",
-              "itemListElement": breadcrumbs.map((bc, i) => ({
-                "@type": "ListItem",
-                "position": i + 1,
-                "name": bc.name,
-                "item": bc.path.startsWith('http') ? bc.path : `https://pk.elocanto.com${bc.path}`
-              }))
-            })}
-          </script>
-        )}
       </Helmet>
       )}
       <style>{`
@@ -600,7 +585,7 @@ export default function AdsListingPage() {
               <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'url(/images/pattern-dots.png)', opacity: 0.1, pointerEvents: 'none' }}></div>
             )}
             
-            <h1 style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, marginBottom: 8 }}>
+            <h2 style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, marginBottom: 8, color: 'white' }}>
               {seo?.title || (hotelSlug ? (
                 cityHotels.find(h => h.slug === hotelSlug)?.name + (cityInfo ? ` in ${cityInfo.name}` : '')
               ) : areaSlug ? (
@@ -610,7 +595,7 @@ export default function AdsListingPage() {
               ) : (
                 cityInfo?.name || 'Listings'
               ))}
-            </h1>
+            </h2>
 
             {/* Navigation Badges / Stats - Only show back-link on sub-pages */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: (areaSlug || hotelSlug || isHotelsPage) ? 16 : 0 }}>
@@ -738,6 +723,36 @@ export default function AdsListingPage() {
           </div>
         </div>
       )}
+
+      {/* Visual Breadcrumbs (SSR handles the Schema JSON-LD) */}
+      <div className="container-custom" style={{ paddingTop: 20 }}>
+        <nav aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-2 text-[12px] text-gray-500 list-none p-0 m-0">
+            {breadcrumbs.map((bc, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <li key={index} className="flex items-center gap-2">
+                  {!isLast ? (
+                    <>
+                      <Link 
+                        to={bc.path} 
+                        className="hover:text-primary transition-colors no-underline font-medium"
+                      >
+                        {bc.name}
+                      </Link>
+                      <span className="text-gray-300">/</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 font-bold truncate max-w-[150px]">
+                      {bc.name}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      </div>
 
       {/* Hero Banner Area */}
       <div className="container-custom" style={{ paddingTop: 12, paddingBottom: 24 }}>

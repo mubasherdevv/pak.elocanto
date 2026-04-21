@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { fileURLToPath } from 'url';
 dotenv.config();
-console.log('MongoDB URI:', process.env.MONGO_URI);
+
 
 import path from 'path';
 import fs from 'fs';
@@ -58,13 +58,13 @@ import areaRoutes from './routes/areaRoutes.js';
 import hotelRoutes from './routes/hotelRoutes.js';
 import seoSettingsRoutes from './routes/seoSettingsRoutes.js';
 import backupRoutes from './routes/backupRoutes.js';
-import { 
-  getSitemapIndex, 
-  getCategoriesSitemap, 
-  getCitiesSitemap, 
-  getAreasSitemap, 
-  getHotelsSitemap, 
-  getAdsSitemap 
+import {
+  getSitemapIndex,
+  getCategoriesSitemap,
+  getCitiesSitemap,
+  getAreasSitemap,
+  getHotelsSitemap,
+  getAdsSitemap
 } from './controllers/sitemapController.js';
 import redirectMiddleware from './middleware/redirectMiddleware.js';
 
@@ -267,10 +267,10 @@ const getSeoMetadata = async (reqPath) => {
 
     // 2. Dynamic Fallback: Use shared resolver logic
     console.log(`[SEO-SSR] ⚠️ No custom SEO. Checking for dynamic fallbacks...`);
-    
+
     // Resolve entity info from path if possible (simplified for SSR)
     const result = await resolveSeoMetadata(normalizedPath);
-    
+
     if (result) {
       console.log(`[SEO-SSR] 📍 Fallback Resolved: ${result.title} (Source: ${result.source})`);
       return {
@@ -279,30 +279,33 @@ const getSeoMetadata = async (reqPath) => {
         keywords: result.keywords || '',
         ogTitle: result.ogTitle || result.title,
         ogDescription: result.ogDescription || result.metaDescription,
+        image: result.image || null,
+        type: result.type || null,
+        entity: result.entity || null,
         url: `https://pk.elocanto.com${normalizedPath}`,
         status: 200
       };
     }
 
     console.log(`[SEO-SSR] ⚠️ No dynamic fallback found. Checking path validity...`);
-    
+
     // Define patterns that MUST resolve or else they are 404
     const entityPrefixes = ['/cities/', '/ads/', '/areas/', '/hotels/', '/category/', '/api/'];
     const isEntityPath = entityPrefixes.some(prefix => normalizedPath.startsWith(prefix));
-    
+
     // Define known valid static routes that don't need custom SEO but should be 200
     const staticRoutes = [
-      '/', '/login', '/register', '/ads', '/ads/', '/about-us', '/contact-us', 
-      '/terms', '/privacy', '/anti-scam', '/copyright-policy', '/dashboard', 
+      '/', '/login', '/register', '/ads', '/ads/', '/about-us', '/contact-us',
+      '/terms', '/privacy', '/anti-scam', '/copyright-policy', '/dashboard',
       '/messages', '/post-ad', '/forgot-password', '/profile'
     ];
-    
-    const isStaticRoute = staticRoutes.some(route => 
+
+    const isStaticRoute = staticRoutes.some(route =>
       normalizedPath === route || normalizedPath.startsWith('/admin') || normalizedPath.startsWith('/messages/') || normalizedPath.startsWith('/profile/')
     );
 
     const siteSettings = await getSettings();
-    
+
     // If it's a known static route or homepage, return site-wide default with 200
     if (isStaticRoute || normalizedPath === '/') {
       return {
@@ -348,6 +351,31 @@ app.get('*', async (req, res) => {
   }
 
   try {
+    // --- 1. URL NORMALIZATION (301 REDIRECTS) ---
+    // Force lowercase and remove trailing slashes to avoid duplicate content indexing
+    if (req.method === 'GET') {
+      const hasExtension = req.path.includes('.');
+      const hasTrailingSlash = req.path.length > 1 && req.path.endsWith('/');
+      const isNotLowercase = req.path !== req.path.toLowerCase();
+
+      // Only normalize if it's not a file (like .png) and not an API call
+      if (!hasExtension && !req.path.startsWith('/api') && (hasTrailingSlash || isNotLowercase)) {
+        let normalized = req.path.toLowerCase();
+        if (normalized.length > 1 && normalized.endsWith('/')) {
+          normalized = normalized.slice(0, -1);
+        }
+        
+        // Preserve query string if any
+        const queryString = req.url.split('?')[1];
+        const destination = normalized + (queryString ? `?${queryString}` : '');
+
+        if (req.path !== normalized) {
+          console.log(`[SEO REDIRECT] ${req.url} -> ${destination}`);
+          return res.redirect(301, destination);
+        }
+      }
+    }
+
     const indexPath = path.resolve(frontendDistPath, 'index.html');
     if (!fs.existsSync(indexPath)) {
       console.error(`[SSR] ❌ index.html not found: ${indexPath}`);
@@ -355,7 +383,7 @@ app.get('*', async (req, res) => {
     }
 
     let html = fs.readFileSync(indexPath, 'utf8');
-    
+
     // Safety check for DB connection
     if (mongoose.connection.readyState !== 1) {
       console.warn('[SSR] ⏳ Waiting for Database connection...');
@@ -388,6 +416,112 @@ app.get('*', async (req, res) => {
       `;
     }
 
+    // Resolve og:image — use ad image if available, else fallback to site default
+    const ogImage = seo.image
+      ? (seo.image.startsWith('http') ? seo.image : `https://pk.elocanto.com${seo.image}`)
+      : (settings?.ogImage || 'https://pk.elocanto.com/og-default.jpg');
+
+    // Build SSR JSON-LD Schema for ad pages (Google ko static HTML mein milega)
+    let schemaScript = '';
+    if (seo.type === 'ad' && seo.entity) {
+      const ad = seo.entity;
+      const adUrl = `https://pk.elocanto.com${normalizePath(req.path)}`;
+      const adImages = Array.isArray(ad.images)
+        ? ad.images.map(img => img.startsWith('http') ? img : `https://pk.elocanto.com${img}`)
+        : [];
+
+      const productSchema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": ad.title,
+        "image": adImages,
+        "description": ad.description,
+        "brand": {
+          "@type": "Brand",
+          "name": ad.brand || "Generic"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": adUrl,
+          "priceCurrency": "PKR",
+          "price": ad.price,
+          "availability": "https://schema.org/InStock",
+          "itemCondition": ad.condition === 'new'
+            ? "https://schema.org/NewCondition"
+            : "https://schema.org/UsedCondition"
+        },
+        "seller": {
+          "@type": "Person",
+          "name": ad.seller?.name,
+          "telephone": ad.phone || ad.seller?.phone
+        }
+      };
+
+      const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": `What is the price of ${ad.title}?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `The price of ${ad.title} in ${ad.city} is PKR ${ad.price?.toLocaleString()}.`
+            }
+          },
+          {
+            "@type": "Question",
+            "name": `Where is ${ad.title} located?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `${ad.title} is located in ${ad.hotel?.name ? ad.hotel.name + ', ' : ''}${ad.area?.name ? ad.area.name + ', ' : ''}${ad.city}, Pakistan.`
+            }
+          },
+          {
+            "@type": "Question",
+            "name": `How to contact the seller of this ad?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `You can contact the seller directly via WhatsApp or phone at ${ad.phone || ad.seller?.phone}.`
+            }
+          }
+        ]
+      };
+
+      // Breadcrumb positions: Home > Category > Subcategory? > City > Area? > Hotel? > Ad
+      const breadcrumbItems = [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pk.elocanto.com/" }
+      ];
+      let pos = 2;
+      if (ad.category) {
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pk.elocanto.com/${ad.category.slug}` });
+      }
+      if (ad.subcategory) {
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.subcategory.name, "item": `https://pk.elocanto.com/${ad.category?.slug}/${ad.subcategory.slug}` });
+      }
+      const citySlug = ad.city?.toLowerCase().replace(/\s+/g, '-');
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.city, "item": `https://pk.elocanto.com/cities/${citySlug}` });
+      if (ad.area) {
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.area.name, "item": `https://pk.elocanto.com/cities/${citySlug}/areas/${ad.area.slug}` });
+      }
+      if (ad.hotel) {
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.hotel.name, "item": `https://pk.elocanto.com/cities/${citySlug}/hotels/${ad.hotel.slug}` });
+      }
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos, "name": ad.title, "item": adUrl });
+
+      const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": breadcrumbItems
+      };
+
+      schemaScript = `
+        <script type="application/ld+json">${JSON.stringify(productSchema)}</script>
+        <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
+        <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
+      `;
+    }
+
     // High Performance Placeholder Replacement
     html = html
       .replace(/{{SEO_TITLE}}/g, seo.title)
@@ -395,22 +529,23 @@ app.get('*', async (req, res) => {
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
       .replace(/{{OG_TITLE}}/g, seo.ogTitle)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
+      .replace(/{{OG_IMAGE}}/g, ogImage)
       .replace(/{{CANONICAL_URL}}/g, seo.url);
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
-    const headerScripts = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
+    const headerScripts = (analyticsScript + gscMeta + schemaScript + (settings?.headerScripts || '')).trim();
 
     if (headerScripts && html.includes('</head>')) {
       html = html.replace('</head>', `${headerScripts}</head>`);
     }
-    
+
     if (settings?.footerScripts && html.includes('</body>')) {
       html = html.replace('</body>', `${settings.footerScripts}</body>`);
     }
 
     console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
     res.status(seo.status || 200).setHeader('Cache-Control', 'no-cache').send(html);
-    
+
   } catch (err) {
     console.error('[SSR] ❌ Panic Error:', err);
     res.status(500).send('An error occurred');
@@ -435,6 +570,3 @@ app.use((err, req, res, next) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Elocanto API running on port ${PORT}`);
 });
-
-
- 

@@ -174,7 +174,8 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
         ogDescription: seo.ogDescription || seo.metaDescription,
         whatsappNumber: seo.whatsappNumber || '',
         isActive: true,
-        source: 'custom'
+        source: 'custom',
+        image: seo.ogImage || null
       };
     }
 
@@ -183,8 +184,14 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     // Ad Detail Pattern: /ads/:slug
     if (normalizedPath.startsWith('/ads/') && normalizedPath.split('/').length === 3) {
       const slug = normalizedPath.split('/')[2];
-      const ad = await Ad.findOne({ slug }).lean();
+      const ad = await Ad.findOne({ slug })
+        .populate('category', 'name slug')
+        .populate('subcategory', 'name slug')
+        .populate('subSubCategory', 'name slug')
+        .lean();
+        
       if (ad) {
+        const image = ad.images && ad.images.length > 0 ? ad.images[0] : null;
         return {
           title: `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`,
           metaDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description?.substring(0, 160)}`,
@@ -192,7 +199,10 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
           ogDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}.`,
           keywords: '',
           isActive: true,
-          source: 'dynamic-ad'
+          source: 'dynamic-ad',
+          image: image,
+          entity: ad,
+          type: 'ad'
         };
       }
     }
@@ -202,12 +212,16 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       const slug = normalizedPath.split('/')[2];
       const city = await City.findOne({ slug }).lean();
       if (city) {
+        const entityCount = await Ad.countDocuments({ city: city.name, isApproved: true, isActive: true });
         return {
           title: `${city.name} Escorts & Call Girls Service 24/7 | Elocanto`,
           metaDescription: `Premium call girls and escort services in ${city.name}. Reliable and verified listings.`,
           keywords: `${city.name} escorts, ${city.name} call girls`,
           isActive: true,
-          source: 'dynamic-city'
+          source: 'dynamic-city',
+          type: 'city',
+          entity: city,
+          entityCount
         };
       }
     }
@@ -221,23 +235,31 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       if (type === 'areas') {
         const area = await Area.findOne({ slug }).lean();
         if (area) {
+          const entityCount = await Ad.countDocuments({ area: area._id, isApproved: true, isActive: true });
           return {
             title: `${area.name} Escorts - Call Girls Service in ${area.name} | Elocanto`,
             metaDescription: `Find top-rated call girls and independent escorts in ${area.name}.`,
             keywords: `${area.name} escorts`,
             isActive: true,
-            source: 'dynamic-area'
+            source: 'dynamic-area',
+            type: 'area',
+            entity: area,
+            entityCount
           };
         }
       } else if (type === 'hotels') {
         const hotel = await Hotel.findOne({ slug }).lean();
         if (hotel) {
+          const entityCount = await Ad.countDocuments({ hotel: hotel._id, isApproved: true, isActive: true });
           return {
             title: `${hotel.name} Escorts - Exclusive Call Girls Service | Elocanto`,
             metaDescription: `Verified escorts and call girls services available at ${hotel.name}.`,
             keywords: `${hotel.name} escorts`,
             isActive: true,
-            source: 'dynamic-hotel'
+            source: 'dynamic-hotel',
+            type: 'hotel',
+            entity: hotel,
+            entityCount
           };
         }
       }

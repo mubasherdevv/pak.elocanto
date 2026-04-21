@@ -410,119 +410,8 @@ export default function AdDetailPage() {
         <meta property="og:url" content={window.location.href} />
         {ad.images && ad.images[0] && <meta property="og:image" content={ad.images[0]} />}
 
-        {/* Schema.org Product Rich Snippet */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org/",
-            "@type": "Product",
-            "name": `${ad.title}${locationSuffix}`,
-            "image": ad.images?.map(img => img.startsWith('http') ? img : `${window.location.origin}${img}`),
-            "description": ad.description,
-            "brand": {
-              "@type": "Brand",
-              "name": ad.brand || "Generic"
-            },
-            "offers": {
-              "@type": "Offer",
-              "url": window.location.href,
-              "priceCurrency": "PKR",
-              "price": ad.price,
-              "availability": "https://schema.org/InStock",
-              "itemCondition": ad.condition === 'new' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition"
-            },
-            "seller": {
-              "@type": "Person",
-              "name": ad.seller?.name,
-              "telephone": ad.phone || ad.seller.phone
-            }
-          })}
-        </script>
         
-        {/* FAQ Schema for Structured Snippets */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": `What is the price of ${ad.title}?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `The price of ${ad.title} in ${ad.city} is PKR ${ad.price?.toLocaleString()}.`
-                }
-              },
-              {
-                "@type": "Question",
-                "name": `Where is ${ad.title} located?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `${ad.title} is located in ${ad.hotel?.name ? ad.hotel.name + ', ' : ''}${ad.area?.name ? ad.area.name + ', ' : ''}${ad.city}, Pakistan.`
-                }
-              },
-              {
-                "@type": "Question",
-                "name": `How to contact the seller of this ad?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `You can contact the seller directly by calling or messaging at ${ad.phone || ad.seller.phone}.`
-                }
-              }
-            ]
-          })}
-        </script>
 
-        {/* Breadcrumb Schema for Google Search */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://pk.elocanto.com/"
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": ad.category.name,
-                "item": `https://pk.elocanto.com/${ad.category.slug}`
-              },
-              ...(ad.subcategory ? [{
-                "@type": "ListItem",
-                "position": 3,
-                "name": ad.subcategory.name,
-                "item": `https://pk.elocanto.com/${ad.category.slug}/${ad.subcategory.slug}`
-              }] : []),
-              {
-                "@type": "ListItem",
-                "position": ad.subcategory ? 4 : 3,
-                "name": ad.city,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`
-              },
-              ...(ad.area ? [{
-                "@type": "ListItem",
-                "position": ad.subcategory ? 5 : 4,
-                "name": ad.area.name,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`
-              }] : []),
-              ...(ad.hotel ? [{
-                "@type": "ListItem",
-                "position": ad.area ? (ad.subcategory ? 6 : 5) : (ad.subcategory ? 5 : 4),
-                "name": ad.hotel.name,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`
-              }] : []),
-              {
-                "@type": "ListItem",
-                "position": (ad.subcategory ? 4 : 3) + (ad.area ? 1 : 0) + (ad.hotel ? 1 : 0) + 1,
-                "name": ad.title,
-                "item": window.location.href
-              }
-            ]
-          })}
-        </script>
       </Helmet>
 
       {isMobile ? (
@@ -530,20 +419,36 @@ export default function AdDetailPage() {
       ) : (
         <div className="container-custom py-8">
           {/* Default Desktop Layout */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-            <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>Home</Link>
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <Link to="/ads" style={{ color: 'inherit', textDecoration: 'none' }}>Ads</Link>
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <Link to={`/${ad.category.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.category.name}</Link>
-            {ad.subcategory && (
-              <>
+          <nav aria-label="Breadcrumb" className="mb-5">
+            <ol className="flex items-center gap-2 text-[13px] text-gray-500 list-none p-0 m-0">
+              <li className="flex items-center gap-2">
+                <Link to="/" className="hover:text-primary transition-colors no-underline">Home</Link>
                 <ChevronRightIcon style={{ width: 12, height: 12 }} />
-                <Link to={`/${ad.category.slug}/${ad.subcategory.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.subcategory.name}</Link>
-              </>
-            )}
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <span style={{ color: '#1a1a2e', fontWeight: 600 }}>{ad.title}</span>
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Link to="/ads" className="hover:text-primary transition-colors no-underline">Ads</Link>
+                <ChevronRightIcon style={{ width: 12, height: 12 }} />
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Link to={`/${ad.category.slug}`} className="hover:text-primary transition-colors no-underline">{ad.category.name}</Link>
+                {ad.subcategory && <ChevronRightIcon style={{ width: 12, height: 12 }} />}
+              </li>
+
+              {ad.subcategory && (
+                <li className="flex items-center gap-2">
+                  <Link to={`/${ad.category.slug}/${ad.subcategory.slug}`} className="hover:text-primary transition-colors no-underline">{ad.subcategory.name}</Link>
+                  <ChevronRightIcon style={{ width: 12, height: 12 }} />
+                </li>
+              )}
+
+              <li className="flex items-center gap-2">
+                <span className="text-gray-900 font-semibold truncate max-w-[200px]">
+                  {ad.title}
+                </span>
+              </li>
+            </ol>
           </nav>
 
           <div className="ad-detail-layout grid grid-cols-[1fr_340px] gap-8">
