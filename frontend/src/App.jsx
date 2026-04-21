@@ -55,7 +55,7 @@ function GlobalHelmet() {
   const defaultDesc = settings?.defaultMetaDescription || 'Explore our classified marketplace.';
   const defaultKeywords = settings?.defaultKeywords || '';
 
-  const favicon = settings?.favicon || '/favicon.ico?v=3';
+  const favicon = settings?.favicon;
   
   return (
     <Helmet>
@@ -65,9 +65,21 @@ function GlobalHelmet() {
       <meta property="og:title" content={defaultTitle} />
       <meta property="og:description" content={defaultDesc} />
       
-      {/* Dynamic Favicon for SEO & Google Search */}
-      <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" />
-      <link rel="apple-touch-icon" href="/favicon.ico?v=3" />
+      {/* Dynamic Favicon Logic */}
+      {favicon ? (
+        <>
+          <link rel="icon" href={favicon} />
+          <link rel="apple-touch-icon" href={favicon} />
+        </>
+      ) : (
+        <>
+          <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+          <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+          <link rel="shortcut icon" href="/favicon.ico" />
+          <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+          <link rel="manifest" href="/site.webmanifest" />
+        </>
+      )}
     </Helmet>
   );
 }

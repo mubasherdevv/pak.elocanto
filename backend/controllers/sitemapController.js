@@ -105,7 +105,6 @@ export const getCitiesSitemap = async (req, res) => {
   cities.forEach(city => {
     if (city.slug) {
       urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(city.slug)}</loc>${formatDate(city.updatedAt)}</url>`);
-      urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(city.slug)}/hotels</loc>${formatDate(city.updatedAt)}</url>`);
     }
   });
 
