@@ -191,6 +191,24 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
         .lean();
         
       if (ad) {
+        // Try to find custom SEO for this specific ad entity
+        const entitySeo = await SeoSettings.findOne({ pageType: 'ad', referenceId: ad._id, isActive: true }).lean();
+        if (entitySeo) {
+          return {
+            title: entitySeo.title,
+            metaDescription: entitySeo.metaDescription,
+            keywords: entitySeo.keywords || '',
+            ogTitle: entitySeo.ogTitle || entitySeo.title,
+            ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+            whatsappNumber: entitySeo.whatsappNumber || '',
+            image: entitySeo.ogImage || (ad.images && ad.images.length > 0 ? ad.images[0] : null),
+            isActive: true,
+            source: 'custom-ad',
+            entity: ad,
+            type: 'ad'
+          };
+        }
+
         const image = ad.images && ad.images.length > 0 ? ad.images[0] : null;
         return {
           title: `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`,
@@ -212,6 +230,24 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       const slug = normalizedPath.split('/')[2];
       const city = await City.findOne({ slug }).lean();
       if (city) {
+        // Try to find custom SEO for this specific city entity (Fixes the Lahore "City Listings" issue)
+        const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
+        if (entitySeo) {
+          return {
+            title: entitySeo.title,
+            metaDescription: entitySeo.metaDescription,
+            keywords: entitySeo.keywords || '',
+            ogTitle: entitySeo.ogTitle || entitySeo.title,
+            ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+            whatsappNumber: entitySeo.whatsappNumber || '',
+            isActive: true,
+            source: 'custom-city',
+            type: 'city',
+            entity: city,
+            image: entitySeo.ogImage || null
+          };
+        }
+
         const entityCount = await Ad.countDocuments({ city: city.name, isApproved: true, isActive: true });
         return {
           title: `${city.name} Escorts & Call Girls Service 24/7 | Elocanto`,
@@ -235,6 +271,22 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       if (type === 'areas') {
         const area = await Area.findOne({ slug }).lean();
         if (area) {
+          const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
+          if (entitySeo) {
+            return {
+              title: entitySeo.title,
+              metaDescription: entitySeo.metaDescription,
+              keywords: entitySeo.keywords || '',
+              ogTitle: entitySeo.ogTitle || entitySeo.title,
+              ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+              whatsappNumber: entitySeo.whatsappNumber || '',
+              isActive: true,
+              type: 'area',
+              entity: area,
+              source: 'custom-area'
+            };
+          }
+
           const entityCount = await Ad.countDocuments({ area: area._id, isApproved: true, isActive: true });
           return {
             title: `${area.name} Escorts - Call Girls Service in ${area.name} | Elocanto`,
@@ -250,6 +302,22 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       } else if (type === 'hotels') {
         const hotel = await Hotel.findOne({ slug }).lean();
         if (hotel) {
+          const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
+          if (entitySeo) {
+            return {
+              title: entitySeo.title,
+              metaDescription: entitySeo.metaDescription,
+              keywords: entitySeo.keywords || '',
+              ogTitle: entitySeo.ogTitle || entitySeo.title,
+              ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+              whatsappNumber: entitySeo.whatsappNumber || '',
+              isActive: true,
+              type: 'hotel',
+              entity: hotel,
+              source: 'custom-hotel'
+            };
+          }
+
           const entityCount = await Ad.countDocuments({ hotel: hotel._id, isApproved: true, isActive: true });
           return {
             title: `${hotel.name} Escorts - Exclusive Call Girls Service | Elocanto`,

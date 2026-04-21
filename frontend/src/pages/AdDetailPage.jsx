@@ -460,8 +460,8 @@ export default function AdDetailPage() {
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</h1>
-                    <h2 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h2>
+                    <div className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</div>
+                    <h1 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h1>
                   </div>
                   <div className="flex gap-4">
                     <button onClick={toggleFav} className="px-5 py-2.5 rounded-2xl border-2 border-gray-50 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-100 transition-all font-black text-[11px] uppercase tracking-widest text-gray-700 shadow-sm bg-white">
