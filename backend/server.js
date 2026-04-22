@@ -544,7 +544,7 @@ app.get('*', async (req, res) => {
     const headerScripts = (analyticsScript + initialDataScript + gscMeta + (settings?.headerScripts || '')).trim();
 
     if (headerScripts && html.includes('</head>')) {
-      html = html.replace('</head>', `${headerScripts}</head>`);
+      html = html.replace('</head>', `${headerScripts}\n  <!-- SSR_DEBUG_V2 -->\n</head>`);
     }
 
     if (settings?.footerScripts && html.includes('</body>')) {
