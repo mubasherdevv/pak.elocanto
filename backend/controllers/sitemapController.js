@@ -34,14 +34,21 @@ const formatDate = (date) => {
  * Sitemap Index: Lists all sub-sitemaps
  */
 export const getSitemapIndex = async (req, res) => {
+  const totalAds = await Ad.countDocuments({ isApproved: true, isActive: true });
+  const adsPages = Math.ceil(totalAds / 10000) || 1;
+  
+  let adsSitemaps = '';
+  for (let i = 1; i <= adsPages; i++) {
+    adsSitemaps += `  <sitemap><loc>${BASE_URL}/sitemap-ads-${i}.xml</loc></sitemap>\n`;
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap><loc>${BASE_URL}/sitemap-categories.xml</loc></sitemap>
   <sitemap><loc>${BASE_URL}/sitemap-cities.xml</loc></sitemap>
   <sitemap><loc>${BASE_URL}/sitemap-areas.xml</loc></sitemap>
   <sitemap><loc>${BASE_URL}/sitemap-hotels.xml</loc></sitemap>
-  <sitemap><loc>${BASE_URL}/sitemap-ads.xml</loc></sitemap>
-</sitemapindex>`;
+${adsSitemaps}</sitemapindex>`;
 
   res.type('application/xml');
   res.status(200).send(xml);
@@ -177,23 +184,27 @@ ${urls.join('\n')}
 };
 
 /**
- * Ads Sitemap
+ * Ads Sitemap with Pagination
  */
 export const getAdsSitemap = async (req, res) => {
-  const CACHE_KEY = 'sitemap_ads_xml';
+  const page = parseInt(req.params.page) || 1;
+  const limit = 10000;
+  const skip = (page - 1) * limit;
+
+  const CACHE_KEY = `sitemap_ads_${page}_xml`;
   const cached = getCache(CACHE_KEY);
   if (cached) {
     res.type('application/xml');
     return res.status(200).send(cached);
   }
 
-  // Fetch only the last 10,000 ads for the main ads sitemap to keep it efficient
   const ads = await Ad.find({ isApproved: true, isActive: true })
     .populate('category', 'slug')
     .populate('subcategory', 'slug')
     .populate('subSubCategory', 'slug')
     .sort({ createdAt: -1 })
-    .limit(10000)
+    .skip(skip)
+    .limit(limit)
     .select('slug updatedAt category subcategory subSubCategory')
     .lean();
 
