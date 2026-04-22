@@ -533,24 +533,11 @@ app.get('*', async (req, res) => {
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
       .replace(/{{OG_TITLE}}/g, seo.ogTitle)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
-      .replace(/{{OG_IMAGE}}/g, settings?.siteLogo || 'https://pk.elocanto.com/og-default.jpg')
       .replace(/{{CANONICAL_URL}}/g, seo.url)
       .replace(/{{CONTENT}}/g, contentHtml); // Inject SEO HTML into root
 
-    // Inject Initial Data for React Hydration (Only public settings)
-    const publicSettings = settings ? {
-      siteTitle: settings.siteTitle,
-      siteLogo: settings.siteLogo,
-      siteDescription: settings.siteDescription,
-      googleAnalyticsId: settings.googleAnalyticsId,
-      googleSearchConsoleId: settings.googleSearchConsoleId,
-      defaultMetaDescription: settings.defaultMetaDescription,
-      whatsappNumber: settings.whatsappNumber,
-      headerScripts: settings.headerScripts,
-      footerScripts: settings.footerScripts
-    } : null;
-
-    const initialDataWithSettings = { ...initialData, settings: publicSettings, seo, path: req.path };
+    // Inject Initial Data for React Hydration
+    const initialDataWithSettings = { ...initialData, settings, seo, path: req.path };
     const initialDataScript = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialDataWithSettings).replace(/</g, '\\u003c')};</script>`;
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
