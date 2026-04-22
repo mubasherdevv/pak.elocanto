@@ -2,18 +2,22 @@ import { createContext, useContext, useState, useCallback, useEffect } from 'rea
 import api from '../lib/api';
 import { cache } from '../utils/cache';
 
+import { getInitialData, getGlobalSettings } from '../utils/ssr';
+
 const AdContext = createContext();
 
 export const AdProvider = ({ children }) => {
-  const [ads, setAds] = useState([]);
-  const [featuredAds, setFeaturedAds] = useState(() => cache.get('featured_ads') || []);
-  const [latestAds, setLatestAds] = useState(() => cache.get('latest_ads') || []);
+  const initialData = getInitialData() || {};
+  
+  const [ads, setAds] = useState(initialData.ads || []);
+  const [featuredAds, setFeaturedAds] = useState(() => initialData.featuredAds || cache.get('featured_ads') || []);
+  const [latestAds, setLatestAds] = useState(() => initialData.latestAds || cache.get('latest_ads') || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [settings, setSettings] = useState(() => cache.get('settings'));
+  const [totalPages, setTotalPages] = useState(initialData.pages || 1);
+  const [totalCount, setTotalCount] = useState(initialData.total || 0);
+  const [currentPage, setCurrentPage] = useState(initialData.page || 1);
+  const [settings, setSettings] = useState(() => getGlobalSettings() || cache.get('settings'));
 
 
 

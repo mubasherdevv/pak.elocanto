@@ -12,29 +12,38 @@ import { usePageSeo } from '../hooks/usePageSeo';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import WhatsAppWidget from '../components/WhatsAppWidget';
 import HowItWorks from '../components/HowItWorks';
+import { getInitialData } from '../utils/ssr';
 
 // Simple global cache for static-ish data to avoid redundant per-page fetches
+const initialData = getInitialData();
 const pageCache = {
-  categories: null,
-  cities: null,
+  categories: initialData?.categories || null,
+  cities: initialData?.cities || null,
 };
+
+
 
 export default function AdsListingPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug } = useParams();
   const { ads, loading, fetchAds, totalPages, totalCount, currentPage, settings } = useAds();
-  const [categories, setCategories] = useState([]);
-  const [cities, setCities] = useState([]);
+  const initialData = getInitialData();
+  const isFirstRender = useRef(true);
+
+  const [categories, setCategories] = useState(initialData?.categories || []);
+  const [cities, setCities] = useState(initialData?.cities || []);
   const [isLarge, setIsLarge] = useState(window.innerWidth >= 1024);
   const [notFound, setNotFound] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(!initialData?.categories);
 
   // City/Area/Hotel hub data
-  const [cityInfo, setCityInfo] = useState(null);
+  const [cityInfo, setCityInfo] = useState(initialData?.city || null);
+
   const [cityAreas, setCityAreas] = useState([]);
   const [cityHotels, setCityHotels] = useState([]);
   const [isLocationsLoading, setIsLocationsLoading] = useState(false);
+
   const isHotelsPage = location.pathname.includes('/hotels') && !hotelSlug;
 
   // Parse remaining query params
@@ -162,8 +171,14 @@ export default function AdsListingPage() {
     if (hotelSlug) baseParams.hotel = hotelSlug;
     if (isHotelsPage && citySlug) baseParams.hotelsInCity = citySlug;
 
-    // Trigger Initial Fetch (Reset)
-    fetchAds({ ...baseParams, page: 1, pageSize: 15 }, false);
+    if (isFirstRender.current && initialData?.ads) {
+      isFirstRender.current = false;
+    } else {
+      // Trigger Initial Fetch (Reset)
+      fetchAds({ ...baseParams, page: 1, pageSize: 15 }, false);
+    }
+
+
 
     const loadData = async () => {
       try {
@@ -405,7 +420,7 @@ export default function AdsListingPage() {
         type: 'city', 
         id: cityInfo?._id, 
         placeholderName: cityInfo?.name || 'City',
-        fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : 'City Listings' 
+        fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : '' 
       };
     }
     if (categorySlug) {
@@ -431,7 +446,9 @@ export default function AdsListingPage() {
   // Handle {name} placeholder in client-side title — only after API responds
   const seoReady = seo !== null;
   const finalSeoTitle = seoReady ? (seo?.title || `{name} | ${siteName}`) : '';
-  const displayTitle = seoReady ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) : '';
+  const displayTitle = seoReady 
+    ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) 
+    : (initialData?.title || seoContext.fallbackTitle);
   
   const finalSeoDesc = seoReady ? (seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
   const displayDesc = seoReady ? finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName) : '';

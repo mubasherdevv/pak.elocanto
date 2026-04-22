@@ -12,20 +12,32 @@ import { usePageSeo } from '../hooks/usePageSeo';
 import { cache } from '../utils/cache';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 
+import { getInitialData } from '../utils/ssr';
+
 const PLACEHOLDER = '/placeholder.png';
 
 export default function HomePage() {
   const { featuredAds, latestAds, fetchFeaturedAds, fetchLatestAds, loading } = useAds();
-  const [categories, setCategories] = useState(() => cache.get('categories') || []);
-  const [cities, setCities] = useState(() => cache.get('cities') || []);
-  const [areas, setAreas] = useState(() => cache.get('areas') || []);
-  const [hotels, setHotels] = useState(() => cache.get('hotels') || []);
-  const [pageLoading, setPageLoading] = useState(true);
+  const initialData = getInitialData() || {};
+  
+  const [categories, setCategories] = useState(() => initialData.categories || cache.get('categories') || []);
+  const [cities, setCities] = useState(() => initialData.cities || cache.get('cities') || []);
+  const [areas, setAreas] = useState(() => initialData.areas || cache.get('areas') || []);
+  const [hotels, setHotels] = useState(() => initialData.hotels || cache.get('hotels') || []);
+  const [pageLoading, setPageLoading] = useState(!initialData.categories);
+
 
   useEffect(() => {
     const loadAllData = async () => {
+      // If we have initial data from SSR, skip the initial fetch
+      if (initialData.categories && initialData.cities) {
+        setPageLoading(false);
+        return;
+      }
+      
       // Speed up: don't show loading spinner if we have cached basic data
       const hasCache = categories.length > 0 && cities.length > 0;
+
       if (!hasCache) setPageLoading(true);
 
       try {

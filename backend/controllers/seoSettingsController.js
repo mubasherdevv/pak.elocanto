@@ -200,7 +200,7 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     // City Pattern: /cities/:slug
     if (normalizedPath.startsWith('/cities/') && normalizedPath.split('/').length === 3) {
       const slug = normalizedPath.split('/')[2];
-      const city = await City.findOne({ slug }).lean();
+      const city = await City.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
       if (city) {
         return {
           title: `${city.name} Escorts & Call Girls Service 24/7 | Elocanto`,
@@ -219,7 +219,7 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       const slug = parts[4];
       
       if (type === 'areas') {
-        const area = await Area.findOne({ slug }).lean();
+        const area = await Area.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (area) {
           return {
             title: `${area.name} Escorts - Call Girls Service in ${area.name} | Elocanto`,
@@ -230,7 +230,7 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
           };
         }
       } else if (type === 'hotels') {
-        const hotel = await Hotel.findOne({ slug }).lean();
+        const hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (hotel) {
           return {
             title: `${hotel.name} Escorts - Exclusive Call Girls Service | Elocanto`,

@@ -67,6 +67,8 @@ import {
   getAdsSitemap 
 } from './controllers/sitemapController.js';
 import redirectMiddleware from './middleware/redirectMiddleware.js';
+import { resolveRouteData } from './utils/ssrData.js';
+
 
 await connectDB();
 
@@ -374,6 +376,8 @@ app.get('*', async (req, res) => {
       getSettings()
     ]);
 
+    const { initialData, contentHtml } = await resolveRouteData(req.path, seo);
+
     // GA4 Script Injection
     let analyticsScript = '';
     if (settings?.googleAnalyticsId) {
@@ -395,10 +399,15 @@ app.get('*', async (req, res) => {
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
       .replace(/{{OG_TITLE}}/g, seo.ogTitle)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
-      .replace(/{{CANONICAL_URL}}/g, seo.url);
+      .replace(/{{CANONICAL_URL}}/g, seo.url)
+      .replace(/{{CONTENT}}/g, contentHtml); // Inject SEO HTML into root
+
+    // Inject Initial Data for React Hydration
+    const initialDataWithSettings = { ...initialData, settings, seo, path: req.path };
+    const initialDataScript = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialDataWithSettings).replace(/</g, '\\u003c')};</script>`;
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
-    const headerScripts = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
+    const headerScripts = (analyticsScript + initialDataScript + gscMeta + (settings?.headerScripts || '')).trim();
 
     if (headerScripts && html.includes('</head>')) {
       html = html.replace('</head>', `${headerScripts}</head>`);
@@ -410,6 +419,7 @@ app.get('*', async (req, res) => {
 
     console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
     res.status(seo.status || 200).setHeader('Cache-Control', 'no-cache').send(html);
+
     
   } catch (err) {
     console.error('[SSR] ❌ Panic Error:', err);

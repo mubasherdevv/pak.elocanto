@@ -7,7 +7,11 @@ import AdminRoute from './components/AdminRoute';
 import { PageSkeleton } from './components/Skeleton';
 import ScrollToTop from './components/ScrollToTop';
 
+import HomePage from './pages/HomePage';
+import AdsListingPage from './pages/AdsListingPage';
+import AdDetailPage from './pages/AdDetailPage';
 import { AdProvider } from './context/AdContext';
+
 import { AuthProvider } from './context/AuthContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
@@ -15,10 +19,8 @@ import { useSettings } from './context/SettingsContext';
 import MaintenanceGuard from './components/MaintenanceGuard';
 import './index.css';
 
-// Lazy loading pages for Code Splitting
-const HomePage = lazy(() => import('./pages/HomePage'));
-const AdsListingPage = lazy(() => import('./pages/AdsListingPage'));
-const AdDetailPage = lazy(() => import('./pages/AdDetailPage'));
+// Lazy loading other pages
+
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));

@@ -1,5 +1,12 @@
-import { createRoot } from 'react-dom/client'
+import { createRoot, hydrateRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 
-createRoot(document.getElementById('root')).render(<App />)
+const rootElement = document.getElementById('root');
+const initialData = window.__INITIAL_DATA__;
+
+if (initialData && Object.keys(initialData).length > 0) {
+  hydrateRoot(rootElement, <App />);
+} else {
+  createRoot(rootElement).render(<App />);
+}

@@ -12,6 +12,7 @@ import ImageCarousel from '../components/ImageCarousel';
 import AdCard from '../components/AdCard';
 import { useAuth } from '../context/AuthContext';
 import { generateAdSlug, extractIdFromSlug } from '../utils/urlUtils';
+import { getInitialData } from '../utils/ssr';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { linkifyText } from '../utils/textUtils';
 import NotFoundPage from './NotFoundPage';
@@ -26,8 +27,13 @@ export default function AdDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { settings } = useSettings();
-  const [ad, setAd] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const initialData = getInitialData();
+  const initialAd = initialData?.ad;
+  const isInitialValid = initialAd && (initialAd.slug === slug || slug?.includes(initialAd._id));
+
+  const [ad, setAd] = useState(isInitialValid ? initialAd : null);
+  const [loading, setLoading] = useState(!isInitialValid);
+
   const [error, setError] = useState(null);
   const [favorited, setFavorited] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
@@ -44,41 +50,50 @@ export default function AdDetailPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const fetchExtras = async (adData) => {
+    // Fetch and mix recommended ads
+    Promise.all([
+      api.get('/ads/latest?limit=10'),
+      api.get('/ads/featured?limit=10')
+    ]).then(([latestRes, featuredRes]) => {
+      const mixed = [...latestRes.data, ...featuredRes.data]
+        .filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Unique
+        .sort(() => Math.random() - 0.5); // Shuffle
+      setRecommendedAds(mixed);
+    }).catch(console.error);
+
+    const viewerId = localStorage.getItem('ad_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (!localStorage.getItem('ad_viewer_id')) {
+      localStorage.setItem('ad_viewer_id', viewerId);
+    }
+    api.post('/views/track', { adId: adData._id, page: 'detail', localStorageId: viewerId }).catch(console.error);
+
+    if (user) {
+      const { data: favData } = await api.get(`/favorites/check/${adData._id}`);
+      setFavorited(favData.favorited);
+    }
+  };
+
   useEffect(() => {
     const fetchAd = async () => {
+      if (isInitialValid && ad) {
+        // Still fetch recommendations and check favorites in background
+        fetchExtras(ad);
+        return;
+      }
       try {
         setLoading(true);
         const id = extractIdFromSlug(slug);
         const { data } = await api.get(`/ads/${id}`);
         setAd(data);
-
-
-        // Fetch and mix recommended ads
-        Promise.all([
-          api.get('/ads/latest?limit=10'),
-          api.get('/ads/featured?limit=10')
-        ]).then(([latestRes, featuredRes]) => {
-          const mixed = [...latestRes.data, ...featuredRes.data]
-            .filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Unique
-            .sort(() => Math.random() - 0.5); // Shuffle
-          setRecommendedAds(mixed);
-        }).catch(console.error);
-
-        const viewerId = localStorage.getItem('ad_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        if (!localStorage.getItem('ad_viewer_id')) {
-          localStorage.setItem('ad_viewer_id', viewerId);
-        }
-        api.post('/views/track', { adId: data._id, page: 'detail', localStorageId: viewerId }).catch(console.error);
+        fetchExtras(data);
 
         const correctSlug = generateAdSlug(data);
         if (slug !== correctSlug) {
           navigate(`/ads/${correctSlug}`, { replace: true });
         }
-        if (user) {
-          const { data: favData } = await api.get(`/favorites/check/${data._id}`);
-          setFavorited(favData.favorited);
-        }
         setError(null);
+
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load ad details');
       } finally {
