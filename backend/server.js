@@ -404,7 +404,7 @@ app.get('*', async (req, res) => {
       getSettings()
     ]);
 
-    const { initialData, contentHtml } = await resolveRouteData(req.path, seo);
+    const { initialData, contentHtml } = await resolveRouteData(req.path, seo, settings);
 
     // GA4 Script Injection
     let analyticsScript = '';

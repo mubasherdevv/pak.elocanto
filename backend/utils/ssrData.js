@@ -12,7 +12,24 @@ import Settings from '../models/Settings.js';
  * @param {object} seo The resolved SEO metadata from database
  * @returns {Promise<{initialData: object, contentHtml: string}>}
  */
-export const resolveRouteData = async (reqPath, seo = {}) => {
+const renderHeader = (settings) => {
+  const logoUrl = settings?.siteLogo || '/logo.png';
+  return `
+    <header style="background: white; border-bottom: 1px solid #eee; padding: 12px 0; position: sticky; top: 0; z-index: 100;">
+      <div style="max-width: 1280px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="${logoUrl}" alt="Logo" style="height: 40px; width: auto;" />
+          <span style="font-weight: 800; font-size: 20px; color: #0f172a;">ELOCANTO</span>
+        </div>
+        <div style="display: flex; gap: 20px; align-items: center;">
+          <button style="background: #f95e26; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;">Post Ad</button>
+        </div>
+      </div>
+    </header>
+  `;
+};
+
+export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
   const path = reqPath.split('?')[0].toLowerCase().replace(/\/+$/, '') || '/';
   console.log(`[SSR-DATA] 🛠️ Resolving path: ${path}`);
   
@@ -154,7 +171,7 @@ export const resolveRouteData = async (reqPath, seo = {}) => {
 
         const ads = await Ad.find(adsQuery).sort({ createdAt: -1 }).limit(20).lean();
         initialData = { ...initialData, city, ads, title };
-        contentHtml = renderGrid(ads, title);
+        contentHtml = renderHeader(settings) + renderGrid(ads, title);
         console.log(`[SSR-DATA] ✅ City resolved: ${city.name} (${ads.length} ads)`);
       } else {
         console.warn(`[SSR-DATA] ❌ City NOT found for slug: ${citySlug}`);
@@ -165,7 +182,7 @@ export const resolveRouteData = async (reqPath, seo = {}) => {
     else if (path === '/ads') {
       const ads = await Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(20).lean();
       initialData = { ...initialData, ads };
-      contentHtml = renderGrid(ads, 'All Advertisements');
+      contentHtml = renderHeader(settings) + renderGrid(ads, 'All Advertisements');
     }
 
     // 5. Category / Subcategory Routes (Unified Router)
