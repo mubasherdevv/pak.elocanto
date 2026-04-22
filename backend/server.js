@@ -533,7 +533,6 @@ app.get('*', async (req, res) => {
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
       .replace(/{{OG_TITLE}}/g, seo.ogTitle)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
-<<<<<<< HEAD
       .replace(/{{CANONICAL_URL}}/g, seo.url)
       .replace(/{{CONTENT}}/g, contentHtml); // Inject SEO HTML into root
 
@@ -543,13 +542,6 @@ app.get('*', async (req, res) => {
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
     const headerScripts = (analyticsScript + initialDataScript + gscMeta + (settings?.headerScripts || '')).trim();
-=======
-      .replace(/{{OG_IMAGE}}/g, ogImage)
-      .replace(/{{CANONICAL_URL}}/g, seo.url);
-
-    const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
-    const headerScripts = (analyticsScript + gscMeta + schemaScript + (settings?.headerScripts || '')).trim();
->>>>>>> c45315369a48a351178ca153589c0ac66fecfdec
 
     if (headerScripts && html.includes('</head>')) {
       html = html.replace('</head>', `${headerScripts}</head>`);
@@ -561,11 +553,6 @@ app.get('*', async (req, res) => {
 
     console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
     res.status(seo.status || 200).setHeader('Cache-Control', 'no-cache').send(html);
-
-<<<<<<< HEAD
-    
-=======
->>>>>>> c45315369a48a351178ca153589c0ac66fecfdec
   } catch (err) {
     console.error('[SSR] ❌ Panic Error:', err);
     res.status(500).send('An error occurred');

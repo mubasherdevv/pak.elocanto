@@ -420,11 +420,7 @@ export default function AdsListingPage() {
         type: 'city',
         id: cityInfo?._id,
         placeholderName: cityInfo?.name || 'City',
-<<<<<<< HEAD
         fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : '' 
-=======
-        fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : 'City Listings'
->>>>>>> c45315369a48a351178ca153589c0ac66fecfdec
       };
     }
     if (categorySlug) {
@@ -450,15 +446,9 @@ export default function AdsListingPage() {
   // Handle {name} placeholder in client-side title — only after API responds
   const seoReady = seo !== null;
   const finalSeoTitle = seoReady ? (seo?.title || `{name} | ${siteName}`) : '';
-<<<<<<< HEAD
   const displayTitle = seoReady 
     ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) 
     : (initialData?.title || seoContext.fallbackTitle);
-  
-=======
-  const displayTitle = seoReady ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) : '';
-
->>>>>>> c45315369a48a351178ca153589c0ac66fecfdec
   const finalSeoDesc = seoReady ? (seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
   const displayDesc = seoReady ? finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName) : '';
 
