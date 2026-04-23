@@ -254,148 +254,192 @@ const normalizePath = (rawPath) => {
  */
 const getSeoMetadata = async (reqPath) => {
   const normalizedPath = normalizePath(reqPath);
-  console.log(`[SEO-SSR] 🔍 Resolving for: "${reqPath}" -> Normalized: "${normalizedPath}"`);
+  console.log(`[SEO-SSR] 🔍 Resolving: "${normalizedPath}"`);
+
+  // ─── LAYER 0: Known static/auth routes (always 200, no DB needed) ───
+  const STATIC_ROUTES = new Set([
+    '/', '/login', '/register', '/ads', '/about-us', '/contact-us',
+    '/terms', '/privacy', '/anti-scam', '/copyright-policy',
+    '/dashboard', '/messages', '/post-ad', '/forgot-password', '/profile'
+  ]);
+
+  const isAdminRoute = normalizedPath.startsWith('/admin');
+  const isMessageRoute = normalizedPath.startsWith('/messages/');
+  const isProfileRoute = normalizedPath.startsWith('/profile/');
+  const isEditAdRoute = normalizedPath.startsWith('/edit-ad/');
 
   try {
-    // 1. Try to find an exact path match in SeoSettings
-    let seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-
-    if (seo) {
-      console.log(`[SEO-SSR] ✅ Match found in DB for: ${normalizedPath}`);
-      return {
-        title: seo.title,
-        description: seo.metaDescription,
-        keywords: seo.keywords || '',
-        ogTitle: seo.ogTitle || seo.title,
-        ogDescription: seo.ogDescription || seo.metaDescription,
-        url: `https://pk.elocanto.com${normalizedPath}`,
-        status: 200
-      };
-    }
-
-    // 2. Dynamic Fallback: Use shared resolver logic
-    console.log(`[SEO-SSR] ⚠️ No custom SEO. Checking for dynamic fallbacks...`);
-
-    // Resolve entity info from path if possible (simplified for SSR)
-    const result = await resolveSeoMetadata(normalizedPath);
-
-    if (result) {
-      console.log(`[SEO-SSR] 📍 Fallback Resolved: ${result.title} (Source: ${result.source})`);
-      return {
-        title: result.title,
-        description: result.metaDescription,
-        keywords: result.keywords || '',
-        ogTitle: result.ogTitle || result.title,
-        ogDescription: result.ogDescription || result.metaDescription,
-        image: result.image || null,
-        type: result.type || null,
-        entity: result.entity || null,
-        url: `https://pk.elocanto.com${normalizedPath}`,
-        status: 200
-      };
-    }
-
-    console.log(`[SEO-SSR] ⚠️ No dynamic fallback found. Checking path validity...`);
-
-    // Define patterns that MUST resolve or else they are 404
-    const entityPrefixes = ['/cities/', '/ads/', '/areas/', '/hotels/', '/category/', '/api/'];
-    const isEntityPath = entityPrefixes.some(prefix => normalizedPath.startsWith(prefix));
-
-    // Define known valid static routes that don't need custom SEO but should be 200
-    const staticRoutes = [
-      '/', '/login', '/register', '/ads', '/ads/', '/about-us', '/contact-us',
-      '/terms', '/privacy', '/anti-scam', '/copyright-policy', '/dashboard',
-      '/messages', '/post-ad', '/forgot-password', '/profile'
-    ];
-
-    const isStaticRoute = staticRoutes.some(route =>
-      normalizedPath === route || normalizedPath.startsWith('/admin') || normalizedPath.startsWith('/messages/') || normalizedPath.startsWith('/profile/')
-    );
-
     const siteSettings = await getSettings();
+    const defaultMeta = {
+      title: siteSettings?.siteTitle || 'Elocanto | Classified Marketplace in Pakistan',
+      description: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+      keywords: siteSettings?.siteKeywords || '',
+      ogTitle: siteSettings?.siteTitle || 'Elocanto',
+      ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+      url: `https://pk.elocanto.com${normalizedPath}`,
+      status: 200
+    };
 
-    // If it's a known static route or homepage, return site-wide default with 200
-    if (isStaticRoute || normalizedPath === '/') {
+    if (STATIC_ROUTES.has(normalizedPath) || isAdminRoute || isMessageRoute || isProfileRoute || isEditAdRoute) {
+      // Still try custom SEO for static routes (e.g. homepage custom SEO)
+      const customSeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+      if (customSeo) {
+        return {
+          title: customSeo.title,
+          description: customSeo.metaDescription,
+          keywords: customSeo.keywords || '',
+          ogTitle: customSeo.ogTitle || customSeo.title,
+          ogDescription: customSeo.ogDescription || customSeo.metaDescription,
+          url: `https://pk.elocanto.com${normalizedPath}`,
+          status: 200
+        };
+      }
+      console.log(`[SEO-SSR] ✅ Static route: ${normalizedPath}`);
+      return defaultMeta;
+    }
+
+    // ─── LAYER 1: Custom SeoSettings exact path match ───
+    const customSeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+    if (customSeo) {
+      console.log(`[SEO-SSR] ✅ Custom SEO found for: ${normalizedPath}`);
       return {
-        title: siteSettings?.siteTitle || 'Elocanto | Classified Marketplace in Pakistan',
-        description: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
-        keywords: siteSettings?.siteKeywords || '',
-        ogTitle: siteSettings?.siteTitle || 'Elocanto',
-        ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
+        title: customSeo.title,
+        description: customSeo.metaDescription,
+        keywords: customSeo.keywords || '',
+        ogTitle: customSeo.ogTitle || customSeo.title,
+        ogDescription: customSeo.ogDescription || customSeo.metaDescription,
         url: `https://pk.elocanto.com${normalizedPath}`,
         status: 200
       };
     }
 
-    // Last check: is this path a known category/subcategory/city slug?
-    // This prevents valid pages from getting a false 404
-    const pathParts = normalizedPath.split('/').filter(Boolean);
-    const rootSlug = pathParts[0];
-    const childSlug = pathParts[1];
+    const parts = normalizedPath.split('/').filter(Boolean);
 
-    if (rootSlug) {
-      try {
-        const [matchedCat, matchedCity] = await Promise.all([
-          Category.findOne({ slug: rootSlug }).lean(),
-          City.findOne({ slug: rootSlug }).lean()
-        ]);
-
-        if (matchedCat || matchedCity) {
-          const entityName = matchedCat?.name || matchedCity?.name || rootSlug;
-          console.log(`[SEO-SSR] ✅ Path matched a known entity slug: ${rootSlug} (${matchedCat ? 'Category' : 'City'})`);
-          return {
-            title: `${entityName} | Elocanto Pakistan`,
-            description: `Browse ${entityName} classified ads on Elocanto Pakistan. Find the best deals on ${entityName}.`,
-            keywords: entityName,
-            ogTitle: `${entityName} | Elocanto`,
-            ogDescription: `Browse ${entityName} ads on Elocanto Pakistan.`,
-            url: `https://pk.elocanto.com${normalizedPath}`,
-            status: 200
-          };
-        }
-
-        // Check if child slug is a subcategory
-        if (childSlug && matchedCat) {
-          const matchedSub = await Subcategory.findOne({ slug: childSlug, category: matchedCat._id }).lean();
-          if (matchedSub) {
-            console.log(`[SEO-SSR] ✅ Path matched subcategory: ${childSlug}`);
-            return {
-              title: `${matchedSub.name} in ${matchedCat.name} | Elocanto Pakistan`,
-              description: `Browse ${matchedSub.name} classified ads in ${matchedCat.name} on Elocanto Pakistan.`,
-              keywords: `${matchedSub.name}, ${matchedCat.name}`,
-              ogTitle: `${matchedSub.name} | Elocanto`,
-              ogDescription: `Find ${matchedSub.name} ads on Elocanto Pakistan.`,
-              url: `https://pk.elocanto.com${normalizedPath}`,
-              status: 200
-            };
-          }
-        }
-      } catch (dbErr) {
-        console.error('[SEO-SSR] DB check error:', dbErr);
+    // ─── LAYER 2: Ad Detail  /ads/:slug ───
+    if (parts[0] === 'ads' && parts.length === 2) {
+      const ad = await Ad.findOne({ slug: parts[1] })
+        .populate('category', 'name slug')
+        .populate('subcategory', 'name slug')
+        .lean();
+      if (ad) {
+        const entitySeo = await SeoSettings.findOne({ pageType: 'ad', referenceId: ad._id, isActive: true }).lean();
+        const title = entitySeo?.title || `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`;
+        const desc = entitySeo?.metaDescription || `${ad.description?.substring(0, 160)}`;
+        const image = ad.images?.[0] || null;
+        console.log(`[SEO-SSR] ✅ Ad matched: ${ad.slug}`);
+        return { title, description: desc, keywords: entitySeo?.keywords || '', ogTitle: title, ogDescription: desc, image, entity: ad, type: 'ad', url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
       }
+      // /ads/:slug but no ad found → strict 404
+      console.log(`[SEO-SSR] ⛔ Ad slug not found: ${parts[1]}`);
+      return make404(normalizedPath);
     }
 
-    // Truly unknown path - return 404
-    console.log(`[SEO-SSR] ⛔ Invalid or unknown path detected: ${normalizedPath}. Returning 404.`);
-    return {
-      title: 'Page Not Found | Elocanto',
-      description: 'The page you are looking for does not exist or has been moved.',
-      keywords: '',
-      ogTitle: 'Page Not Found',
-      ogDescription: 'The page you are looking for does not exist.',
-      url: `https://pk.elocanto.com${normalizedPath}`,
-      status: 404
-    };
+    // ─── LAYER 3: Cities /cities/:citySlug ───
+    if (parts[0] === 'cities' && parts.length >= 2) {
+      const city = await City.findOne({ slug: { $regex: new RegExp(`^${parts[1]}$`, 'i') } }).lean();
+      if (!city) {
+        console.log(`[SEO-SSR] ⛔ City not found: ${parts[1]}`);
+        return make404(normalizedPath);
+      }
+
+      // /cities/:citySlug/areas/:areaSlug
+      if (parts[2] === 'areas' && parts[3]) {
+        const area = await Area.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).lean();
+        if (!area) { console.log(`[SEO-SSR] ⛔ Area not found: ${parts[3]}`); return make404(normalizedPath); }
+        const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
+        const title = entitySeo?.title || `${area.name} Escorts - Call Girls in ${city.name} | Elocanto`;
+        const desc = entitySeo?.metaDescription || `Find verified escorts and call girls in ${area.name}, ${city.name}.`;
+        console.log(`[SEO-SSR] ✅ Area matched: ${area.slug}`);
+        return { title, description: desc, keywords: entitySeo?.keywords || `${area.name} escorts`, ogTitle: title, ogDescription: desc, type: 'area', entity: area, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+      }
+
+      // /cities/:citySlug/hotels (list page)
+      if (parts[2] === 'hotels' && !parts[3]) {
+        const title = `Hotels in ${city.name} | Elocanto`;
+        console.log(`[SEO-SSR] ✅ City hotels list: ${city.name}`);
+        return { title, description: `Browse all hotels in ${city.name} on Elocanto.`, keywords: `${city.name} hotels`, ogTitle: title, ogDescription: `Hotels in ${city.name}.`, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+      }
+
+      // /cities/:citySlug/hotels/:hotelSlug
+      if (parts[2] === 'hotels' && parts[3]) {
+        const hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).lean();
+        if (!hotel) { console.log(`[SEO-SSR] ⛔ Hotel not found: ${parts[3]}`); return make404(normalizedPath); }
+        const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
+        const title = entitySeo?.title || `${hotel.name} Escorts - Exclusive Call Girls | Elocanto`;
+        const desc = entitySeo?.metaDescription || `Verified escorts at ${hotel.name}, ${city.name}.`;
+        console.log(`[SEO-SSR] ✅ Hotel matched: ${hotel.slug}`);
+        return { title, description: desc, keywords: entitySeo?.keywords || `${hotel.name} escorts`, ogTitle: title, ogDescription: desc, type: 'hotel', entity: hotel, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+      }
+
+      // /cities/:citySlug (base city page)
+      const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
+      const title = entitySeo?.title || `${city.name} Escorts & Call Girls 24/7 | Elocanto`;
+      const desc = entitySeo?.metaDescription || `Premium escort services in ${city.name}. Verified listings.`;
+      console.log(`[SEO-SSR] ✅ City matched: ${city.name}`);
+      return { title, description: desc, keywords: entitySeo?.keywords || `${city.name} escorts`, ogTitle: title, ogDescription: desc, type: 'city', entity: city, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+    }
+
+    // ─── LAYER 4: Category /:catSlug ───
+    if (parts.length >= 1 && parts[0] !== 'cities' && parts[0] !== 'ads') {
+      const category = await Category.findOne({ slug: parts[0] }).lean();
+      if (category) {
+        // ── Subcategory /:catSlug/:subSlug ──
+        if (parts[1]) {
+          const sub = await Subcategory.findOne({ slug: parts[1], category: category._id }).lean();
+          if (!sub) {
+            // Could be SubSubCategory
+            const subsub = await SubSubCategory.findOne({ slug: parts[1] }).lean();
+            if (!subsub) {
+              console.log(`[SEO-SSR] ⛔ Subcategory/Sub-subcategory not found: ${parts[1]}`);
+              return make404(normalizedPath);
+            }
+            const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+            const title = entitySeo?.title || `${subsub.name} | ${category.name} | Elocanto Pakistan`;
+            const desc = entitySeo?.metaDescription || `Browse ${subsub.name} classified ads on Elocanto Pakistan.`;
+            console.log(`[SEO-SSR] ✅ Sub-subcategory matched: ${subsub.slug}`);
+            return { title, description: desc, keywords: entitySeo?.keywords || subsub.name, ogTitle: title, ogDescription: desc, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+          }
+
+          const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+          const title = entitySeo?.title || `${sub.name} in ${category.name} | Elocanto Pakistan`;
+          const desc = entitySeo?.metaDescription || `Browse ${sub.name} classified ads in ${category.name} on Elocanto Pakistan.`;
+          console.log(`[SEO-SSR] ✅ Subcategory matched: ${sub.slug}`);
+          return { title, description: desc, keywords: entitySeo?.keywords || `${sub.name}, ${category.name}`, ogTitle: title, ogDescription: desc, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+        }
+
+        // ── Category only /:catSlug ──
+        const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
+        const title = entitySeo?.title || `${category.name} | Elocanto Pakistan`;
+        const desc = entitySeo?.metaDescription || `Browse ${category.name} classified ads on Elocanto Pakistan. Find the best deals.`;
+        console.log(`[SEO-SSR] ✅ Category matched: ${category.slug}`);
+        return { title, description: desc, keywords: entitySeo?.keywords || category.name, ogTitle: title, ogDescription: desc, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+      }
+
+      // Not a category → strict 404
+      console.log(`[SEO-SSR] ⛔ Unknown slug (not category/city/ad): ${normalizedPath}`);
+      return make404(normalizedPath);
+    }
+
+    // ─── FALLBACK: 404 for everything else ───
+    console.log(`[SEO-SSR] ⛔ Unmatched path: ${normalizedPath}`);
+    return make404(normalizedPath);
 
   } catch (error) {
     console.error('[SEO-SSR] ❌ Resolution Error:', error);
-    return {
-      title: 'Elocanto',
-      description: 'Secure destination to buy and sell.',
-      status: 500
-    };
+    return { title: 'Elocanto', description: 'Secure destination to buy and sell.', status: 500 };
   }
 };
+
+// Helper: Standard 404 response
+const make404 = (normalizedPath) => ({
+  title: 'Page Not Found | Elocanto',
+  description: 'The page you are looking for does not exist or has been moved.',
+  keywords: '',
+  ogTitle: 'Page Not Found',
+  ogDescription: 'The page you are looking for does not exist.',
+  url: `https://pk.elocanto.com${normalizedPath}`,
+  status: 404
+});
 
 // Handle SPA routing with dynamic SEO injection
 app.get('*', async (req, res) => {
