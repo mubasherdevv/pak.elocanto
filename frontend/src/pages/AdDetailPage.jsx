@@ -238,6 +238,25 @@ export default function AdDetailPage() {
 
         {/* 2. Price & Title Section */}
         <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 16 }}>
+          {(ad.listingType === 'featured' || ad.adType === 'featured') && (
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: 6, 
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)', 
+              color: 'white', 
+              padding: '4px 12px', 
+              borderRadius: 10, 
+              fontSize: 10, 
+              fontWeight: 900, 
+              textTransform: 'uppercase', 
+              letterSpacing: 1, 
+              marginBottom: 12,
+              boxShadow: '0 4px 12px rgba(217, 119, 6, 0.3)'
+            }}>
+              <span style={{ fontSize: 12 }}>⭐</span> FEATURED AD
+            </div>
+          )}
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.5px' }}>PKR {ad.price?.toLocaleString()}</h1>
           <h2 style={{ fontSize: 16, color: '#475569', marginTop: 8, lineHeight: 1.4, fontWeight: 500 }}>{ad.title}</h2>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#94a3b8', fontSize: 12, marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
@@ -475,6 +494,11 @@ export default function AdDetailPage() {
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
+                    {(ad.listingType === 'featured' || ad.adType === 'featured') && (
+                      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest mb-3 shadow-lg shadow-orange-500/20">
+                        <span>⭐</span> FEATURED AD
+                      </div>
+                    )}
                     <div className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</div>
                     <h1 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h1>
                   </div>
