@@ -25,7 +25,7 @@ const normalizePath = (rawPath) => {
  */
 const resolvePathForRecord = async (pageType, referenceId) => {
   let path = '/';
-  
+
   const ensureCitySuffix = (slug) => {
     if (!slug) return '';
     return slug.endsWith('-call-girls-service') ? slug : `${slug}-call-girls-service`;
@@ -100,20 +100,20 @@ export const getSeoSettingById = async (req, res) => {
 // @route   POST /api/seo-settings
 export const saveSeoSettings = async (req, res) => {
   try {
-    const { 
-      pageType, 
-      referenceId, 
-      title, 
-      metaDescription, 
-      keywords, 
-      ogTitle, 
+    const {
+      pageType,
+      referenceId,
+      title,
+      metaDescription,
+      keywords,
+      ogTitle,
       ogDescription,
       whatsappNumber,
-      isActive 
+      isActive
     } = req.body;
 
     const pagePath = await resolvePathForRecord(pageType, referenceId);
-    
+
     // Check if record exists for this unique combination
     let setting = await SeoSettings.findOne({ pageType, referenceId });
 
@@ -160,6 +160,20 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     // 1. Try Path Match (Most specific)
     let seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
 
+    // Fuzzy Match Fallback for Cities (if exact path match fails)
+    if (!seo && normalizedPath.startsWith('/cities/')) {
+      const parts = normalizedPath.split('/');
+      if (parts.length >= 3) {
+        const citySlugPart = parts[2].replace(/-call-girls-services?$/, '');
+        // Search for any active SEO record that contains this city slug in its path
+        seo = await SeoSettings.findOne({ 
+          pagePath: new RegExp(citySlugPart, 'i'),
+          isActive: true 
+        }).lean();
+        if (seo) console.log(`[SEO-SSR] 🔍 Fuzzy match found for: ${normalizedPath} -> ${seo.pagePath}`);
+      }
+    }
+
     // 2. Try Entity Match (If path didn't work)
     if (!seo && pageType && referenceId && referenceId !== 'null' && referenceId !== 'undefined') {
       seo = await SeoSettings.findOne({ pageType, referenceId, isActive: true }).lean();
@@ -180,7 +194,7 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     }
 
     // 3. Dynamic Fallback: Match based on URL patterns
-    
+
     // Ad Detail Pattern: /ads/:slug
     if (normalizedPath.startsWith('/ads/') && normalizedPath.split('/').length === 3) {
       const slug = normalizedPath.split('/')[2];
@@ -234,7 +248,7 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     if (parts.length === 5 && parts[1] === 'cities') {
       const type = parts[3];
       const slug = parts[4];
-      
+
       if (type === 'areas') {
         const area = await Area.findOne({ slug }).lean();
         if (area) {
@@ -299,7 +313,7 @@ export const deleteSeoSetting = async (req, res) => {
 export const getPublicSeo = async (req, res) => {
   try {
     const { pagePath, pageType, referenceId } = req.query;
-    
+
     // Normalize path just like SSR
     let normalizedPath = '/';
     if (pagePath) {
@@ -309,7 +323,7 @@ export const getPublicSeo = async (req, res) => {
     }
 
     const result = await resolveSeoMetadata(normalizedPath, pageType, referenceId);
-    
+
     if (result) return res.json(result);
     res.status(404).json({ message: 'No SEO found' });
   } catch (error) {
@@ -321,11 +335,11 @@ export const getPublicSeo = async (req, res) => {
 export const getSeoSettings = getPublicSeo;
 export const getSeoByPath = getPublicSeo;
 
-export default { 
-  getSeoSettings, 
-  getSeoSettingById, 
-  saveSeoSettings, 
-  deleteSeoSetting, 
-  getPublicSeo, 
-  resolveSeoMetadata 
+export default {
+  getSeoSettings,
+  getSeoSettingById,
+  saveSeoSettings,
+  deleteSeoSetting,
+  getPublicSeo,
+  resolveSeoMetadata
 };

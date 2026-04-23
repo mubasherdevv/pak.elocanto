@@ -12,10 +12,21 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
   const { settings } = useSettings();
   
   // Start as null — this tells pages "SEO not loaded yet, keep SSR title"
-  const [seo, setSeo] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Initialize from hydrated data if path matches
+  const getInitialSeo = () => {
+    if (typeof window !== 'undefined' && window.__SEO_DATA__) {
+      return window.__SEO_DATA__;
+    }
+    return null;
+  };
+
+  const [seo, setSeo] = useState(getInitialSeo);
+  const [loading, setLoading] = useState(!getInitialSeo());
 
   useEffect(() => {
+    // If already hydrated, skip fetch
+    if (seo) return;
+
     const fetchSeo = async () => {
       try {
         setLoading(true);

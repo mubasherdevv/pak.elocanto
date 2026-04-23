@@ -398,14 +398,23 @@ app.get('*', async (req, res) => {
     }
 
     // High Performance Placeholder Replacement
-    html = html
+    // Inject SEO Data into window object for Frontend Hydration
+    const seoDataScript = `<script>window.__SEO_DATA__ = ${JSON.stringify({
+      title: seo.title,
+      metaDescription: seo.description,
+      keywords: seo.keywords,
+      url: seo.url
+    })};</script>`;
+
+    let modifiedHtml = html
       .replace(/{{SEO_TITLE}}/g, seo.title)
       .replace(/{{SEO_DESCRIPTION}}/g, seo.description)
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
-      .replace(/{{OG_TITLE}}/g, seo.ogTitle)
-      .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
+      .replace(/{{OG_TITLE}}/g, seo.ogTitle || seo.title)
+      .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription || seo.description)
       .replace(/{{CANONICAL_URL}}/g, seo.url)
-      .replace(/{{SEO_BODY}}/g, seo.bodyContent || '');
+      .replace(/{{SEO_BODY}}/g, seo.bodyContent || '')
+      .replace('</head>', `${seoDataScript}</head>`);
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
     const headerScripts = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();
