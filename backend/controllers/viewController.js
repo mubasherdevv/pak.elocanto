@@ -89,6 +89,7 @@ export const trackBulkViews = asyncHandler(async (req, res) => {
   const ipAddress = req.ip || req.connection?.remoteAddress || 'unknown';
   const userId = req.user?._id || null;
   const localStorageId = req.body.localStorageId || null;
+  const page = req.body.page || 'ads';
 
   const featuredViews = [];
   const simpleViewsToCheck = [];
@@ -97,10 +98,11 @@ export const trackBulkViews = asyncHandler(async (req, res) => {
     const ad = await Ad.findById(adId);
     if (!ad) continue;
 
-    if (ad.listingType === 'featured' || ad.adType === 'featured') {
+    // If it's the homepage featured section or listing gallery, increment views on every load
+    if (ad.listingType === 'featured' || ad.adType === 'featured' || page === 'homepage' || page === 'listing_gallery') {
       featuredViews.push({
         adId,
-        page: 'ads',
+        page: page,
         ipAddress,
         userAgent
       });
