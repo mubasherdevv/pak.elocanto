@@ -15,21 +15,54 @@ export default function SeoContentSection() {
       let slug = '';
 
       const path = location.pathname;
-      if (path === '/' || path === '') {
-        pageType = 'home';
-      } else if (path.startsWith('/ads/')) {
-        pageType = 'ad_detail';
-        slug = path.replace('/ads/', ''); 
-      } else if (path === '/ads') {
-        const params = new URLSearchParams(location.search);
-        const cat = params.get('category');
-        const sub = params.get('subcategory');
+      const parts = path.split('/').filter(Boolean);
 
-        if (sub) { pageType = 'subcategory'; slug = sub; }
-        else if (cat) { pageType = 'category'; slug = cat; }
-        else { pageType = 'home'; } 
-      } else {
-        pageType = path.replace(/^\//, ''); 
+      // 1. Handle Homepage
+      if (parts.length === 0) {
+        pageType = 'home';
+      } 
+      // 2. Handle Ad Detail: /ads/:slug
+      else if (parts[0] === 'ads' && parts[1]) {
+        pageType = 'ad_detail';
+        slug = parts[1];
+      }
+      // 3. Handle Cities & Locations: /cities/:citySlug/...
+      else if (parts[0] === 'cities' && parts[1]) {
+        const citySlug = parts[1];
+        const type = parts[2];
+        const subSlug = parts[3];
+
+        if (type === 'areas' && subSlug) {
+          pageType = 'area';
+          slug = subSlug;
+        } else if (type === 'hotels' && subSlug) {
+          pageType = 'hotel';
+          slug = subSlug;
+        } else {
+          pageType = 'city';
+          slug = citySlug;
+        }
+      }
+      // 4. Handle Auth & Static Pages
+      else if (['login', 'register', 'profile', 'ads'].includes(parts[0])) {
+        pageType = parts[0];
+        if (pageType === 'ads') {
+            const params = new URLSearchParams(location.search);
+            const cat = params.get('category');
+            const sub = params.get('subcategory');
+            if (sub) { pageType = 'subcategory'; slug = sub; }
+            else if (cat) { pageType = 'category'; slug = cat; }
+            else pageType = 'home';
+        }
+      }
+      // 5. Handle Categories & Subcategories (/:cat/:sub)
+      else if (parts.length === 1) {
+        pageType = 'category';
+        slug = parts[0];
+      }
+      else if (parts.length >= 2) {
+        pageType = 'subcategory';
+        slug = parts[1];
       }
 
       try {
