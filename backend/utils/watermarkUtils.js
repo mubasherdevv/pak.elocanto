@@ -46,61 +46,13 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Background Overlay (Pati) - Centered horizontal strip
-    const bgWidth = imageWidth;
-    const bgHeight = Math.floor(imageHeight * 0.2); // 20% height strip
-
-    const bgBuffer = await sharp({
-      create: {
-        width: bgWidth,
-        height: bgHeight,
-        channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0.4 } // Reduced opacity
-      }
-    })
-    .blur(5)
-    .png()
-    .toBuffer();
-
-    // Composite Logo onto Strip
-    const finalWmBuffer = await sharp(bgBuffer)
-      .composite([{ input: logoBuffer, gravity: 'center' }])
-      .png()
-      .toBuffer();
-
-    const wmMeta = await sharp(finalWmBuffer).metadata();
-    const wmWidth = wmMeta.width || bgWidth;
-    const wmHeight = wmMeta.height || bgHeight;
-
-    let gravity = 'southeast';
-    let left = imageWidth - wmWidth - opts.padding;
-    let top = imageHeight - wmHeight - opts.padding;
-
-    // Flexible positioning logic
-    switch (opts.position) {
-      case WATERMARK_POSITION.CENTER:
-        left = Math.floor((imageWidth - wmWidth) / 2);
-        top = Math.floor((imageHeight - wmHeight) / 2);
-        break;
-      case WATERMARK_POSITION.TOP_LEFT:
-        left = opts.padding;
-        top = opts.padding;
-        break;
-      case WATERMARK_POSITION.TOP_RIGHT:
-        left = imageWidth - wmWidth - opts.padding;
-        top = opts.padding;
-        break;
-      case WATERMARK_POSITION.BOTTOM_LEFT:
-        left = opts.padding;
-        top = imageHeight - wmHeight - opts.padding;
-        break;
-    }
-
+    // Composite logo directly onto image (no dark background strip)
     compositeOptions = {
-      input: finalWmBuffer,
-      left: Math.max(0, left),
-      top: Math.max(0, top),
+      input: logoBuffer,
+      left: Math.max(0, Math.floor((imageWidth - lWidth) / 2)),
+      top: Math.max(0, Math.floor((imageHeight - lHeight) / 2)),
     };
+
   } else {
     // Fallback to text watermark
     const text = opts.text || await getSiteName();
@@ -217,63 +169,13 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Background Overlay (Pati) - Centered horizontal strip
-    const bgWidth = imageWidth;
-    const bgHeight = Math.floor(imageHeight * 0.2); // 20% height strip
-
-    const bgBuffer = await sharp({
-      create: {
-        width: bgWidth,
-        height: bgHeight,
-        channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0.4 } // Reduced opacity
-      }
-    })
-    .blur(5)
-    .png()
-    .toBuffer();
-
-    const finalWmBuffer = await sharp(bgBuffer)
-      .composite([{ input: logoBuffer, gravity: 'center' }])
-      .png()
-      .toBuffer();
-
-    const wmMeta = await sharp(finalWmBuffer).metadata();
-    const wmWidth = wmMeta.width || bgWidth;
-    const wmHeight = wmMeta.height || bgHeight;
-
-    let left = opts.padding;
-    let top = opts.padding;
-
-    switch (opts.position) {
-      case WATERMARK_POSITION.CENTER:
-        left = Math.floor((imageWidth - wmWidth) / 2);
-        top = Math.floor((imageHeight - wmHeight) / 2);
-        break;
-      case WATERMARK_POSITION.TOP_LEFT:
-        left = opts.padding;
-        top = opts.padding;
-        break;
-      case WATERMARK_POSITION.TOP_RIGHT:
-        left = imageWidth - wmWidth - opts.padding;
-        top = opts.padding;
-        break;
-      case WATERMARK_POSITION.BOTTOM_LEFT:
-        left = opts.padding;
-        top = imageHeight - wmHeight - opts.padding;
-        break;
-      case WATERMARK_POSITION.BOTTOM_RIGHT:
-      default:
-        left = imageWidth - wmWidth - opts.padding;
-        top = imageHeight - wmHeight - opts.padding;
-        break;
-    }
-
+    // Composite logo directly onto image (no dark background strip)
     compositeOptions = {
-      input: finalWmBuffer,
-      left,
-      top,
+      input: logoBuffer,
+      left: Math.max(0, Math.floor((imageWidth - lWidth) / 2)),
+      top: Math.max(0, Math.floor((imageHeight - lHeight) / 2)),
     };
+
   } else {
 
     const text = opts.text || getSiteName();
