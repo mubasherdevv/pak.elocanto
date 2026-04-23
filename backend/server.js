@@ -327,8 +327,55 @@ const getSeoMetadata = async (reqPath) => {
       };
     }
 
-    // If it's an entity path (like /cities/junk) and we reached here, it didn't match anything in DB
-    // Return 404 to fix Soft 404 issue for Google Search Console
+    // Last check: is this path a known category/subcategory/city slug?
+    // This prevents valid pages from getting a false 404
+    const pathParts = normalizedPath.split('/').filter(Boolean);
+    const rootSlug = pathParts[0];
+    const childSlug = pathParts[1];
+
+    if (rootSlug) {
+      try {
+        const [matchedCat, matchedCity] = await Promise.all([
+          Category.findOne({ slug: rootSlug }).lean(),
+          City.findOne({ slug: rootSlug }).lean()
+        ]);
+
+        if (matchedCat || matchedCity) {
+          const entityName = matchedCat?.name || matchedCity?.name || rootSlug;
+          console.log(`[SEO-SSR] ✅ Path matched a known entity slug: ${rootSlug} (${matchedCat ? 'Category' : 'City'})`);
+          return {
+            title: `${entityName} | Elocanto Pakistan`,
+            description: `Browse ${entityName} classified ads on Elocanto Pakistan. Find the best deals on ${entityName}.`,
+            keywords: entityName,
+            ogTitle: `${entityName} | Elocanto`,
+            ogDescription: `Browse ${entityName} ads on Elocanto Pakistan.`,
+            url: `https://pk.elocanto.com${normalizedPath}`,
+            status: 200
+          };
+        }
+
+        // Check if child slug is a subcategory
+        if (childSlug && matchedCat) {
+          const matchedSub = await Subcategory.findOne({ slug: childSlug, category: matchedCat._id }).lean();
+          if (matchedSub) {
+            console.log(`[SEO-SSR] ✅ Path matched subcategory: ${childSlug}`);
+            return {
+              title: `${matchedSub.name} in ${matchedCat.name} | Elocanto Pakistan`,
+              description: `Browse ${matchedSub.name} classified ads in ${matchedCat.name} on Elocanto Pakistan.`,
+              keywords: `${matchedSub.name}, ${matchedCat.name}`,
+              ogTitle: `${matchedSub.name} | Elocanto`,
+              ogDescription: `Find ${matchedSub.name} ads on Elocanto Pakistan.`,
+              url: `https://pk.elocanto.com${normalizedPath}`,
+              status: 200
+            };
+          }
+        }
+      } catch (dbErr) {
+        console.error('[SEO-SSR] DB check error:', dbErr);
+      }
+    }
+
+    // Truly unknown path - return 404
     console.log(`[SEO-SSR] ⛔ Invalid or unknown path detected: ${normalizedPath}. Returning 404.`);
     return {
       title: 'Page Not Found | Elocanto',
@@ -536,9 +583,10 @@ app.get('*', async (req, res) => {
     html = html
       .replace(/{{SEO_TITLE}}/g, seo.title)
       .replace(/{{SEO_DESCRIPTION}}/g, seo.description)
-      .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
-      .replace(/{{OG_TITLE}}/g, seo.ogTitle)
-      .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
+      .replace(/{{SEO_KEYWORDS}}/g, seo.keywords || '')
+      .replace(/{{OG_TITLE}}/g, seo.ogTitle || seo.title)
+      .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription || seo.description)
+      .replace(/{{OG_IMAGE}}/g, ogImage)
       .replace(/{{CANONICAL_URL}}/g, seo.url)
       .replace(/{{CONTENT}}/g, contentHtml); // Inject SEO HTML into root
 
