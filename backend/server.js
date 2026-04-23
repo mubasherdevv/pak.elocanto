@@ -312,7 +312,14 @@ const getSeoMetadata = async (reqPath) => {
         ogTitle: siteSettings?.siteTitle || 'Elocanto',
         ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
         url: `https://pk.elocanto.com${normalizedPath}`,
-        status: 200
+        status: 200,
+        bodyContent: `
+          <div class="seo-ssr-content">
+            <h1>${siteSettings?.siteTitle || 'Elocanto'}</h1>
+            <p>${siteSettings?.siteDescription || 'Classified Marketplace in Pakistan'}</p>
+            <p>Buy and sell items securely on Elocanto. Browse thousands of listings across Pakistan.</p>
+          </div>
+        `
       };
     }
 
@@ -326,7 +333,8 @@ const getSeoMetadata = async (reqPath) => {
       ogTitle: 'Page Not Found',
       ogDescription: 'The page you are looking for does not exist.',
       url: `https://pk.elocanto.com${normalizedPath}`,
-      status: 404
+      status: 404,
+      bodyContent: '<div class="seo-ssr-content"><h1>404 - Page Not Found</h1><p>Sorry, the page you are looking for does not exist.</p></div>'
     };
 
   } catch (error) {
@@ -334,7 +342,8 @@ const getSeoMetadata = async (reqPath) => {
     return {
       title: 'Elocanto',
       description: 'Secure destination to buy and sell.',
-      status: 500
+      status: 500,
+      bodyContent: ''
     };
   }
 };
@@ -395,7 +404,8 @@ app.get('*', async (req, res) => {
       .replace(/{{SEO_KEYWORDS}}/g, seo.keywords)
       .replace(/{{OG_TITLE}}/g, seo.ogTitle)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription)
-      .replace(/{{CANONICAL_URL}}/g, seo.url);
+      .replace(/{{CANONICAL_URL}}/g, seo.url)
+      .replace(/{{SEO_BODY}}/g, seo.bodyContent || '');
 
     const gscMeta = settings?.googleSearchConsoleId ? `<meta name="google-site-verification" content="${settings.googleSearchConsoleId}" />` : '';
     const headerScripts = (analyticsScript + gscMeta + (settings?.headerScripts || '')).trim();

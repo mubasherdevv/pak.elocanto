@@ -174,7 +174,8 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
         ogDescription: seo.ogDescription || seo.metaDescription,
         whatsappNumber: seo.whatsappNumber || '',
         isActive: true,
-        source: 'custom'
+        source: 'custom',
+        bodyContent: `<div class="seo-ssr-content"><h1>${seo.title}</h1><p>${seo.metaDescription}</p></div>`
       };
     }
 
@@ -192,7 +193,16 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
           ogDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}.`,
           keywords: '',
           isActive: true,
-          source: 'dynamic-ad'
+          source: 'dynamic-ad',
+          bodyContent: `
+            <div class="seo-ssr-content">
+              <h1>${ad.title}</h1>
+              <p><strong>Price:</strong> PKR ${ad.price?.toLocaleString()}</p>
+              <p><strong>Location:</strong> ${ad.city}${ad.area ? ', ' + ad.area : ''}</p>
+              <div class="description">${ad.description || ''}</div>
+              <p>Category: ${ad.category} > ${ad.subcategory || ''}</p>
+            </div>
+          `
         };
       }
     }
@@ -207,7 +217,14 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
           metaDescription: `Premium call girls and escort services in ${city.name}. Reliable and verified listings.`,
           keywords: `${city.name} escorts, ${city.name} call girls`,
           isActive: true,
-          source: 'dynamic-city'
+          source: 'dynamic-city',
+          bodyContent: `
+            <div class="seo-ssr-content">
+              <h1>${city.name} Call Girls & Escorts Service</h1>
+              <p>Find the best verified call girls and escort services in ${city.name}. Reliable and high-quality listings available 24/7.</p>
+              <p>Browse categories and locations in ${city.name} for the most professional services.</p>
+            </div>
+          `
         };
       }
     }
@@ -226,7 +243,13 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
             metaDescription: `Find top-rated call girls and independent escorts in ${area.name}.`,
             keywords: `${area.name} escorts`,
             isActive: true,
-            source: 'dynamic-area'
+            source: 'dynamic-area',
+            bodyContent: `
+              <div class="seo-ssr-content">
+                <h1>Call Girls & Escorts in ${area.name}</h1>
+                <p>Verified escort services and independent call girls available in ${area.name}. Check out the latest profiles and services.</p>
+              </div>
+            `
           };
         }
       } else if (type === 'hotels') {
@@ -237,7 +260,13 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
             metaDescription: `Verified escorts and call girls services available at ${hotel.name}.`,
             keywords: `${hotel.name} escorts`,
             isActive: true,
-            source: 'dynamic-hotel'
+            source: 'dynamic-hotel',
+            bodyContent: `
+              <div class="seo-ssr-content">
+                <h1>Escort Services at ${hotel.name}</h1>
+                <p>Premium and verified escort services at ${hotel.name}. Professional profiles with high-quality service guaranteed.</p>
+              </div>
+            `
           };
         }
       }
