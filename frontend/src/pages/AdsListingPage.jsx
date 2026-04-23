@@ -592,19 +592,7 @@ export default function AdsListingPage() {
         }
       `}</style>
 
-      {/* Breadcrumbs */}
-      <div className="container-custom" style={{ paddingTop: 16 }}>
-        <nav style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: 'var(--gray-500)', fontWeight: 600 }}>
-          {breadcrumbs.map((bc, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Link to={bc.path} style={{ textDecoration: 'none', color: i === breadcrumbs.length - 1 ? 'var(--primary)' : 'inherit' }}>
-                {bc.name}
-              </Link>
-              {i < breadcrumbs.length - 1 && <span>/</span>}
-            </div>
-          ))}
-        </nav>
-      </div>
+
 
       {/* City/Area/Hotel Hub Section - Premium Banner */}
       {citySlug && cityInfo && (

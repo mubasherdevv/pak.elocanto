@@ -46,19 +46,19 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Full-Surface Background Overlay (Pati)
+    // Create Background Overlay (Pati) - Centered horizontal strip
     const bgWidth = imageWidth;
-    const bgHeight = imageHeight; // Full image height as requested
+    const bgHeight = Math.floor(imageHeight * 0.2); // 20% height strip
 
     const bgBuffer = await sharp({
       create: {
         width: bgWidth,
         height: bgHeight,
         channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0.75 }
+        background: { r: 0, g: 0, b: 0, alpha: 0.4 } // Reduced opacity
       }
     })
-    .blur(8) // Increased blur for softer, premium look
+    .blur(5)
     .png()
     .toBuffer();
 
@@ -97,7 +97,7 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     }
 
     compositeOptions = {
-      input: wmBuffer,
+      input: finalWmBuffer,
       left: Math.max(0, left),
       top: Math.max(0, top),
     };
@@ -217,19 +217,19 @@ export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
     const lWidth = logoMeta.width || targetWmWidth;
     const lHeight = logoMeta.height || 100;
 
-    // Create Full-Surface Background Overlay (Pati)
+    // Create Background Overlay (Pati) - Centered horizontal strip
     const bgWidth = imageWidth;
-    const bgHeight = imageHeight;
+    const bgHeight = Math.floor(imageHeight * 0.2); // 20% height strip
 
     const bgBuffer = await sharp({
       create: {
         width: bgWidth,
         height: bgHeight,
         channels: 4,
-        background: { r: 0, g: 0, b: 0, alpha: 0.75 }
+        background: { r: 0, g: 0, b: 0, alpha: 0.4 } // Reduced opacity
       }
     })
-    .blur(8)
+    .blur(5)
     .png()
     .toBuffer();
 

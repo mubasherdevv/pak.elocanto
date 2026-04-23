@@ -20,9 +20,16 @@ export default function ImageCarousel({ images = [], title = '', fullWidth = fal
         borderRadius: fullWidth ? 0 : 16, 
         overflow: 'hidden',
         background: '#f3f4f6', 
-        cursor: 'zoom-in'
+        cursor: 'pointer',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        zIndex: 10
       }}
-        onClick={() => setLightbox(true)}
+        onClick={(e) => {
+          e.preventDefault();
+          setLightbox(true);
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.01)'}
+        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
       >
         <img
           key={safeImages[currentIndex]}
