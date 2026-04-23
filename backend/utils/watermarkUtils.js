@@ -47,7 +47,7 @@ const buildCompositeOptions = async (imageWidth, imageHeight, opts) => {
       width: imageWidth,
       height: imageHeight,
       channels: 4,
-      background: { r: 0, g: 0, b: 0, alpha: 0.6 }
+      background: { r: 0, g: 0, b: 0, alpha: 0.75 }
     }
   }).png().toBuffer();
 
