@@ -238,7 +238,7 @@ export default function AdDetailPage() {
 
         {/* 2. Price & Title Section */}
         <div style={{ background: 'white', borderRadius: 20, padding: 20, boxShadow: '0 4px 20px rgba(0,0,0,0.04)', marginBottom: 16 }}>
-          {(ad.listingType === 'featured' || ad.adType === 'featured') && (
+          {(ad.listingType === 'featured' || ad.adType === 'featured' || ad.isFeatured) && (
             <div style={{ 
               display: 'inline-flex', 
               alignItems: 'center', 
@@ -494,9 +494,24 @@ export default function AdDetailPage() {
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
-                    {(ad.listingType === 'featured' || ad.adType === 'featured') && (
-                      <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-400 to-orange-600 text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest mb-3 shadow-lg shadow-orange-500/20">
-                        <span>⭐</span> FEATURED AD
+                    {(ad.listingType === 'featured' || ad.adType === 'featured' || ad.isFeatured) && (
+                      <div style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        gap: 8, 
+                        background: 'linear-gradient(135deg, #fbbf24, #f59e0b, #ea580c)', 
+                        color: 'white', 
+                        padding: '6px 16px', 
+                        borderRadius: 12, 
+                        fontSize: 11, 
+                        fontWeight: 900, 
+                        textTransform: 'uppercase', 
+                        letterSpacing: 1.5, 
+                        marginBottom: 16,
+                        boxShadow: '0 10px 20px rgba(234, 88, 12, 0.2)',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                      }}>
+                        <span style={{ fontSize: 14 }}>⭐</span> FEATURED PREMIUM
                       </div>
                     )}
                     <div className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</div>
