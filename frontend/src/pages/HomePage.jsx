@@ -29,8 +29,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const loadAllData = async () => {
-      // If we have initial data from SSR, skip the initial fetch
-      if (initialData.categories && initialData.cities) {
+      // If we have initial data from SSR for everything, skip the initial fetch
+      if (initialData.categories && initialData.cities && initialData.areas && initialData.hotels) {
         setPageLoading(false);
         return;
       }

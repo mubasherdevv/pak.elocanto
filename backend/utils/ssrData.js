@@ -68,11 +68,22 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
 
     // 1. Home Page
     if (path === '/') {
-      const [featuredAds, latestAds] = await Promise.all([
+      const [featuredAds, latestAds, homeCities, homeAreas, homeHotels] = await Promise.all([
         Ad.find({ isFeatured: true, isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(10).lean(),
-        Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(12).lean()
+        Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(12).lean(),
+        City.find({ showOnHome: true }).sort({ name: 1 }).lean(),
+        Area.find({ showOnHome: true }).populate('city', 'name slug').lean(),
+        Hotel.find({ showOnHome: true }).populate('city', 'name slug').lean()
       ]);
-      initialData = { ...initialData, featuredAds, latestAds };
+      
+      initialData = { 
+        ...initialData, 
+        featuredAds, 
+        latestAds, 
+        cities: homeCities, 
+        areas: homeAreas, 
+        hotels: homeHotels 
+      };
       
       const categoryHtml = `
         <div style="margin-bottom: 40px;">
@@ -92,7 +103,7 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
         <div style="margin-bottom: 40px;">
           <h2 style="font-size: 24px; margin-bottom: 20px;">Browse by City</h2>
           <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px;">
-            ${allCities.map(city => `
+            ${homeCities.map(city => `
               <a href="/cities/${city.slug}" style="text-decoration: none; color: inherit; text-align: center; border: 1px solid #f1f5f9; padding: 10px; border-radius: 50%; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-size: 11px; font-weight: 700;">
                 ${city.name}
               </a>
