@@ -1,0 +1,182 @@
+# Elocanto Website Design & Structure Documentation
+
+## 1. Design Aesthetics (Theme & Vibe)
+- **Style**: Modern, Premium, and Clean (Social Media/Classifieds feel).
+- **Colors**:
+  - Primary: #f95e26 (Vibrant Orange) - Used for primary buttons, links, and focus states.
+  - Accent: #22c55e (Success Green) - Used for prices and online status.
+  - Background: #f7f8fa (Ultra Light Gray) - Gives a clean "app-like" feel.
+  - Text: #0f172a (Dark Navy) - High contrast for readability.
+- **Typography**: Inter (Sans-serif) - Clean, professional, and easy to read.
+- **Components Shape**: Large border-radius (16px - 24px) for cards and modals to create a soft, friendly UI.
+- **Visual Effects**: Soft shadows (shadow-sm/md), glassmorphism (blur backgrounds) for dropdowns, and smooth hover transitions.
+
+## 2. Core Layout Structure
+The application uses a `PublicLayout` wrapper for all user-facing pages:
+- **Navbar**: Sticky at the top, fixed height (72px), white background, soft bottom shadow.
+- **Main Content**: Dynamic area where different pages (Home, Ads, etc.) are rendered.
+- **Footer**: Large footer with multiple columns for links, categories, and branding.
+
+## 3. Key Components Design
+
+### A. Navbar (Navigation Bar)
+- **Logo**: Left-aligned, links to home.
+- **Hamburger Menu**: Visible on all screens, opens the sidebar.
+- **Search Bar**: Often present in the hero section or top of listing pages.
+- **User Actions**:
+  - Login Button: Ghost style (clean).
+  - Profile Dropdown: Visible when logged in (shows avatar, name, and quick links).
+- **CTA Button**: "Post Ad" - Highlighted with a vibrant orange gradient and shadow.
+
+### B. Mobile Navigation (Drawer)
+- Slides in from the left.
+- Contains links to categories, account settings, and contact pages.
+
+### C. AdCard (Vertical Ad Display)
+- **Image**: Large, rounded top corners, fixed aspect ratio.
+- **Price Tag**: Bold Orange text at the top or bottom left.
+- **Title**: 1-2 lines of text, bold.
+- **Meta Info**: Location and Date at the bottom with small icons.
+- **Featured Ribbon**: A gradient gold/orange ribbon for "Featured" ads.
+
+### D. AdDetail (Single Ad View)
+- **Top Section**: Large Image Carousel with thumbnails.
+- **Main Column**: Ad Title, Price, Detailed Description, Attributes (e.g., condition, category).
+- **Sidebar**: Seller profile card (name, photo, join date), "Contact Seller" buttons, and Google Map location.
+
+## 4. Main Page Breakdowns
+
+### Home Page
+- **Hero Section**: Large search bar with "Welcome" text and a vibrant background.
+- **Categories Grid**: Circular or rounded square icons for quick navigation.
+- **Featured Ads**: A horizontal scrolling section or grid of top-tier ads.
+- **SEO Content**: Dynamic text sections at the bottom for long-form keywords.
+
+### Ads Listing Page
+- **Filter Sidebar**: Sticky on desktop, allows filtering by price, location, and category.
+- **Ads Grid**: 2 columns on mobile, 4 columns on desktop.
+- **Pagination**: Modern, numbered buttons at the bottom.
+
+### User Dashboard
+- **Sidebar Menu**: Left-aligned links (My Ads, Messages, Favorites, Settings).
+- **Content Area**: Statistics (views, ads count) and lists of user items.
+
+## 5. Admin Panel Design
+- Dark Sidebar for navigation.
+- Statistics Cards with charts (revenue, user growth).
+- Clean Data Tables for managing users, ads, and settings.
+
+## 6. Frontend File Inventory (Directory Structure)
+
+### Pages (`frontend/src/pages`)
+1.  **AboutUsPage**: Company information and mission.
+2.  **AdDetailPage**: Full display of an ad with images, price, and seller info.
+3.  **AdsListingPage**: Main search results and category listing page.
+4.  **HomePage**: The landing page with hero search and featured sections.
+5.  **PostAdPage**: Multistep form for users to post new advertisements.
+6.  **ProfilePage**: User's public profile showing their active ads.
+7.  **LoginPage / RegisterPage**: Authentication forms (Sign in / Sign up).
+8.  **UserDashboardPage**: Private area for users to manage ads, messages, and settings.
+9.  **AdminDashboardPage**: Main entry for administrators (Stats & Overview).
+10. **AdminAdsPage / AdminUsersPage**: Detailed management tables for ads and users.
+11. **AdminSettingsPage**: Global site configuration (Logo, Colors, SEO).
+12. **AdminTitlesSeoPage**: Advanced SEO title and metadata management.
+13. **CityManagePage / CategoryManagePage**: CRUD interfaces for locations and categories.
+14. **ContactUsPage / AntiScamPage / PrivacyPage / TermsPage**: Legal and support pages.
+15. **NotFoundPage**: Custom 404 error page.
+
+### Components (`frontend/src/components`)
+1.  **Navbar**: Top navigation bar with Logo, Search, and User Menu.
+2.  **MobileNav**: Sidebar navigation drawer for mobile devices.
+3.  **Footer**: Bottom section with quick links and site branding.
+4.  **AdCard**: Vertical preview card for an advertisement (Grid view).
+5.  **HorizontalAdCard**: Wide preview card for list views.
+6.  **ImageCarousel**: High-performance slider for ad detail images.
+7.  **LazyImage**: Performance-optimized image loader with blur effects.
+8.  **ImageEditorModal**: Built-in tool to crop/rotate images before uploading.
+9.  **PublicLayout**: The main wrapper that includes Navbar and Footer.
+10. **AdminLayout**: Specialized layout with a sidebar for admin pages.
+11. **SeoContentSection**: Injects dynamic SEO text at the bottom of pages.
+12. **WhatsAppWidget**: Floating button for instant customer support.
+13. **Skeleton**: Loading placeholders for a smoother UI experience.
+14. **FloatingScrollToTop**: Small button to jump back to the top of long pages.
+15. **MaintenanceGuard**: Protects the site during updates.
+
+## 7. Detailed Page-by-Page UI Breakdown
+
+### 🏠 Home Page (`HomePage.jsx`)
+- **Hero Section**: 
+  - Background: Modern gradient/image.
+  - Content: Big bold heading + subtext.
+  - Search: A large, centered input field with location and category dropdowns.
+- **Category Grid**: 
+  - Icons: Circular or rounded squares for categories (e.g., Models, Escorts, Massage).
+  - Hover: Subtle scale-up animation.
+- **Featured Ads Section**: 
+  - Layout: Grid or Carousel of `AdCard` components.
+  - Badges: Bright "Featured" or "Hot" labels on top-tier ads.
+- **SEO Content**: 
+  - Located at the bottom, containing rich text for keywords like "Best service in Lahore", etc.
+
+### 🔍 Ads Listing Page (`AdsListingPage.jsx`)
+- **Top Bar**: 
+  - Shows breadcrumbs and "Showing X results".
+  - Sort dropdown (Latest, Price Low to High, etc.).
+- **Sidebar (Sticky)**: 
+  - Filter groups: Categories, Cities, Areas, Price Range.
+  - Checkboxes and Range Sliders.
+- **Results Area**: 
+  - Main grid of ads. 
+  - Mobile: Single column or 2-column small cards.
+  - Desktop: 3-4 column grid.
+- **Pagination**: 
+  - Large, clickable numbers at the bottom with "Prev/Next" buttons.
+
+### 📦 Ad Detail Page (`AdDetailPage.jsx`)
+- **Image Gallery**: 
+  - Large main image with a thumbnail slider underneath.
+  - Fullscreen zoom on click.
+- **Ad Identity**: 
+  - Bold Title + Big Price Tag (Orange).
+  - Breadcrumbs showing Category > City > Area.
+- **Main Content**: 
+  - Ad Description (Long text).
+  - Attributes Table: (Age, Height, Services, Language, etc.).
+- **Right Sidebar**: 
+  - **Seller Card**: Profile pic, name, "Member since", and verification badge.
+  - **Contact Buttons**: "Call Now", "WhatsApp", "Send Message".
+  - **Location**: Small Google Map preview.
+
+### ➕ Post Ad Page (`PostAdPage.jsx`)
+- **Stepper Header**: 
+  - Shows progress (1. Category, 2. Details, 3. Photos, 4. Done).
+- **Form Layout**: 
+  - Single column centered layout.
+  - Clean input fields with labels and helper text.
+- **Image Upload Zone**: 
+  - Large dashed box for drag-and-drop.
+  - Preview grid for uploaded photos with a "Delete" button.
+
+### 👤 User Dashboard (`UserDashboardPage.jsx`)
+- **Header**: 
+  - User profile summary + Quick stats (Total Views, Active Ads).
+- **Tabs System**: 
+  - Horizontal menu: My Ads, Messages, Favorites, Settings.
+- **Ad Management**: 
+  - List of user ads with status badges (Active, Pending, Expired).
+  - Action buttons: Edit, Delete, Promote (Feature).
+
+### ⚙️ Admin Panel (`AdminDashboardPage`)
+- **Sidebar**: 
+  - Dark-themed fixed sidebar with icons for every management section.
+- **Statistics Cards**: 
+  - 4 large cards at the top (Total Revenue, New Users, New Ads, Reports).
+- **Data Tables**: 
+  - Modern paginated tables with search and bulk actions.
+  - Color-coded status badges for quick scanning.
+
+### 🛡️ Legal & Info Pages (`Privacy, Terms, About Us`)
+- **Layout**: 
+  - `LegalPageLayout` provides a centered, clean text document look.
+  - Sidebar with a table of contents for long documents.
+  - Professional typography for readability.

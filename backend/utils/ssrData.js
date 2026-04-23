@@ -35,7 +35,7 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
   
   const [allCategories, allCities] = await Promise.all([
     Category.find().lean(),
-    City.find({ showOnHome: true }).lean()
+    City.find().sort({ name: 1 }).lean()
   ]);
 
   let initialData = { 
