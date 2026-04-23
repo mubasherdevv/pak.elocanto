@@ -14,10 +14,61 @@ export const WATERMARK_POSITION = {
 
 const DEFAULT_OPTIONS = {
   position: WATERMARK_POSITION.CENTER,
-  watermarkWidth: 400, // Increased as requested
+  watermarkWidth: 400,
   opacity: 0.8,
   padding: 0,
 };
+
+/**
+ * Helper: Build the composite options array for the watermark.
+ * Style: Full-image dark overlay (alpha: 0.6) with logo centered on top.
+ */
+const buildCompositeOptions = async (imageWidth, imageHeight, opts) => {
+  const watermarkExists = fs.existsSync(WATERMARK_PATH);
+
+  if (!watermarkExists) {
+    return null; // caller handles fallback
+  }
+
+  const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.6));
+
+  const logoBuffer = await sharp(WATERMARK_PATH)
+    .resize({ width: targetWmWidth, withoutEnlargement: true })
+    .ensureAlpha()
+    .toBuffer();
+
+  const logoMeta = await sharp(logoBuffer).metadata();
+  const lWidth = logoMeta.width || targetWmWidth;
+  const lHeight = logoMeta.height || 100;
+
+  // Full-image dark overlay — matches screenshot (entire image covered)
+  const overlayBuffer = await sharp({
+    create: {
+      width: imageWidth,
+      height: imageHeight,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0.6 }
+    }
+  }).png().toBuffer();
+
+  // Composite logo centered on the overlay
+  const finalWmBuffer = await sharp(overlayBuffer)
+    .composite([{
+      input: logoBuffer,
+      left: Math.max(0, Math.floor((imageWidth - lWidth) / 2)),
+      top: Math.max(0, Math.floor((imageHeight - lHeight) / 2)),
+    }])
+    .png()
+    .toBuffer();
+
+  return {
+    input: finalWmBuffer,
+    left: 0,
+    top: 0,
+  };
+};
+
+// ─── File-based watermark ───────────────────────────────────────────────────
 
 export const addWatermark = async (inputPath, outputPath, options = {}) => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -26,63 +77,29 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
     throw new Error(`Input file not found: ${inputPath}`);
   }
 
-  const watermarkExists = fs.existsSync(WATERMARK_PATH);
-  let compositeOptions;
+  const metadata = await sharp(inputPath).metadata();
+  const imageWidth = metadata.width || 1200;
+  const imageHeight = metadata.height || 800;
 
-  if (watermarkExists) {
-    const metadata = await sharp(inputPath).metadata();
-    const imageWidth = metadata.width || 1200;
-    const imageHeight = metadata.height || 800;
+  let compositeOptions = await buildCompositeOptions(imageWidth, imageHeight, opts);
 
-    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.6));
-    
-    // Scale logo
-    const logoBuffer = await sharp(WATERMARK_PATH)
-      .resize({ width: targetWmWidth, withoutEnlargement: true })
-      .ensureAlpha()
-      .toBuffer();
-
-    const logoMeta = await sharp(logoBuffer).metadata();
-    const lWidth = logoMeta.width || targetWmWidth;
-    const lHeight = logoMeta.height || 100;
-
-    // Composite logo directly onto image (no dark background strip)
-    compositeOptions = {
-      input: logoBuffer,
-      left: Math.max(0, Math.floor((imageWidth - lWidth) / 2)),
-      top: Math.max(0, Math.floor((imageHeight - lHeight) / 2)),
-    };
-
-  } else {
-    // Fallback to text watermark
+  if (!compositeOptions) {
+    // Fallback: text watermark
     const text = opts.text || await getSiteName();
-    const metadata = await sharp(inputPath).metadata();
-    const fontSize = Math.max(16, Math.floor(metadata.width / 35));
-    const textBuffer = await createTextWatermark(text, fontSize, metadata.width || 1200);
-
-    compositeOptions = {
-      input: textBuffer,
-      gravity: 'southeast',
-    };
+    const fontSize = Math.max(16, Math.floor(imageWidth / 35));
+    const textBuffer = await createTextWatermark(text, fontSize, imageWidth);
+    compositeOptions = { input: textBuffer, gravity: 'southeast' };
   }
 
-  // Optimize and Save with SEO Obfuscation
-  // 1. Subtle modulation (brightness/saturation) to change file signature
-  // 2. Tiny blur to soften pixels
-  // 3. 0.1 degree rotation to re-sample the pixel grid (unique fingerprint)
   const outputBuffer = await sharp(inputPath)
     .withMetadata()
-    .modulate({
-      brightness: 1.02, 
-      saturation: 1.05
-    })
+    .modulate({ brightness: 1.02, saturation: 1.05 })
     .blur(0.5)
     .rotate(0.1, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .composite([compositeOptions])
-    .webp({ quality: 80, effort: 6 }) 
+    .webp({ quality: 80, effort: 6 })
     .toBuffer();
 
-  // Ensure output directory exists (Final check)
   const outputDir = path.dirname(outputPath);
   if (!fs.existsSync(outputDir)) {
     console.log(`[WATERMARK] Creating missing output directory: ${outputDir}`);
@@ -94,6 +111,41 @@ export const addWatermark = async (inputPath, outputPath, options = {}) => {
 
   return outputPath;
 };
+
+// ─── Buffer-based watermark ─────────────────────────────────────────────────
+
+export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
+  const opts = { ...DEFAULT_OPTIONS, ...options };
+
+  if (!imageBuffer || imageBuffer.length === 0) {
+    throw new Error('Empty buffer provided');
+  }
+
+  const metadata = await sharp(imageBuffer).metadata();
+  const imageWidth = metadata.width || 1200;
+  const imageHeight = metadata.height || 800;
+
+  let compositeOptions = await buildCompositeOptions(imageWidth, imageHeight, opts);
+
+  if (!compositeOptions) {
+    // Fallback: text watermark
+    const text = opts.text || getSiteName();
+    const fontSize = Math.max(16, Math.floor(imageWidth / 40));
+    const textBuffer = await createTextWatermark(text, fontSize, imageWidth);
+    compositeOptions = { input: textBuffer, gravity: 'southeast' };
+  }
+
+  return sharp(imageBuffer)
+    .withMetadata()
+    .modulate({ brightness: 1.01, saturation: 1.03 })
+    .blur(0.5)
+    .rotate(0.05, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .composite([compositeOptions])
+    .webp({ quality: 85 })
+    .toBuffer();
+};
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 const getSiteName = () => {
   try {
@@ -120,86 +172,18 @@ const createTextWatermark = async (text, fontSize, imageWidth) => {
       background: { r: 0, g: 0, b: 0, alpha: 0.5 },
     },
   })
-    .composite([
-      {
-        input: Buffer.from(
-          `<svg>
-            <style>
-              text { fill: white; font-size: ${fontSize}px; font-family: Arial, sans-serif; font-weight: bold; }
-            </style>
-            <text x="50%" y="50%" text-anchor="middle" dy=".35em">${text}</text>
-          </svg>`
-        ),
-        top: 0,
-        left: 0,
-      },
-    ])
+    .composite([{
+      input: Buffer.from(
+        `<svg>
+          <style>
+            text { fill: white; font-size: ${fontSize}px; font-family: Arial, sans-serif; font-weight: bold; }
+          </style>
+          <text x="50%" y="50%" text-anchor="middle" dy=".35em">${text}</text>
+        </svg>`
+      ),
+      top: 0,
+      left: 0,
+    }])
     .png()
-    .toBuffer();
-};
-
-const copyFile = (src, dest) => {
-  fs.copyFileSync(src, dest);
-  return dest;
-};
-
-export const addWatermarkToBuffer = async (imageBuffer, options = {}) => {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
-
-  if (!imageBuffer || imageBuffer.length === 0) {
-    throw new Error('Empty buffer provided');
-  }
-
-  const watermarkExists = fs.existsSync(WATERMARK_PATH);
-  let compositeOptions;
-
-  if (watermarkExists) {
-    const metadata = await sharp(imageBuffer).metadata();
-    const imageWidth = metadata.width || 1200;
-    const imageHeight = metadata.height || 800;
-
-    const targetWmWidth = Math.min(opts.watermarkWidth, Math.floor(imageWidth * 0.6));
-
-    const logoBuffer = await sharp(WATERMARK_PATH)
-      .resize({ width: targetWmWidth, withoutEnlargement: true })
-      .ensureAlpha()
-      .toBuffer();
-
-    const logoMeta = await sharp(logoBuffer).metadata();
-    const lWidth = logoMeta.width || targetWmWidth;
-    const lHeight = logoMeta.height || 100;
-
-    // Composite logo directly onto image (no dark background strip)
-    compositeOptions = {
-      input: logoBuffer,
-      left: Math.max(0, Math.floor((imageWidth - lWidth) / 2)),
-      top: Math.max(0, Math.floor((imageHeight - lHeight) / 2)),
-    };
-
-  } else {
-
-    const text = opts.text || getSiteName();
-    const metadata = await sharp(imageBuffer).metadata();
-    const fontSize = Math.max(16, Math.floor(metadata.width / 40));
-
-    const textBuffer = await createTextWatermark(text, fontSize, metadata.width || 1200);
-
-    compositeOptions = {
-      input: textBuffer,
-      gravity: 'southeast',
-    };
-  }
-
-  // SEO Obfuscation & Final watermark
-  return sharp(imageBuffer)
-    .withMetadata()
-    .modulate({
-      brightness: 1.01,
-      saturation: 1.03
-    })
-    .blur(0.5)
-    .rotate(0.05, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .composite([compositeOptions])
-    .webp({ quality: 85 })
     .toBuffer();
 };
