@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import compression from 'compression';
+import prerender from 'prerender-node';
 import { fileURLToPath } from 'url';
 dotenv.config();
 
@@ -74,6 +75,11 @@ await connectDB();
 
 const app = express();
 app.set('trust proxy', 1);
+
+// Prerender.io middleware - Must be before SPA route handler
+if (process.env.PRERENDER_TOKEN) {
+  app.use(prerender.set('prerenderToken', process.env.PRERENDER_TOKEN));
+}
 const PORT = process.env.PORT || 5000;
 console.log('Server starting...');
 
