@@ -456,6 +456,7 @@ export default function AdsListingPage() {
 
 
   const trackedKey = useRef(null);
+  const trackedFeaturedKey = useRef(null);
 
   useEffect(() => {
     if (ads.length > 0 && trackedKey.current !== location.search) {
@@ -468,6 +469,19 @@ export default function AdsListingPage() {
       api.post('/views/track-bulk', { adIds, localStorageId: viewerId }).catch(console.error);
     }
   }, [ads, location.search]);
+
+  // Track Gallery (Marquee) Featured Ads on reload/load
+  useEffect(() => {
+    if (featuredAds.length > 0 && trackedFeaturedKey.current !== 'tracked') {
+      trackedFeaturedKey.current = 'tracked';
+      const adIds = featuredAds.map(ad => ad._id);
+      const viewerId = localStorage.getItem('ad_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      if (!localStorage.getItem('ad_viewer_id')) {
+        localStorage.setItem('ad_viewer_id', viewerId);
+      }
+      api.post('/views/track-bulk', { adIds, localStorageId: viewerId, page: 'listing_gallery' }).catch(console.error);
+    }
+  }, [featuredAds]);
 
   const updateFilter = (name, value) => {
     const params = new URLSearchParams(location.search);
