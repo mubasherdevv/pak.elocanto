@@ -2,11 +2,14 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import api from '../lib/api';
 import { cache } from '../utils/cache';
 
+import { getGlobalSettings } from '../utils/ssr';
+
 const SettingsContext = createContext();
 const SETTINGS_CACHE_TIME = 10 * 60 * 1000; // 10 minutes cache for settings
 
 export const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState(() => cache.get('settings'));
+  const initialSettings = getGlobalSettings();
+  const [settings, setSettings] = useState(() => initialSettings || cache.get('settings'));
   const [loading, setLoading] = useState(!settings);
   const [error, setError] = useState(null);
 

@@ -12,29 +12,38 @@ import { usePageSeo } from '../hooks/usePageSeo';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import WhatsAppWidget from '../components/WhatsAppWidget';
 import HowItWorks from '../components/HowItWorks';
+import { getInitialData } from '../utils/ssr';
 
 // Simple global cache for static-ish data to avoid redundant per-page fetches
+const initialData = getInitialData();
 const pageCache = {
-  categories: null,
-  cities: null,
+  categories: initialData?.categories || null,
+  cities: initialData?.cities || null,
 };
+
+
 
 export default function AdsListingPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug } = useParams();
   const { ads, loading, fetchAds, totalPages, totalCount, currentPage, settings } = useAds();
-  const [categories, setCategories] = useState([]);
-  const [cities, setCities] = useState([]);
+  const initialData = getInitialData();
+  const isFirstRender = useRef(true);
+
+  const [categories, setCategories] = useState(initialData?.categories || []);
+  const [cities, setCities] = useState(initialData?.cities || []);
   const [isLarge, setIsLarge] = useState(window.innerWidth >= 1024);
   const [notFound, setNotFound] = useState(false);
-  const [dataLoading, setDataLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(!initialData?.categories);
 
   // City/Area/Hotel hub data
-  const [cityInfo, setCityInfo] = useState(null);
+  const [cityInfo, setCityInfo] = useState(initialData?.city || null);
+
   const [cityAreas, setCityAreas] = useState([]);
   const [cityHotels, setCityHotels] = useState([]);
   const [isLocationsLoading, setIsLocationsLoading] = useState(false);
+
   const isHotelsPage = location.pathname.includes('/hotels') && !hotelSlug;
 
   // Parse remaining query params
@@ -46,7 +55,7 @@ export default function AdsListingPage() {
   const priceMin = searchParams.get('priceMin') || '';
   const priceMax = searchParams.get('priceMax') || '';
   const tags = searchParams.get('tags') || '';
-  
+
   const [showFilters, setShowFilters] = useState(false);
   const [featuredAds, setFeaturedAds] = useState([]);
 
@@ -61,9 +70,9 @@ export default function AdsListingPage() {
   // Expandable city filter state
   const [expandedCity, setExpandedCity] = useState(null);
   const [expandedSub, setExpandedSub] = useState({}); // { cityId_areas: bool, cityId_hotels: bool }
-  
+
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('adsViewMode') || 'grid');
-  
+
   useEffect(() => {
     localStorage.setItem('adsViewMode', viewMode);
   }, [viewMode]);
@@ -84,7 +93,7 @@ export default function AdsListingPage() {
     if (!city?.slug) return;
     // Only fetch if not already cached
     if (cityFilterAreas[expandedCity] && cityFilterHotels[expandedCity]) return;
-    
+
     Promise.all([
       api.get(`/areas?city=${city.slug}`).catch(() => ({ data: [] })),
       api.get(`/hotels?city=${city.slug}`).catch(() => ({ data: [] })),
@@ -142,13 +151,13 @@ export default function AdsListingPage() {
 
   useEffect(() => {
     // Build shared fetch params
-    const baseParams = { 
-      keyword, 
-      category: categorySlug, 
+    const baseParams = {
+      keyword,
+      category: categorySlug,
       subcategory: subCategorySlug,
       subSubCategory: subSubcatSlug,
-      city: citySlug || city, 
-      sort, 
+      city: citySlug || city,
+      sort,
       priceMin,
       priceMax,
       tags,
@@ -162,8 +171,14 @@ export default function AdsListingPage() {
     if (hotelSlug) baseParams.hotel = hotelSlug;
     if (isHotelsPage && citySlug) baseParams.hotelsInCity = citySlug;
 
-    // Trigger Initial Fetch (Reset)
-    fetchAds({ ...baseParams, page: 1, pageSize: 15 }, false);
+    if (isFirstRender.current && initialData?.ads) {
+      isFirstRender.current = false;
+    } else {
+      // Trigger Initial Fetch (Reset)
+      fetchAds({ ...baseParams, page: 1, pageSize: 15 }, false);
+    }
+
+
 
     const loadData = async () => {
       try {
@@ -176,14 +191,14 @@ export default function AdsListingPage() {
         setNotFound(false); // Reset on every load
 
         const galleryLimit = settings?.featuredAdsLimit || 10;
-        
+
         const essentialPromises = [];
         if (!pageCache.categories) essentialPromises.push(api.get('/categories'));
         if (!pageCache.cities) essentialPromises.push(api.get('/cities'));
         if (citySlug) essentialPromises.push(api.get(`/cities/slug/${citySlug}`).catch(() => null));
 
         const essentialResults = await Promise.all(essentialPromises);
-        
+
         let cityInfoRes = null;
         let index = 0;
         if (!pageCache.categories) {
@@ -276,43 +291,43 @@ export default function AdsListingPage() {
             if (areasRes?.data) setCityAreas(areasRes.data);
             if (hotelsRes?.data) setCityHotels(hotelsRes.data);
             setIsLocationsLoading(false);
-            
-            if (areaSlug || hotelSlug || isHotelsPage) {
-               setBreadcrumbs(prev => {
-                 const newBc = [...prev];
-                 let foundSpecific = false;
 
-                 if (areaSlug) {
-                   const area = areasRes.data.find(a => a.slug === areaSlug);
-                   if (area) {
-                     foundSpecific = true;
-                     if (!newBc.find(b => b.path.includes(areaSlug))) {
-                       newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
-                     }
-                   } else {
-                     setNotFound(true);
-                   }
-                 }
-                 if (isHotelsPage || hotelSlug) {
-                   if (!newBc.find(b => b.name === 'Hotels')) {
-                     newBc.push({ name: 'Hotels', path: `/cities/${citySlug}/hotels` });
-                   }
-                   if (hotelSlug) {
-                     const hotel = hotelsRes.data.find(h => h.slug === hotelSlug);
-                     if (hotel) {
-                       foundSpecific = true;
-                       if (!newBc.find(b => b.path.includes(hotelSlug))) {
-                         newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
-                       }
-                     } else {
-                       setNotFound(true);
-                     }
-                   } else if (isHotelsPage) {
-                     foundSpecific = true;
-                   }
-                 }
-                 return newBc;
-               });
+            if (areaSlug || hotelSlug || isHotelsPage) {
+              setBreadcrumbs(prev => {
+                const newBc = [...prev];
+                let foundSpecific = false;
+
+                if (areaSlug) {
+                  const area = areasRes.data.find(a => a.slug === areaSlug);
+                  if (area) {
+                    foundSpecific = true;
+                    if (!newBc.find(b => b.path.includes(areaSlug))) {
+                      newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
+                    }
+                  } else {
+                    setNotFound(true);
+                  }
+                }
+                if (isHotelsPage || hotelSlug) {
+                  if (!newBc.find(b => b.name === 'Hotels')) {
+                    newBc.push({ name: 'Hotels', path: `/cities/${citySlug}/hotels` });
+                  }
+                  if (hotelSlug) {
+                    const hotel = hotelsRes.data.find(h => h.slug === hotelSlug);
+                    if (hotel) {
+                      foundSpecific = true;
+                      if (!newBc.find(b => b.path.includes(hotelSlug))) {
+                        newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
+                      }
+                    } else {
+                      setNotFound(true);
+                    }
+                  } else if (isHotelsPage) {
+                    foundSpecific = true;
+                  }
+                }
+                return newBc;
+              });
             }
           }).catch(() => {
             setIsLocationsLoading(false);
@@ -337,14 +352,14 @@ export default function AdsListingPage() {
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && !loading && !infiniteLoading && currentPage < totalPages) {
         setInfiniteLoading(true);
-        
-        const nextParams = { 
-          keyword, 
-          category: categorySlug, 
+
+        const nextParams = {
+          keyword,
+          category: categorySlug,
           subcategory: subCategorySlug,
           subSubCategory: subSubcatSlug,
-          city: citySlug || city, 
-          sort, 
+          city: citySlug || city,
+          sort,
           page: currentPage + 1,
           pageSize: 15,
           priceMin,
@@ -376,43 +391,43 @@ export default function AdsListingPage() {
   const getSeoContext = () => {
     if (hotelSlug) {
       const hotel = cityHotels.find(h => h.slug === hotelSlug);
-      return { 
-        type: 'hotel', 
-        id: hotel?._id, 
+      return {
+        type: 'hotel',
+        id: hotel?._id,
         placeholderName: hotel?.name || 'Hotel',
-        fallbackTitle: hotel ? `${hotel.name} in ${cityInfo?.name || ''}` : 'Hotel Listings' 
+        fallbackTitle: hotel ? `${hotel.name} in ${cityInfo?.name || ''}` : 'Hotel Listings'
       };
     }
     if (areaSlug) {
       const area = cityAreas.find(a => a.slug === areaSlug);
-      return { 
-        type: 'area', 
-        id: area?._id, 
+      return {
+        type: 'area',
+        id: area?._id,
         placeholderName: area?.name || 'Area',
-        fallbackTitle: area ? `Ads in ${area.name}, ${cityInfo?.name || ''}` : 'Area Listings' 
+        fallbackTitle: area ? `Ads in ${area.name}, ${cityInfo?.name || ''}` : 'Area Listings'
       };
     }
     if (citySlug) {
       if (isHotelsPage) {
-        return { 
-          type: 'city-hotels', 
-          id: cityInfo?._id, 
+        return {
+          type: 'city-hotels',
+          id: cityInfo?._id,
           placeholderName: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotels',
-          fallbackTitle: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotel Listings' 
+          fallbackTitle: cityInfo ? `Hotels in ${cityInfo.name}` : 'Hotel Listings'
         };
       }
-      return { 
-        type: 'city', 
-        id: cityInfo?._id, 
+      return {
+        type: 'city',
+        id: cityInfo?._id,
         placeholderName: cityInfo?.name || 'City',
-        fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : 'City Listings' 
+        fallbackTitle: cityInfo ? `Ads in ${cityInfo.name}` : '' 
       };
     }
     if (categorySlug) {
       const name = activeSubSub?.name || activeSub?.name || activeCategory?.name || 'Category';
-      return { 
-        type: 'category', 
-        id: activeSubSub?._id || activeSub?._id || activeCategory?._id, 
+      return {
+        type: 'category',
+        id: activeSubSub?._id || activeSub?._id || activeCategory?._id,
         placeholderName: name,
         fallbackTitle: `${name} Listings`
       };
@@ -422,7 +437,7 @@ export default function AdsListingPage() {
 
   const seoContext = getSeoContext();
   const siteName = settings?.siteName || 'Elocanto.pk';
-  
+
   const { seo } = usePageSeo(seoContext.type, seoContext.id, {
     title: seoContext.fallbackTitle,
     description: `Browse the latest ads in ${seoContext.placeholderName}. Find the best deals on Elocanto.`
@@ -431,8 +446,9 @@ export default function AdsListingPage() {
   // Handle {name} placeholder in client-side title — only after API responds
   const seoReady = seo !== null;
   const finalSeoTitle = seoReady ? (seo?.title || `{name} | ${siteName}`) : '';
-  const displayTitle = seoReady ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) : '';
-  
+  const displayTitle = seoReady 
+    ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName) 
+    : (initialData?.title || seoContext.fallbackTitle);
   const finalSeoDesc = seoReady ? (seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
   const displayDesc = seoReady ? finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName) : '';
 
@@ -468,27 +484,12 @@ export default function AdsListingPage() {
   return (
     <div style={{ background: '#f8fafc', minHeight: '100vh', paddingBottom: 64 }}>
       {seoReady && (
-      <Helmet>
-        <title>{displayTitle}</title>
-        <meta name="description" content={displayDesc} />
-        {displayKeywords && <meta name="keywords" content={displayKeywords} />}
-        
-        {/* Breadcrumb Schema for Google Search */}
-        {breadcrumbs.length > 0 && (
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "BreadcrumbList",
-              "itemListElement": breadcrumbs.map((bc, i) => ({
-                "@type": "ListItem",
-                "position": i + 1,
-                "name": bc.name,
-                "item": bc.path.startsWith('http') ? bc.path : `https://pk.elocanto.com${bc.path}`
-              }))
-            })}
-          </script>
-        )}
-      </Helmet>
+        <Helmet>
+          <title>{displayTitle}</title>
+          <meta name="description" content={displayDesc} />
+          {displayKeywords && <meta name="keywords" content={displayKeywords} />}
+
+        </Helmet>
       )}
       <style>{`
         .filter-overlay {
@@ -576,7 +577,7 @@ export default function AdsListingPage() {
           animation: scroll-hint 2s ease-in-out infinite;
         }
       `}</style>
-      
+
       {/* Breadcrumbs */}
       <div className="container-custom" style={{ paddingTop: 16 }}>
         <nav style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13, color: 'var(--gray-500)', fontWeight: 600 }}>
@@ -599,8 +600,8 @@ export default function AdsListingPage() {
             {(hotelSlug || areaSlug) && (
               <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: 'url(/images/pattern-dots.png)', opacity: 0.1, pointerEvents: 'none' }}></div>
             )}
-            
-            <h1 style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, marginBottom: 8 }}>
+
+            <h1 style={{ fontSize: 'clamp(22px, 5vw, 36px)', fontWeight: 900, marginBottom: 8, color: 'white' }}>
               {seo?.title || (hotelSlug ? (
                 cityHotels.find(h => h.slug === hotelSlug)?.name + (cityInfo ? ` in ${cityInfo.name}` : '')
               ) : areaSlug ? (
@@ -638,12 +639,12 @@ export default function AdsListingPage() {
               {/* Areas Section - Only show on City hub OR Area pages */}
               {(cityAreas.length > 0 || isLocationsLoading) && (!hotelSlug && !isHotelsPage) && (
                 <div style={{ marginBottom: areaSlug ? 0 : 20 }}>
-                  <button 
+                  <button
                     disabled={isLocationsLoading}
                     onClick={() => setIsAreasExpanded(!isAreasExpanded)}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)', 
-                      border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '10px 20px', 
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.2)', color: 'white', padding: '10px 20px',
                       borderRadius: 14, cursor: isLocationsLoading ? 'wait' : 'pointer', transition: 'all 0.3s',
                       opacity: isLocationsLoading ? 0.7 : 1
                     }}
@@ -656,10 +657,10 @@ export default function AdsListingPage() {
                   </button>
 
                   <div className={`expandable-container ${isAreasExpanded ? 'expanded' : ''}`} style={{ marginTop: 20 }}>
-                    <input 
-                      type="text" 
-                      className="search-pill" 
-                      placeholder="Search for an area..." 
+                    <input
+                      type="text"
+                      className="search-pill"
+                      placeholder="Search for an area..."
                       value={areaSearch}
                       onChange={(e) => setAreaSearch(e.target.value)}
                     />
@@ -668,9 +669,9 @@ export default function AdsListingPage() {
                         .filter(a => a.name.toLowerCase().includes(areaSearch.toLowerCase()))
                         .map(area => (
                           <Link key={area._id} to={`/cities/${citySlug}/areas/${area.slug}`}
-                            style={{ 
-                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white', 
-                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none', 
+                            style={{
+                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                               border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
                               display: 'block', textAlign: 'center'
                             }}
@@ -688,12 +689,12 @@ export default function AdsListingPage() {
               {(cityHotels.length > 0 || isLocationsLoading) && (!areaSlug) && (
                 <div style={{ marginBottom: (hotelSlug || isHotelsPage) ? 0 : 0 }}>
                   <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <button 
+                    <button
                       disabled={isLocationsLoading}
                       onClick={() => setIsHotelsExpanded(!isHotelsExpanded)}
-                      style={{ 
-                        display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(249,115,22,0.1)', 
-                        border: '1px solid rgba(249,115,22,0.3)', color: 'white', padding: '10px 20px', 
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(249,115,22,0.1)',
+                        border: '1px solid rgba(249,115,22,0.3)', color: 'white', padding: '10px 20px',
                         borderRadius: 14, cursor: isLocationsLoading ? 'wait' : 'pointer', transition: 'all 0.3s',
                         opacity: isLocationsLoading ? 0.7 : 1
                       }}
@@ -707,10 +708,10 @@ export default function AdsListingPage() {
                   </div>
 
                   <div className={`expandable-container ${isHotelsExpanded ? 'expanded' : ''}`} style={{ marginTop: 20 }}>
-                    <input 
-                      type="text" 
-                      className="search-pill" 
-                      placeholder="Search for a hotel..." 
+                    <input
+                      type="text"
+                      className="search-pill"
+                      placeholder="Search for a hotel..."
                       value={hotelSearch}
                       onChange={(e) => setHotelSearch(e.target.value)}
                     />
@@ -719,9 +720,9 @@ export default function AdsListingPage() {
                         .filter(h => h.name.toLowerCase().includes(hotelSearch.toLowerCase()))
                         .map(hotel => (
                           <Link key={hotel._id} to={`/cities/${citySlug}/hotels/${hotel.slug}`}
-                            style={{ 
-                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white', 
-                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none', 
+                            style={{
+                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
                               border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
                               display: 'block', textAlign: 'center'
                             }}
@@ -738,6 +739,36 @@ export default function AdsListingPage() {
           </div>
         </div>
       )}
+
+      {/* Visual Breadcrumbs (SSR handles the Schema JSON-LD) */}
+      <div className="container-custom" style={{ paddingTop: 20 }}>
+        <nav aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-2 text-[12px] text-gray-500 list-none p-0 m-0">
+            {breadcrumbs.map((bc, index) => {
+              const isLast = index === breadcrumbs.length - 1;
+              return (
+                <li key={index} className="flex items-center gap-2">
+                  {!isLast ? (
+                    <>
+                      <Link
+                        to={bc.path}
+                        className="hover:text-primary transition-colors no-underline font-medium"
+                      >
+                        {bc.name}
+                      </Link>
+                      <span className="text-gray-300">/</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-900 font-bold truncate max-w-[150px]">
+                      {bc.name}
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+      </div>
 
       {/* Hero Banner Area */}
       <div className="container-custom" style={{ paddingTop: 12, paddingBottom: 24 }}>
@@ -765,8 +796,8 @@ export default function AdsListingPage() {
           <div style={{ display: 'flex', gap: 12, borderBottom: '1px solid #eef2ff', paddingBottom: 12, overflowX: 'auto' }} className="hide-scroll">
             <button
               onClick={() => updateFilter('listingType', '')}
-              style={{ 
-                color: listingType === '' ? 'white' : '#64748b', 
+              style={{
+                color: listingType === '' ? 'white' : '#64748b',
                 background: listingType === '' ? 'var(--dark)' : 'white',
                 padding: '10px 20px', borderRadius: 12,
                 border: '1px solid ' + (listingType === '' ? 'var(--dark)' : '#e2e8f0'),
@@ -778,8 +809,8 @@ export default function AdsListingPage() {
             </button>
             <button
               onClick={() => updateFilter('listingType', 'featured')}
-              style={{ 
-                color: listingType === 'featured' ? 'white' : '#64748b', 
+              style={{
+                color: listingType === 'featured' ? 'white' : '#64748b',
                 background: listingType === 'featured' ? '#f59e0b' : 'white',
                 padding: '10px 20px', borderRadius: 12,
                 border: '1px solid ' + (listingType === 'featured' ? '#f59e0b' : '#e2e8f0'),
@@ -791,8 +822,8 @@ export default function AdsListingPage() {
             </button>
             <button
               onClick={() => updateFilter('listingType', 'simple')}
-              style={{ 
-                color: listingType === 'simple' ? 'white' : '#64748b', 
+              style={{
+                color: listingType === 'simple' ? 'white' : '#64748b',
                 background: listingType === 'simple' ? '#3b82f6' : 'white',
                 padding: '10px 20px', borderRadius: 12,
                 border: '1px solid ' + (listingType === 'simple' ? '#3b82f6' : '#e2e8f0'),
@@ -803,59 +834,59 @@ export default function AdsListingPage() {
               📋 SIMPLE ADS
             </button>
           </div>
-          
+
           {/* View Toggle - Visible on all devices */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-4px' }}>
-             <div style={{ display: 'flex', background: 'white', borderRadius: 12, padding: 4, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-               <button
-                 onClick={() => setViewMode('list')}
-                 style={{
-                   padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                   background: viewMode === 'list' ? 'rgba(62,111,225,0.08)' : 'transparent',
-                   color: viewMode === 'list' ? 'var(--primary)' : '#94a3b8', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 11
-                 }}
-                 title="List View"
-               >
-                 <ListBulletIcon style={{ width: 16, height: 16 }} />
-                 <span className="hidden sm:inline">LIST</span>
-               </button>
-               <button
-                 onClick={() => setViewMode('grid')}
-                 style={{
-                   padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                   background: viewMode === 'grid' ? 'rgba(62,111,225,0.08)' : 'transparent',
-                   color: viewMode === 'grid' ? 'var(--primary)' : '#94a3b8', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 11
-                 }}
-                 title="Grid View"
-               >
-                 <Squares2X2Icon style={{ width: 16, height: 16 }} />
-                 <span className="hidden sm:inline">GRID</span>
-               </button>
-             </div>
+            <div style={{ display: 'flex', background: 'white', borderRadius: 12, padding: 4, border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: viewMode === 'list' ? 'rgba(62,111,225,0.08)' : 'transparent',
+                  color: viewMode === 'list' ? 'var(--primary)' : '#94a3b8', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 11
+                }}
+                title="List View"
+              >
+                <ListBulletIcon style={{ width: 16, height: 16 }} />
+                <span className="hidden sm:inline">LIST</span>
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                style={{
+                  padding: '8px 12px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  background: viewMode === 'grid' ? 'rgba(62,111,225,0.08)' : 'transparent',
+                  color: viewMode === 'grid' ? 'var(--primary)' : '#94a3b8', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700, fontSize: 11
+                }}
+                title="Grid View"
+              >
+                <Squares2X2Icon style={{ width: 16, height: 16 }} />
+                <span className="hidden sm:inline">GRID</span>
+              </button>
+            </div>
           </div>
 
           {/* Quick Filter Actions - ONLY on small devices */}
           {!isLarge && (
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button 
-                style={{ 
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, 
-                  background: 'white', border: '1px solid #e2e8f0', padding: '12px 16px', 
-                  borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#1e293b', 
-                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' 
-                }} 
+              <button
+                style={{
+                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  background: 'white', border: '1px solid #e2e8f0', padding: '12px 16px',
+                  borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#1e293b',
+                  cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                }}
                 onClick={() => setShowFilters(true)}
               >
-                <AdjustmentsHorizontalIcon style={{ width: 18, color: '#64748b' }} /> 
+                <AdjustmentsHorizontalIcon style={{ width: 18, color: '#64748b' }} />
                 Advanced Filters
               </button>
               <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <select 
+                <select
                   value={sort} onChange={(e) => updateFilter('sort', e.target.value)}
                   aria-label="Sort by"
-                  style={{ 
-                    width: '100%', appearance: 'none', background: 'white', border: '1px solid #e2e8f0', 
-                    padding: '12px 16px', paddingRight: 40, borderRadius: 12, fontSize: 14, 
+                  style={{
+                    width: '100%', appearance: 'none', background: 'white', border: '1px solid #e2e8f0',
+                    padding: '12px 16px', paddingRight: 40, borderRadius: 12, fontSize: 14,
                     fontWeight: 700, color: '#1e293b', cursor: 'pointer', outline: 'none',
                     boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                   }}
@@ -883,8 +914,8 @@ export default function AdsListingPage() {
               </div>
               <Link to="/ads?sort=featured" style={{ background: '#fef9c3', color: '#854d0e', fontSize: 12, fontWeight: 800, textDecoration: 'none', padding: '8px 16px', borderRadius: 12, border: '1px solid #fef08a' }}>View All &rarr;</Link>
             </div>
-            
-            <div className="gallery-container" style={{ 
+
+            <div className="gallery-container" style={{
               overflowX: 'hidden', paddingBottom: 16, paddingTop: 4
             }}>
               <div className="gallery-marquee">
@@ -892,15 +923,15 @@ export default function AdsListingPage() {
                 {featuredAds.slice(0, settings?.featuredAdsLimit || 10).map(ad => (
                   <Link key={ad._id} to={`/ads/${generateAdSlug(ad)}`} style={{ textDecoration: 'none', textAlign: 'center', flexShrink: 0, width: 130 }}>
                     <div style={{ width: 130, height: 130, borderRadius: '50%', background: 'white', border: '4px solid white', boxShadow: '0 10px 20px rgba(0,0,0,0.06)', marginBottom: 12, overflow: 'hidden', transition: 'all 0.3s' }} className="hover:scale-105 hover:shadow-lg group">
-                      <img 
-                        src={getOptimizedImageUrl(ad.images?.[0], 160)} 
-                        alt={ad.title} 
-                        width="130" 
-                        height="130" 
-                        loading="lazy" 
+                      <img
+                        src={getOptimizedImageUrl(ad.images?.[0], 160)}
+                        alt={ad.title}
+                        width="130"
+                        height="130"
+                        loading="lazy"
                         decoding="async"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        className="transition-transform group-hover:scale-110" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        className="transition-transform group-hover:scale-110"
                         onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
                       />
                     </div>
@@ -912,21 +943,21 @@ export default function AdsListingPage() {
                 {featuredAds.slice(0, settings?.featuredAdsLimit || 10).map(ad => (
                   <Link key={`${ad._id}-clone`} to={`/ads/${generateAdSlug(ad)}`} style={{ textDecoration: 'none', textAlign: 'center', flexShrink: 0, width: 130 }}>
                     <div style={{ width: 130, height: 130, borderRadius: '50%', background: 'white', border: '4px solid white', boxShadow: '0 10px 20px rgba(0,0,0,0.06)', marginBottom: 12, overflow: 'hidden', transition: 'all 0.3s' }} className="hover:scale-105 hover:shadow-lg group">
-                      <img 
+                      <img
                         key={ad.images?.[0]}
-                        src={getOptimizedImageUrl(ad.images?.[0], 160)} 
-                        alt={ad.title} 
-                        width="130" 
-                        height="130" 
-                        loading="lazy" 
+                        src={getOptimizedImageUrl(ad.images?.[0], 160)}
+                        alt={ad.title}
+                        width="130"
+                        height="130"
+                        loading="lazy"
                         decoding="async"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                        className="transition-transform group-hover:scale-110" 
-                        onError={(e) => { 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        className="transition-transform group-hover:scale-110"
+                        onError={(e) => {
                           // Phase 1: Try loading the raw original path if optimized fails
                           if (e.target.src.includes('/images/')) {
                             e.target.src = ad.images?.[0] || '/placeholder.png';
-                          } 
+                          }
                           // Phase 2: If even raw fails, show the placeholder
                           else if (!e.target.src.includes('placeholder.png')) {
                             e.target.src = '/placeholder.png';
@@ -946,13 +977,13 @@ export default function AdsListingPage() {
 
       {/* Main Content Layout */}
       <div className="container-custom flex flex-col lg:grid lg:grid-cols-[260px_1fr] gap-8">
-        
+
         {/* Sidebar Filters (Desktop Only) */}
         <aside className="hidden lg:block" style={{ background: 'transparent', border: 'none', padding: 0 }}>
           <div style={{ background: 'white', padding: 24, borderRadius: 16, border: '1px solid var(--gray-200)' }}>
             <h4 style={{ fontSize: 12, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--dark)', marginBottom: 20 }}>Categories</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <Link 
+              <Link
                 to="/ads"
                 style={{ textAlign: 'left', textDecoration: 'none', fontSize: 14, color: !categorySlug ? 'var(--primary)' : 'var(--dark)', fontWeight: !categorySlug ? 700 : 600 }}
               >
@@ -960,14 +991,14 @@ export default function AdsListingPage() {
               </Link>
               {categories.map(cat => (
                 <div key={cat._id}>
-                  <Link 
+                  <Link
                     to={`/${cat.slug}`}
-                    style={{ 
+                    style={{
                       textAlign: 'left', textDecoration: 'none',
-                      background: categorySlug === cat.slug ? 'rgba(249, 94, 38, 0.08)' : 'none', 
+                      background: categorySlug === cat.slug ? 'rgba(249, 94, 38, 0.08)' : 'none',
                       padding: '8px 10px', borderRadius: 10,
-                      fontSize: 14, color: categorySlug === cat.slug ? 'var(--primary)' : 'var(--dark)', 
-                      fontWeight: categorySlug === cat.slug ? 700 : 600, 
+                      fontSize: 14, color: categorySlug === cat.slug ? 'var(--primary)' : 'var(--dark)',
+                      fontWeight: categorySlug === cat.slug ? 700 : 600,
                       display: 'flex', justifyContent: 'space-between', width: '100%'
                     }}
                   >
@@ -978,11 +1009,11 @@ export default function AdsListingPage() {
                     <div style={{ paddingLeft: 12, marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8, borderLeft: '2px solid var(--gray-100)', marginLeft: 6 }}>
                       {cat.subcategories?.map(sub => (
                         <div key={sub._id}>
-                          <Link 
+                          <Link
                             to={`/${cat.slug}/${sub.slug}`}
-                            style={{ 
+                            style={{
                               textAlign: 'left', textDecoration: 'none',
-                              fontSize: 13, color: subCategorySlug === sub.slug ? 'var(--primary)' : 'var(--gray-600)', 
+                              fontSize: 13, color: subCategorySlug === sub.slug ? 'var(--primary)' : 'var(--gray-600)',
                               fontWeight: subCategorySlug === sub.slug ? 700 : 500,
                               display: 'flex', justifyContent: 'space-between'
                             }}
@@ -995,7 +1026,7 @@ export default function AdsListingPage() {
                                 <Link
                                   key={ss._id}
                                   to={`/${cat.slug}/${sub.slug}/${ss.slug}`}
-                                  style={{ 
+                                  style={{
                                     textDecoration: 'none', fontSize: 12,
                                     color: subSubcatSlug === ss.slug ? 'var(--primary)' : 'var(--gray-500)',
                                     fontWeight: subSubcatSlug === ss.slug ? 700 : 400
@@ -1013,21 +1044,21 @@ export default function AdsListingPage() {
                 </div>
               ))}
             </div>
-            
+
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #f1f5f9' }}>
               <h4 style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--gray-400)', marginBottom: 16 }}>Price Range</h4>
               <div style={{ display: 'flex', gap: 8 }}>
-                <input 
-                  type="number" placeholder="Min" className="input-field" 
+                <input
+                  type="number" placeholder="Min" className="input-field"
                   style={{ padding: '8px 12px', fontSize: 13 }}
-                  value={tempFilters.priceMin} 
-                  onChange={(e) => setTempFilters({...tempFilters, priceMin: e.target.value})}
+                  value={tempFilters.priceMin}
+                  onChange={(e) => setTempFilters({ ...tempFilters, priceMin: e.target.value })}
                 />
-                <input 
-                  type="number" placeholder="Max" className="input-field" 
+                <input
+                  type="number" placeholder="Max" className="input-field"
                   style={{ padding: '8px 12px', fontSize: 13 }}
-                  value={tempFilters.priceMax} 
-                  onChange={(e) => setTempFilters({...tempFilters, priceMax: e.target.value})}
+                  value={tempFilters.priceMax}
+                  onChange={(e) => setTempFilters({ ...tempFilters, priceMax: e.target.value })}
                 />
               </div>
             </div>
@@ -1048,14 +1079,14 @@ export default function AdsListingPage() {
                 const isCurrent = citySlug === c.slug;
                 return (
                   <div key={c._id}>
-                    <button 
+                    <button
                       onClick={() => setExpandedCity(isExpanded ? null : c._id)}
-                      style={{ 
+                      style={{
                         textAlign: 'left', width: '100%',
-                        background: isCurrent ? 'rgba(62, 111, 225, 0.08)' : isExpanded ? '#f8fafc' : 'none', 
-                        border: 'none', padding: '10px 12px', borderRadius: 10, fontSize: 13, cursor: 'pointer', 
-                        color: isCurrent ? 'var(--primary)' : 'var(--dark)', fontWeight: isCurrent ? 700 : 600, 
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' 
+                        background: isCurrent ? 'rgba(62, 111, 225, 0.08)' : isExpanded ? '#f8fafc' : 'none',
+                        border: 'none', padding: '10px 12px', borderRadius: 10, fontSize: 13, cursor: 'pointer',
+                        color: isCurrent ? 'var(--primary)' : 'var(--dark)', fontWeight: isCurrent ? 700 : 600,
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s'
                       }}
                     >
                       <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1067,7 +1098,7 @@ export default function AdsListingPage() {
                     {isExpanded && (
                       <div style={{ paddingLeft: 16, paddingTop: 6, paddingBottom: 8, display: 'flex', flexDirection: 'column', gap: 4, borderLeft: '2px solid #e2e8f0', marginLeft: 20 }}>
                         {/* City main page link */}
-                        <Link 
+                        <Link
                           to={`/cities/${c.slug}`}
                           style={{ textDecoration: 'none', fontSize: 12, fontWeight: 700, color: citySlug === c.slug && !areaSlug && !hotelSlug && !isHotelsPage ? 'var(--primary)' : '#475569', padding: '6px 10px', borderRadius: 8, background: citySlug === c.slug && !areaSlug && !hotelSlug && !isHotelsPage ? 'rgba(62,111,225,0.06)' : 'none', display: 'flex', alignItems: 'center', gap: 6 }}
                         >
@@ -1077,7 +1108,7 @@ export default function AdsListingPage() {
                         {/* Areas sub-section */}
                         {cityFilterAreas[c._id]?.length > 0 && (
                           <div style={{ marginTop: 4 }}>
-                            <button 
+                            <button
                               onClick={() => setExpandedSub(prev => ({ ...prev, [`${c._id}_areas`]: !prev[`${c._id}_areas`] }))}
                               style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer' }}
                             >
@@ -1087,7 +1118,7 @@ export default function AdsListingPage() {
                             {expandedSub[`${c._id}_areas`] && (
                               <div className="fade-in">
                                 {cityFilterAreas[c._id].map(area => (
-                                  <Link 
+                                  <Link
                                     key={area._id}
                                     to={`/cities/${c.slug}/areas/${area.slug}`}
                                     style={{ textDecoration: 'none', fontSize: 12, fontWeight: areaSlug === area.slug ? 700 : 500, color: areaSlug === area.slug ? 'var(--primary)' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: areaSlug === area.slug ? 'rgba(62,111,225,0.06)' : 'none' }}
@@ -1103,7 +1134,7 @@ export default function AdsListingPage() {
                         {/* Hotels sub-section */}
                         {cityFilterHotels[c._id]?.length > 0 && (
                           <div style={{ marginTop: 4 }}>
-                            <button 
+                            <button
                               onClick={() => setExpandedSub(prev => ({ ...prev, [`${c._id}_hotels`]: !prev[`${c._id}_hotels`] }))}
                               style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 10, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, padding: '8px 10px', background: 'none', border: 'none', cursor: 'pointer' }}
                             >
@@ -1112,14 +1143,14 @@ export default function AdsListingPage() {
                             </button>
                             {expandedSub[`${c._id}_hotels`] && (
                               <div className="fade-in">
-                                <Link 
+                                <Link
                                   to={`/cities/${c.slug}/hotels`}
                                   style={{ textDecoration: 'none', fontSize: 12, fontWeight: isHotelsPage && citySlug === c.slug ? 700 : 500, color: isHotelsPage && citySlug === c.slug ? '#f97316' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: isHotelsPage && citySlug === c.slug ? 'rgba(249,115,22,0.06)' : 'none' }}
                                 >
                                   🏨 All Hotels
                                 </Link>
                                 {cityFilterHotels[c._id].map(hotel => (
-                                  <Link 
+                                  <Link
                                     key={hotel._id}
                                     to={`/cities/${c.slug}/hotels/${hotel.slug}`}
                                     style={{ textDecoration: 'none', fontSize: 12, fontWeight: hotelSlug === hotel.slug ? 700 : 500, color: hotelSlug === hotel.slug ? '#f97316' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: hotelSlug === hotel.slug ? 'rgba(249,115,22,0.06)' : 'none' }}
@@ -1147,7 +1178,7 @@ export default function AdsListingPage() {
 
         {/* Ads List Content */}
         <div style={{ minWidth: 0 }}>
-          
+
           {/* Trust Banner */}
           <div style={{ background: '#e0fcf4', border: '1px solid #a7f3d0', borderRadius: 12, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: '1 1 auto' }}>
@@ -1181,7 +1212,7 @@ export default function AdsListingPage() {
 
           {loading ? (
             <div className="ads-grid">
-               {Array(6).fill(0).map((_, i) => <AdCardSkeleton key={i} />)}
+              {Array(6).fill(0).map((_, i) => <AdCardSkeleton key={i} />)}
             </div>
           ) : ads.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '100px 0', background: 'white', borderRadius: 16 }}>
@@ -1259,17 +1290,17 @@ export default function AdsListingPage() {
                 <div style={{ position: 'absolute', right: '40%', top: '50%', transform: 'translate(50%, -50%)', width: 14, height: 14, background: 'var(--primary)', borderRadius: '50%', border: '2px solid white', boxShadow: '0 2px 4px rgba(0,0,0,0.2)' }}></div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
-                <input 
-                  type="number" placeholder="Min" aria-label="Minimum price" className="input-field" 
-                  style={{ padding: '10px 14px', fontSize: 13, borderRadius: 12, border: '2px solid var(--gray-200)' }} 
-                  value={tempFilters.priceMin} 
-                  onChange={(e) => setTempFilters({...tempFilters, priceMin: e.target.value})}
+                <input
+                  type="number" placeholder="Min" aria-label="Minimum price" className="input-field"
+                  style={{ padding: '10px 14px', fontSize: 13, borderRadius: 12, border: '2px solid var(--gray-200)' }}
+                  value={tempFilters.priceMin}
+                  onChange={(e) => setTempFilters({ ...tempFilters, priceMin: e.target.value })}
                 />
-                <input 
-                  type="number" placeholder="Max" aria-label="Maximum price" className="input-field" 
-                  style={{ padding: '10px 14px', fontSize: 13, borderRadius: 12, border: '2px solid var(--gray-200)' }} 
-                  value={tempFilters.priceMax} 
-                  onChange={(e) => setTempFilters({...tempFilters, priceMax: e.target.value})}
+                <input
+                  type="number" placeholder="Max" aria-label="Maximum price" className="input-field"
+                  style={{ padding: '10px 14px', fontSize: 13, borderRadius: 12, border: '2px solid var(--gray-200)' }}
+                  value={tempFilters.priceMax}
+                  onChange={(e) => setTempFilters({ ...tempFilters, priceMax: e.target.value })}
                 />
               </div>
             </div>
@@ -1311,7 +1342,7 @@ export default function AdsListingPage() {
                   const isCurrent = citySlug === c.slug;
                   return (
                     <div key={c._id}>
-                      <button 
+                      <button
                         onClick={() => setExpandedCity(isExpanded ? null : c._id)}
                         style={{ textAlign: 'left', width: '100%', background: isCurrent ? 'rgba(62, 111, 225, 0.08)' : isExpanded ? '#f8fafc' : 'none', border: 'none', padding: '10px 12px', borderRadius: 10, fontSize: 13, cursor: 'pointer', color: isCurrent ? 'var(--primary)' : 'var(--dark)', fontWeight: isCurrent ? 700 : 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.2s' }}
                       >

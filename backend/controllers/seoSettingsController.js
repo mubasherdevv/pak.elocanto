@@ -25,7 +25,7 @@ const normalizePath = (rawPath) => {
  */
 const resolvePathForRecord = async (pageType, referenceId) => {
   let path = '/';
-
+  
   const ensureCitySuffix = (slug) => {
     if (!slug) return '';
     return slug.endsWith('-call-girls-service') ? slug : `${slug}-call-girls-service`;
@@ -100,20 +100,20 @@ export const getSeoSettingById = async (req, res) => {
 // @route   POST /api/seo-settings
 export const saveSeoSettings = async (req, res) => {
   try {
-    const {
-      pageType,
-      referenceId,
-      title,
-      metaDescription,
-      keywords,
-      ogTitle,
+    const { 
+      pageType, 
+      referenceId, 
+      title, 
+      metaDescription, 
+      keywords, 
+      ogTitle, 
       ogDescription,
       whatsappNumber,
-      isActive
+      isActive 
     } = req.body;
 
     const pagePath = await resolvePathForRecord(pageType, referenceId);
-
+    
     // Check if record exists for this unique combination
     let setting = await SeoSettings.findOne({ pageType, referenceId });
 
@@ -160,20 +160,6 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     // 1. Try Path Match (Most specific)
     let seo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
 
-    // Fuzzy Match Fallback for Cities (if exact path match fails)
-    if (!seo && normalizedPath.startsWith('/cities/')) {
-      const parts = normalizedPath.split('/');
-      if (parts.length >= 3) {
-        const citySlugPart = parts[2].replace(/-call-girls-services?$/, '');
-        // Search for any active SEO record that contains this city slug in its path
-        seo = await SeoSettings.findOne({ 
-          pagePath: new RegExp(citySlugPart, 'i'),
-          isActive: true 
-        }).lean();
-        if (seo) console.log(`[SEO-SSR] 🔍 Fuzzy match found for: ${normalizedPath} -> ${seo.pagePath}`);
-      }
-    }
-
     // 2. Try Entity Match (If path didn't work)
     if (!seo && pageType && referenceId && referenceId !== 'null' && referenceId !== 'undefined') {
       seo = await SeoSettings.findOne({ pageType, referenceId, isActive: true }).lean();
@@ -189,17 +175,41 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
         whatsappNumber: seo.whatsappNumber || '',
         isActive: true,
         source: 'custom',
-        bodyContent: `<div class="seo-ssr-content"><h1>${seo.title}</h1><p>${seo.metaDescription}</p></div>`
+        image: seo.ogImage || null
       };
     }
 
     // 3. Dynamic Fallback: Match based on URL patterns
-
+    
     // Ad Detail Pattern: /ads/:slug
     if (normalizedPath.startsWith('/ads/') && normalizedPath.split('/').length === 3) {
       const slug = normalizedPath.split('/')[2];
-      const ad = await Ad.findOne({ slug }).lean();
+      const ad = await Ad.findOne({ slug })
+        .populate('category', 'name slug')
+        .populate('subcategory', 'name slug')
+        .populate('subSubCategory', 'name slug')
+        .lean();
+        
       if (ad) {
+        // Try to find custom SEO for this specific ad entity
+        const entitySeo = await SeoSettings.findOne({ pageType: 'ad', referenceId: ad._id, isActive: true }).lean();
+        if (entitySeo) {
+          return {
+            title: entitySeo.title,
+            metaDescription: entitySeo.metaDescription,
+            keywords: entitySeo.keywords || '',
+            ogTitle: entitySeo.ogTitle || entitySeo.title,
+            ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+            whatsappNumber: entitySeo.whatsappNumber || '',
+            image: entitySeo.ogImage || (ad.images && ad.images.length > 0 ? ad.images[0] : null),
+            isActive: true,
+            source: 'custom-ad',
+            entity: ad,
+            type: 'ad'
+          };
+        }
+
+        const image = ad.images && ad.images.length > 0 ? ad.images[0] : null;
         return {
           title: `${ad.title} - PKR ${ad.price?.toLocaleString()} in ${ad.city} | Elocanto`,
           metaDescription: `Check out this ${ad.title} for PKR ${ad.price?.toLocaleString()} in ${ad.city}. ${ad.description?.substring(0, 160)}`,
@@ -208,15 +218,9 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
           keywords: '',
           isActive: true,
           source: 'dynamic-ad',
-          bodyContent: `
-            <div class="seo-ssr-content">
-              <h1>${ad.title}</h1>
-              <p><strong>Price:</strong> PKR ${ad.price?.toLocaleString()}</p>
-              <p><strong>Location:</strong> ${ad.city}${ad.area ? ', ' + ad.area : ''}</p>
-              <div class="description">${ad.description || ''}</div>
-              <p>Category: ${ad.category} > ${ad.subcategory || ''}</p>
-            </div>
-          `
+          image: image,
+          entity: ad,
+          type: 'ad'
         };
       }
     }
@@ -224,21 +228,36 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     // City Pattern: /cities/:slug
     if (normalizedPath.startsWith('/cities/') && normalizedPath.split('/').length === 3) {
       const slug = normalizedPath.split('/')[2];
-      const city = await City.findOne({ slug }).lean();
+      const city = await City.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
       if (city) {
+        // Try to find custom SEO for this specific city entity (Fixes the Lahore "City Listings" issue)
+        const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
+        if (entitySeo) {
+          return {
+            title: entitySeo.title,
+            metaDescription: entitySeo.metaDescription,
+            keywords: entitySeo.keywords || '',
+            ogTitle: entitySeo.ogTitle || entitySeo.title,
+            ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+            whatsappNumber: entitySeo.whatsappNumber || '',
+            isActive: true,
+            source: 'custom-city',
+            type: 'city',
+            entity: city,
+            image: entitySeo.ogImage || null
+          };
+        }
+
+        const entityCount = await Ad.countDocuments({ city: city.name, isApproved: true, isActive: true });
         return {
           title: `${city.name} Escorts & Call Girls Service 24/7 | Elocanto`,
           metaDescription: `Premium call girls and escort services in ${city.name}. Reliable and verified listings.`,
           keywords: `${city.name} escorts, ${city.name} call girls`,
           isActive: true,
           source: 'dynamic-city',
-          bodyContent: `
-            <div class="seo-ssr-content">
-              <h1>${city.name} Call Girls & Escorts Service</h1>
-              <p>Find the best verified call girls and escort services in ${city.name}. Reliable and high-quality listings available 24/7.</p>
-              <p>Browse categories and locations in ${city.name} for the most professional services.</p>
-            </div>
-          `
+          type: 'city',
+          entity: city,
+          entityCount
         };
       }
     }
@@ -248,39 +267,67 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
     if (parts.length === 5 && parts[1] === 'cities') {
       const type = parts[3];
       const slug = parts[4];
-
+      
       if (type === 'areas') {
-        const area = await Area.findOne({ slug }).lean();
+        const area = await Area.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (area) {
+          const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
+          if (entitySeo) {
+            return {
+              title: entitySeo.title,
+              metaDescription: entitySeo.metaDescription,
+              keywords: entitySeo.keywords || '',
+              ogTitle: entitySeo.ogTitle || entitySeo.title,
+              ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+              whatsappNumber: entitySeo.whatsappNumber || '',
+              isActive: true,
+              type: 'area',
+              entity: area,
+              source: 'custom-area'
+            };
+          }
+
+          const entityCount = await Ad.countDocuments({ area: area._id, isApproved: true, isActive: true });
           return {
             title: `${area.name} Escorts - Call Girls Service in ${area.name} | Elocanto`,
             metaDescription: `Find top-rated call girls and independent escorts in ${area.name}.`,
             keywords: `${area.name} escorts`,
             isActive: true,
             source: 'dynamic-area',
-            bodyContent: `
-              <div class="seo-ssr-content">
-                <h1>Call Girls & Escorts in ${area.name}</h1>
-                <p>Verified escort services and independent call girls available in ${area.name}. Check out the latest profiles and services.</p>
-              </div>
-            `
+            type: 'area',
+            entity: area,
+            entityCount
           };
         }
       } else if (type === 'hotels') {
-        const hotel = await Hotel.findOne({ slug }).lean();
+        const hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (hotel) {
+          const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
+          if (entitySeo) {
+            return {
+              title: entitySeo.title,
+              metaDescription: entitySeo.metaDescription,
+              keywords: entitySeo.keywords || '',
+              ogTitle: entitySeo.ogTitle || entitySeo.title,
+              ogDescription: entitySeo.ogDescription || entitySeo.metaDescription,
+              whatsappNumber: entitySeo.whatsappNumber || '',
+              isActive: true,
+              type: 'hotel',
+              entity: hotel,
+              source: 'custom-hotel'
+            };
+          }
+
+          const entityCount = await Ad.countDocuments({ hotel: hotel._id, isApproved: true, isActive: true });
           return {
             title: `${hotel.name} Escorts - Exclusive Call Girls Service | Elocanto`,
             metaDescription: `Verified escorts and call girls services available at ${hotel.name}.`,
             keywords: `${hotel.name} escorts`,
             isActive: true,
             source: 'dynamic-hotel',
-            bodyContent: `
-              <div class="seo-ssr-content">
-                <h1>Escort Services at ${hotel.name}</h1>
-                <p>Premium and verified escort services at ${hotel.name}. Professional profiles with high-quality service guaranteed.</p>
-              </div>
-            `
+            type: 'hotel',
+            entity: hotel,
+            entityCount
           };
         }
       }
@@ -313,7 +360,7 @@ export const deleteSeoSetting = async (req, res) => {
 export const getPublicSeo = async (req, res) => {
   try {
     const { pagePath, pageType, referenceId } = req.query;
-
+    
     // Normalize path just like SSR
     let normalizedPath = '/';
     if (pagePath) {
@@ -323,7 +370,7 @@ export const getPublicSeo = async (req, res) => {
     }
 
     const result = await resolveSeoMetadata(normalizedPath, pageType, referenceId);
-
+    
     if (result) return res.json(result);
     res.status(404).json({ message: 'No SEO found' });
   } catch (error) {
@@ -335,11 +382,11 @@ export const getPublicSeo = async (req, res) => {
 export const getSeoSettings = getPublicSeo;
 export const getSeoByPath = getPublicSeo;
 
-export default {
-  getSeoSettings,
-  getSeoSettingById,
-  saveSeoSettings,
-  deleteSeoSetting,
-  getPublicSeo,
-  resolveSeoMetadata
+export default { 
+  getSeoSettings, 
+  getSeoSettingById, 
+  saveSeoSettings, 
+  deleteSeoSetting, 
+  getPublicSeo, 
+  resolveSeoMetadata 
 };

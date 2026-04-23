@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/api';
 import { useSettings } from '../context/SettingsContext';
+import { getInitialData } from '../utils/ssr';
 
 /**
  * Custom hook to fetch SEO settings for a specific page with fallbacks.
@@ -10,23 +11,18 @@ import { useSettings } from '../context/SettingsContext';
  */
 export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
   const { settings } = useSettings();
+  const initialData = getInitialData();
   
-  // Start as null — this tells pages "SEO not loaded yet, keep SSR title"
-  // Initialize from hydrated data if path matches
-  const getInitialSeo = () => {
-    if (typeof window !== 'undefined' && window.__SEO_DATA__) {
-      return window.__SEO_DATA__;
-    }
-    return null;
-  };
-
-  const [seo, setSeo] = useState(getInitialSeo);
-  const [loading, setLoading] = useState(!getInitialSeo());
+  // Start with server-injected SEO data if available and path matches
+  const [seo, setSeo] = useState(initialData?.seo || null);
+  const [loading, setLoading] = useState(!seo);
 
   useEffect(() => {
-    // If already hydrated, skip fetch
-    if (seo) return;
-
+    // If we already have the correct SEO data from SSR, we can skip the initial fetch
+    if (initialData?.seo) {
+       setLoading(false);
+       return;
+    }
     const fetchSeo = async () => {
       try {
         setLoading(true);

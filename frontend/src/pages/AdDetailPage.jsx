@@ -12,6 +12,7 @@ import ImageCarousel from '../components/ImageCarousel';
 import AdCard from '../components/AdCard';
 import { useAuth } from '../context/AuthContext';
 import { generateAdSlug, extractIdFromSlug } from '../utils/urlUtils';
+import { getInitialData } from '../utils/ssr';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { linkifyText } from '../utils/textUtils';
 import NotFoundPage from './NotFoundPage';
@@ -26,8 +27,13 @@ export default function AdDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { settings } = useSettings();
-  const [ad, setAd] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const initialData = getInitialData();
+  const initialAd = initialData?.ad;
+  const isInitialValid = initialAd && (initialAd.slug === slug || slug?.includes(initialAd._id));
+
+  const [ad, setAd] = useState(isInitialValid ? initialAd : null);
+  const [loading, setLoading] = useState(!isInitialValid);
+
   const [error, setError] = useState(null);
   const [favorited, setFavorited] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
@@ -44,41 +50,50 @@ export default function AdDetailPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const fetchExtras = async (adData) => {
+    // Fetch and mix recommended ads
+    Promise.all([
+      api.get('/ads/latest?limit=10'),
+      api.get('/ads/featured?limit=10')
+    ]).then(([latestRes, featuredRes]) => {
+      const mixed = [...latestRes.data, ...featuredRes.data]
+        .filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Unique
+        .sort(() => Math.random() - 0.5); // Shuffle
+      setRecommendedAds(mixed);
+    }).catch(console.error);
+
+    const viewerId = localStorage.getItem('ad_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (!localStorage.getItem('ad_viewer_id')) {
+      localStorage.setItem('ad_viewer_id', viewerId);
+    }
+    api.post('/views/track', { adId: adData._id, page: 'detail', localStorageId: viewerId }).catch(console.error);
+
+    if (user) {
+      const { data: favData } = await api.get(`/favorites/check/${adData._id}`);
+      setFavorited(favData.favorited);
+    }
+  };
+
   useEffect(() => {
     const fetchAd = async () => {
+      if (isInitialValid && ad) {
+        // Still fetch recommendations and check favorites in background
+        fetchExtras(ad);
+        return;
+      }
       try {
         setLoading(true);
         const id = extractIdFromSlug(slug);
         const { data } = await api.get(`/ads/${id}`);
         setAd(data);
-
-
-        // Fetch and mix recommended ads
-        Promise.all([
-          api.get('/ads/latest?limit=10'),
-          api.get('/ads/featured?limit=10')
-        ]).then(([latestRes, featuredRes]) => {
-          const mixed = [...latestRes.data, ...featuredRes.data]
-            .filter((v, i, a) => a.findIndex(t => t._id === v._id) === i) // Unique
-            .sort(() => Math.random() - 0.5); // Shuffle
-          setRecommendedAds(mixed);
-        }).catch(console.error);
-
-        const viewerId = localStorage.getItem('ad_viewer_id') || `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        if (!localStorage.getItem('ad_viewer_id')) {
-          localStorage.setItem('ad_viewer_id', viewerId);
-        }
-        api.post('/views/track', { adId: data._id, page: 'detail', localStorageId: viewerId }).catch(console.error);
+        fetchExtras(data);
 
         const correctSlug = generateAdSlug(data);
         if (slug !== correctSlug) {
           navigate(`/ads/${correctSlug}`, { replace: true });
         }
-        if (user) {
-          const { data: favData } = await api.get(`/favorites/check/${data._id}`);
-          setFavorited(favData.favorited);
-        }
         setError(null);
+
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load ad details');
       } finally {
@@ -410,119 +425,8 @@ export default function AdDetailPage() {
         <meta property="og:url" content={window.location.href} />
         {ad.images && ad.images[0] && <meta property="og:image" content={ad.images[0]} />}
 
-        {/* Schema.org Product Rich Snippet */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org/",
-            "@type": "Product",
-            "name": `${ad.title}${locationSuffix}`,
-            "image": ad.images?.map(img => img.startsWith('http') ? img : `${window.location.origin}${img}`),
-            "description": ad.description,
-            "brand": {
-              "@type": "Brand",
-              "name": ad.brand || "Generic"
-            },
-            "offers": {
-              "@type": "Offer",
-              "url": window.location.href,
-              "priceCurrency": "PKR",
-              "price": ad.price,
-              "availability": "https://schema.org/InStock",
-              "itemCondition": ad.condition === 'new' ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition"
-            },
-            "seller": {
-              "@type": "Person",
-              "name": ad.seller?.name,
-              "telephone": ad.phone || ad.seller.phone
-            }
-          })}
-        </script>
         
-        {/* FAQ Schema for Structured Snippets */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": `What is the price of ${ad.title}?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `The price of ${ad.title} in ${ad.city} is PKR ${ad.price?.toLocaleString()}.`
-                }
-              },
-              {
-                "@type": "Question",
-                "name": `Where is ${ad.title} located?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `${ad.title} is located in ${ad.hotel?.name ? ad.hotel.name + ', ' : ''}${ad.area?.name ? ad.area.name + ', ' : ''}${ad.city}, Pakistan.`
-                }
-              },
-              {
-                "@type": "Question",
-                "name": `How to contact the seller of this ad?`,
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": `You can contact the seller directly by calling or messaging at ${ad.phone || ad.seller.phone}.`
-                }
-              }
-            ]
-          })}
-        </script>
 
-        {/* Breadcrumb Schema for Google Search */}
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-              {
-                "@type": "ListItem",
-                "position": 1,
-                "name": "Home",
-                "item": "https://pk.elocanto.com/"
-              },
-              {
-                "@type": "ListItem",
-                "position": 2,
-                "name": ad.category.name,
-                "item": `https://pk.elocanto.com/${ad.category.slug}`
-              },
-              ...(ad.subcategory ? [{
-                "@type": "ListItem",
-                "position": 3,
-                "name": ad.subcategory.name,
-                "item": `https://pk.elocanto.com/${ad.category.slug}/${ad.subcategory.slug}`
-              }] : []),
-              {
-                "@type": "ListItem",
-                "position": ad.subcategory ? 4 : 3,
-                "name": ad.city,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`
-              },
-              ...(ad.area ? [{
-                "@type": "ListItem",
-                "position": ad.subcategory ? 5 : 4,
-                "name": ad.area.name,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`
-              }] : []),
-              ...(ad.hotel ? [{
-                "@type": "ListItem",
-                "position": ad.area ? (ad.subcategory ? 6 : 5) : (ad.subcategory ? 5 : 4),
-                "name": ad.hotel.name,
-                "item": `https://pk.elocanto.com/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`
-              }] : []),
-              {
-                "@type": "ListItem",
-                "position": (ad.subcategory ? 4 : 3) + (ad.area ? 1 : 0) + (ad.hotel ? 1 : 0) + 1,
-                "name": ad.title,
-                "item": window.location.href
-              }
-            ]
-          })}
-        </script>
       </Helmet>
 
       {isMobile ? (
@@ -530,20 +434,36 @@ export default function AdDetailPage() {
       ) : (
         <div className="container-custom py-8">
           {/* Default Desktop Layout */}
-          <nav style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
-            <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>Home</Link>
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <Link to="/ads" style={{ color: 'inherit', textDecoration: 'none' }}>Ads</Link>
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <Link to={`/${ad.category.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.category.name}</Link>
-            {ad.subcategory && (
-              <>
+          <nav aria-label="Breadcrumb" className="mb-5">
+            <ol className="flex items-center gap-2 text-[13px] text-gray-500 list-none p-0 m-0">
+              <li className="flex items-center gap-2">
+                <Link to="/" className="hover:text-primary transition-colors no-underline">Home</Link>
                 <ChevronRightIcon style={{ width: 12, height: 12 }} />
-                <Link to={`/${ad.category.slug}/${ad.subcategory.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.subcategory.name}</Link>
-              </>
-            )}
-            <ChevronRightIcon style={{ width: 12, height: 12 }} />
-            <span style={{ color: '#1a1a2e', fontWeight: 600 }}>{ad.title}</span>
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Link to="/ads" className="hover:text-primary transition-colors no-underline">Ads</Link>
+                <ChevronRightIcon style={{ width: 12, height: 12 }} />
+              </li>
+
+              <li className="flex items-center gap-2">
+                <Link to={`/${ad.category.slug}`} className="hover:text-primary transition-colors no-underline">{ad.category.name}</Link>
+                {ad.subcategory && <ChevronRightIcon style={{ width: 12, height: 12 }} />}
+              </li>
+
+              {ad.subcategory && (
+                <li className="flex items-center gap-2">
+                  <Link to={`/${ad.category.slug}/${ad.subcategory.slug}`} className="hover:text-primary transition-colors no-underline">{ad.subcategory.name}</Link>
+                  <ChevronRightIcon style={{ width: 12, height: 12 }} />
+                </li>
+              )}
+
+              <li className="flex items-center gap-2">
+                <span className="text-gray-900 font-semibold truncate max-w-[200px]">
+                  {ad.title}
+                </span>
+              </li>
+            </ol>
           </nav>
 
           <div className="ad-detail-layout grid grid-cols-[1fr_340px] gap-8">
@@ -555,8 +475,8 @@ export default function AdDetailPage() {
               <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</h1>
-                    <h2 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h2>
+                    <div className="text-4xl font-black text-gray-900">PKR {ad.price?.toLocaleString()}</div>
+                    <h1 className="text-xl text-gray-500 mt-2 font-medium">{ad.title}</h1>
                   </div>
                   <div className="flex gap-4">
                     <button onClick={toggleFav} className="px-5 py-2.5 rounded-2xl border-2 border-gray-50 flex items-center gap-2 hover:bg-gray-50 hover:border-gray-100 transition-all font-black text-[11px] uppercase tracking-widest text-gray-700 shadow-sm bg-white">
