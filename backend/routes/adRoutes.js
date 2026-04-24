@@ -1,7 +1,8 @@
 import express from 'express';
 import {
   getAds, getFeaturedAds, getLatestAds, getAdById,
-  createAd, updateAd, deleteAd, getMyAds, getSellerAds, getAllAdsAdmin, getAdsByUserAdmin, getSimilarAds, getSellerAnalytics
+  createAd, updateAd, deleteAd, getMyAds, getSellerAds, getAllAdsAdmin, getAdsByUserAdmin, getSimilarAds, getSellerAnalytics,
+  bulkDeleteAds, bulkUpdateAds
 } from '../controllers/adController.js';
 import { diagnoseCloudinary } from '../controllers/diagnosisController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -21,6 +22,11 @@ router.get('/:id', getAdById);
 router.post('/', protect, createAd);
 router.put('/:id', protect, updateAd);
 router.delete('/:id', protect, deleteAd);
+
+
+// Bulk Actions
+router.post('/bulk-delete', protect, admin, bulkDeleteAds);
+router.post('/bulk-update', protect, admin, bulkUpdateAds);
 
 // Debug/Diagnosis (Restored Private)
 router.get('/diagnosis/cloudinary', protect, admin, diagnoseCloudinary);

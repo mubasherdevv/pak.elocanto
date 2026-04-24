@@ -54,6 +54,9 @@ export default function AdminAdsPage() {
   const [adToReject, setAdToReject] = useState(null);
   const [tempRejectionReason, setTempRejectionReason] = useState('Does not meet our community standards');
 
+  // Bulk Selection State
+  const [selectedAds, setSelectedAds] = useState([]);
+
   useEffect(() => {
     fetchSettings();
     fetchData();
@@ -214,6 +217,39 @@ export default function AdminAdsPage() {
     }
   };
 
+  const toggleSelectAd = (id) => {
+    setSelectedAds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action, value = true) => {
+    if (selectedAds.length === 0) return;
+    
+    const confirmMsg = action === 'delete' 
+      ? `Are you sure you want to delete ${selectedAds.length} advertisements?`
+      : `Apply action to ${selectedAds.length} advertisements?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    try {
+      setUpdateLoading(true);
+      if (action === 'delete') {
+        await api.post('/ads/bulk-delete', { ids: selectedAds });
+        toast.success(`${selectedAds.length} ads deleted`);
+      } else {
+        await api.post('/ads/bulk-update', { ids: selectedAds, update: { [action]: value } });
+        toast.success(`Updated ${selectedAds.length} ads`);
+      }
+      setSelectedAds([]);
+      fetchData();
+    } catch (err) {
+      toast.error('Bulk action failed');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
   const stats = [
     { label: 'Total Listings', value: ads.length, icon: ShoppingBagIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
     { label: 'Pending Approval', value: ads.filter(a => !a.isApproved).length, icon: ExclamationCircleIcon, color: 'text-red-600', bg: 'bg-red-50' },
@@ -344,6 +380,17 @@ export default function AdminAdsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-100 italic">
+                    <th className="px-4 py-4 w-10">
+                      <input 
+                        type="checkbox" 
+                        className="w-5 h-5 rounded-lg border-2 border-gray-200 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                        checked={selectedAds.length === currentAds.length && currentAds.length > 0}
+                        onChange={() => {
+                          if (selectedAds.length === currentAds.length) setSelectedAds([]);
+                          else setSelectedAds(currentAds.map(ad => ad._id));
+                        }}
+                      />
+                    </th>
                     <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Listing</th>
                     <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Details</th>
                     <th className="px-4 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest whitespace-nowrap">Seller</th>
@@ -353,7 +400,15 @@ export default function AdminAdsPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {currentAds.map((ad) => (
-                    <tr key={ad._id} className="hover:bg-gray-50/40 transition-all group">
+                    <tr key={ad._id} className={`hover:bg-gray-50/40 transition-all group ${selectedAds.includes(ad._id) ? 'bg-orange-50/30' : ''}`}>
+                      <td className="px-4 py-5">
+                        <input 
+                          type="checkbox" 
+                          className="w-5 h-5 rounded-lg border-2 border-gray-200 text-orange-500 focus:ring-orange-500 cursor-pointer"
+                          checked={selectedAds.includes(ad._id)}
+                          onChange={() => toggleSelectAd(ad._id)}
+                        />
+                      </td>
                       <td className="px-4 py-5">
                         <div className="flex items-center gap-3">
                           <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform group-hover:scale-105">
@@ -557,6 +612,50 @@ export default function AdminAdsPage() {
               </div>
             )}
           </div>
+
+          {/* Bulk Actions Bar */}
+          {selectedAds.length > 0 && (
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+              <div className="bg-gray-900 text-white px-8 py-5 rounded-[32px] shadow-2xl flex items-center gap-10 border border-gray-800">
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Selected Items</span>
+                  <span className="text-lg font-black text-orange-500">{selectedAds.length} Ads</span>
+                </div>
+                
+                <div className="h-10 w-px bg-gray-700" />
+                
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => handleBulkAction('isApproved', true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                  >
+                    <CheckBadgeIcon className="w-4 h-4" /> Approve
+                  </button>
+                  <button 
+                    onClick={() => handleBulkAction('isFeatured', true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                  >
+                    <StarSolid className="w-4 h-4 text-white" /> Gallery
+                  </button>
+                  <button 
+                    onClick={() => handleBulkAction('delete')}
+                    className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                  >
+                    <TrashIcon className="w-4 h-4" /> Delete
+                  </button>
+                  
+                  <div className="h-10 w-px bg-gray-700 mx-2" />
+                  
+                  <button 
+                    onClick={() => setSelectedAds([])}
+                    className="px-4 py-2 text-gray-400 hover:text-white font-black text-[10px] uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       ) : (
         /* In-Page Edit View */

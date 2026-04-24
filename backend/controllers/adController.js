@@ -607,3 +607,38 @@ export const getSellerAnalytics = asyncHandler(async (req, res) => {
     }
   });
 });
+
+// @desc    Bulk delete ads
+// @route   POST /api/ads/bulk-delete
+export const bulkDeleteAds = asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ message: 'Invalid IDs provided' });
+  }
+
+  // Find ads to get image URLs for Cloudinary cleanup if needed
+  // For now, doing simple deleteMany. In a real scenario, we might want to clean up images too.
+  await Ad.deleteMany({ _id: { $in: ids } });
+  res.json({ message: 'Ads deleted successfully' });
+});
+
+// @desc    Bulk update ads status
+// @route   POST /api/ads/bulk-update
+export const bulkUpdateAds = asyncHandler(async (req, res) => {
+  const { ids, update } = req.body;
+  if (!ids || !Array.isArray(ids) || !update) {
+    return res.status(400).json({ message: 'Invalid data provided' });
+  }
+
+  // Only allow specific fields to be bulk updated for safety
+  const allowedUpdates = ['isApproved', 'isActive', 'isFeatured', 'rejectionReason'];
+  const filteredUpdate = {};
+  Object.keys(update).forEach(key => {
+    if (allowedUpdates.includes(key)) {
+      filteredUpdate[key] = update[key];
+    }
+  });
+
+  await Ad.updateMany({ _id: { $in: ids } }, { $set: filteredUpdate });
+  res.json({ message: 'Ads updated successfully' });
+});
