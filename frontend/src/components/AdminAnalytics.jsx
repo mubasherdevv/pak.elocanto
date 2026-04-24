@@ -113,7 +113,7 @@ const AdminAnalytics = () => {
         <h2 className="text-xl font-bold text-dark mb-4">Ads Performance & Engagement</h2>
         
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-semibold text-gray-medium">7-Day Views</p>
@@ -147,28 +147,6 @@ const AdminAnalytics = () => {
               {(adsData?.summary?.totalImpressions || 0).toLocaleString()}
             </h3>
             <p className="text-xs text-gray-medium mt-2">Listing page visibility</p>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">7-Day Inquiries</p>
-              <ChatBubbleLeftIcon className="w-5 h-5 text-green-500" />
-            </div>
-            <h3 className="text-3xl font-extrabold text-dark">
-              {(adsData?.summary?.totalInquiries || 0).toLocaleString()}
-            </h3>
-            <p className="text-xs text-gray-medium mt-2">User messages received</p>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">Engagement Rate</p>
-              <div className="w-5 h-5 bg-orange-100 rounded-full flex items-center justify-center text-xs font-bold text-orange-600">%</div>
-            </div>
-            <h3 className="text-3xl font-extrabold text-dark">
-              {adsData?.summary?.engagementRate || '0%'}
-            </h3>
-            <p className="text-xs text-gray-medium mt-2">Inquiries per view (7d)</p>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -224,15 +202,6 @@ const AdminAnalytics = () => {
                   dot={{ fill: '#8b5cf6', r: 4 }}
                   activeDot={{ r: 6 }}
                   name="Impressions"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="inquiries" 
-                  stroke="#10b981" 
-                  strokeWidth={2}
-                  dot={{ fill: '#10b981', r: 4 }}
-                  activeDot={{ r: 6 }}
-                  name="Inquiries"
                 />
               </LineChart>
             </ResponsiveContainer>
