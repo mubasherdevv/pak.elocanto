@@ -42,6 +42,15 @@ export default function LoginPage() {
           </div>
         )}
 
+        {settings && settings.enableUserLogin === false && (
+          <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', color: '#9a3412', padding: 12, borderRadius: 12, marginBottom: 20, fontSize: 13, display: 'flex', gap: 8, alignItems: 'center' }}>
+            <ExclamationCircleIcon style={{ width: 18, height: 18 }} /> 
+            Public login is disabled. Only Administrators can access the dashboard.
+          </div>
+        )}
+
+
+
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <div>
@@ -79,9 +88,16 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <button type="submit" className="btn-primary" style={{ height: 52, borderRadius: 12, fontSize: 16 }} disabled={loading}>
+          <button 
+            type="submit" 
+            className="btn-primary" 
+            style={{ height: 52, borderRadius: 12, fontSize: 16 }} 
+            disabled={loading}
+          >
             {loading ? 'Logging in...' : 'Log In'}
           </button>
+
+
         </form>
 
         <div style={{ marginTop: 32, textAlign: 'center', borderTop: '1px solid #f3f4f6', paddingTop: 24 }}>

@@ -139,8 +139,9 @@ export const getFeaturedAds = asyncHandler(async (req, res) => {
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name slug')
     .populate('cityRef', 'name slug')
-    .populate('area', 'name slug')
-    .populate('hotel', 'name slug');
+    .populate('area', 'name slug customCitySlug')
+    .populate('hotel', 'name slug customCitySlug');
+
 
   res.json(ads);
 });
@@ -180,8 +181,9 @@ export const getAdById = asyncHandler(async (req, res) => {
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name image slug')
     .populate('cityRef', 'name slug')
-    .populate('area', 'name slug')
-    .populate('hotel', 'name slug');
+    .populate('area', 'name slug customCitySlug')
+    .populate('hotel', 'name slug customCitySlug');
+
 
   // 2. Fallback: Check if identifier is a raw 24-char ID
   if (!ad && identifier.match(/^[0-9a-fA-F]{24}$/)) {
@@ -190,8 +192,9 @@ export const getAdById = asyncHandler(async (req, res) => {
       .populate('category', 'name slug icon')
       .populate('subcategory', 'name image slug')
       .populate('cityRef', 'name slug')
-      .populate('area', 'name slug')
-      .populate('hotel', 'name slug');
+      .populate('area', 'name slug customCitySlug')
+      .populate('hotel', 'name slug customCitySlug');
+
   }
 
   // 3. Fallback: If it's a "dirty" slug (title-17759... or title-69d8fa...), try to extract the ID from the end
@@ -205,8 +208,9 @@ export const getAdById = asyncHandler(async (req, res) => {
         .populate('category', 'name slug icon')
         .populate('subcategory', 'name image slug')
         .populate('cityRef', 'name slug')
-        .populate('area', 'name slug')
-        .populate('hotel', 'name slug');
+        .populate('area', 'name slug customCitySlug')
+        .populate('hotel', 'name slug customCitySlug');
+
     }
   }
 

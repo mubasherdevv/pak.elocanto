@@ -34,7 +34,9 @@ const settingsSchema = mongoose.Schema(
 
     // 5. User Settings
     enableUserRegistration: { type: Boolean, default: true },
+    enableUserLogin: { type: Boolean, default: true },
     enableEmailVerification: { type: Boolean, default: false },
+
     allowTemporaryEmails: { type: Boolean, default: false },
     defaultUserRole: { type: String, enum: ['user', 'seller'], default: 'user' },
 

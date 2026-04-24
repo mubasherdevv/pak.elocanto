@@ -11,6 +11,9 @@ const redirectMiddleware = async (req, res, next) => {
     return next();
   }
 
+  // console.log(`[REDIRECT CHECK] Incoming path: ${req.path}`);
+
+
   // Skip static assets and uploads (but allow API for redirects)
   const skipPrefixes = ['/uploads', '/assets', '/static', '/api/health'];
   if (skipPrefixes.some(prefix => req.path.startsWith(prefix))) {
@@ -62,8 +65,9 @@ const redirectMiddleware = async (req, res, next) => {
         destination = `/api${cleanDest}`;
       }
 
-      console.log(`[REDIRECT] ${isApiRequest ? '[API] ' : ''}${rawPath} -> ${destination} (${redirect.statusCode})`);
+      console.log(`[REDIRECT MATCH] Found redirect for ${lookupPath} -> ${destination}`);
       return res.redirect(redirect.statusCode || 301, destination);
+
     }
 
     next();

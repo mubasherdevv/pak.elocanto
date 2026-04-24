@@ -765,10 +765,49 @@ export default function AdminSettingsPage() {
       </div>
 
       <hr className="border-gray-100 my-8" />
+      <h2 className="text-lg font-black text-gray-900 mb-4 flex items-center gap-2">
+        <UserIcon className="w-5 h-5 text-orange-500" />
+        User Access Control
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-blue-50/50 border-2 border-blue-50 p-6 rounded-[32px] space-y-2">
+          <label className="flex items-center gap-4 cursor-pointer p-2 hover:bg-white/50 rounded-2xl transition-colors">
+            <input
+              type="checkbox"
+              checked={settings.enableUserRegistration !== false}
+              className="w-6 h-6 accent-blue-600 rounded-lg"
+              onChange={(e) => setSettings({ ...settings, enableUserRegistration: e.target.checked })}
+            />
+            <div>
+              <span className="block text-sm font-black text-blue-900">User Registration [ {settings.enableUserRegistration !== false ? 'Enabled' : 'Disabled'} ]</span>
+              <span className="block text-xs font-bold text-blue-400">If unchecked, no one can create a new account.</span>
+            </div>
+          </label>
+        </div>
+
+        <div className="bg-purple-50/50 border-2 border-purple-50 p-6 rounded-[32px] space-y-2">
+          <label className="flex items-center gap-4 cursor-pointer p-2 hover:bg-white/50 rounded-2xl transition-colors">
+            <input
+              type="checkbox"
+              checked={settings.enableUserLogin !== false}
+              className="w-6 h-6 accent-purple-600 rounded-lg"
+              onChange={(e) => setSettings({ ...settings, enableUserLogin: e.target.checked })}
+            />
+            <div>
+              <span className="block text-sm font-black text-purple-900">User Login [ {settings.enableUserLogin !== false ? 'Enabled' : 'Disabled'} ]</span>
+              <span className="block text-xs font-bold text-purple-400">If unchecked, only Admins can login. Existing users will be blocked.</span>
+            </div>
+          </label>
+        </div>
+
+      </div>
+
+      <hr className="border-gray-100 my-8" />
       <h2 className="text-lg font-black text-red-600 mb-4 flex items-center gap-2">
         <span className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
         Maintenance Mode
       </h2>
+
       <div className="bg-red-50/50 border-2 border-red-50 p-6 rounded-[32px] space-y-4">
         <label className="flex items-center gap-4 cursor-pointer p-2 hover:bg-white/50 rounded-2xl transition-colors">
           <input

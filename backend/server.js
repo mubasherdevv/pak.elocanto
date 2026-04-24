@@ -230,7 +230,8 @@ const getSettings = async () => {
   const cached = getCache('site_settings');
   if (cached) return cached;
   const settings = await Settings.findOne({}).lean();
-  if (settings) setCache('site_settings', settings, 3600);
+  if (settings) setCache('site_settings', settings, 60);
+
   return settings;
 };
 

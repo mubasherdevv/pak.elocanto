@@ -1,4 +1,6 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
+
 import Ad from '../models/Ad.js';
 import ActivityLog from '../models/ActivityLog.js';
 import generateToken from '../utils/generateToken.js';
@@ -12,9 +14,26 @@ import asyncHandler from '../middleware/asyncHandler.js';
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
+
+  // Check if login is enabled in settings
+  const Settings = mongoose.model('Settings');
+  const settings = await Settings.findOne({});
   
+  const user = await User.findOne({ email });
+
+  console.log(`[AUTH] Login Attempt: ${email} | Settings.enableUserLogin: ${settings?.enableUserLogin} | User.isAdmin: ${user?.isAdmin}`);
+
+  if (settings && settings.enableUserLogin === false) {
+    // Only allow Admins to login if login is disabled
+    if (!user || !user.isAdmin) {
+      console.log(`[AUTH] Login BLOCKED for non-admin: ${email}`);
+      return res.status(403).json({ message: 'Login is currently disabled by administrator.' });
+    }
+  }
+
+
   if (user && user.isLocked()) {
+
     return res.status(423).json({ 
       message: 'Account is temporarily locked due to too many failed attempts. Try again later.',
       lockUntil: user.lockUntil
@@ -127,7 +146,21 @@ const googleAuth = asyncHandler(async (req, res) => {
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password, phone, city } = req.body;
+
+  // Check if registration is enabled in settings
+  const Settings = mongoose.model('Settings');
+  const settings = await Settings.findOne({});
+  
+  console.log(`[AUTH] Registration Attempt: ${email} | Settings.enableUserRegistration: ${settings?.enableUserRegistration}`);
+
+  if (settings && settings.enableUserRegistration === false) {
+    console.log(`[AUTH] Registration BLOCKED: ${email}`);
+    return res.status(403).json({ message: 'New user registration is currently disabled.' });
+  }
+
+
   const emailValidation = validateEmail(email);
+
   if (!emailValidation.valid) {
     return res.status(400).json({ message: emailValidation.message });
   }

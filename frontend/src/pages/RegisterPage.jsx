@@ -83,6 +83,14 @@ export default function RegisterPage() {
               </div>
             )}
 
+            {settings && settings.enableUserRegistration === false && (
+              <div style={{ background: '#fff7ed', border: '1px solid #ffedd5', color: '#9a3412', padding: 12, borderRadius: 12, marginBottom: 20, fontSize: 13, display: 'flex', gap: 8, alignItems: 'center' }}>
+                <ExclamationCircleIcon style={{ width: 18, height: 18 }} /> 
+                New user registration is currently disabled by administrator.
+              </div>
+            )}
+
+
 
             <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <div style={{ gridColumn: 'span 2' }}>
@@ -128,9 +136,16 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <button type="submit" className="btn-primary" style={{ gridColumn: 'span 2', height: 52, borderRadius: 12, marginTop: 8 }} disabled={loading}>
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                style={{ gridColumn: 'span 2', height: 52, borderRadius: 12, marginTop: 8 }} 
+                disabled={loading}
+              >
                 {loading ? 'Creating account...' : 'Create Account'}
               </button>
+
+
             </form>
 
             <p style={{ fontSize: 12, color: '#6b7280', textAlign: 'center', marginTop: 16 }}>

@@ -263,16 +263,19 @@ export default function AdDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <MapPinIcon style={{ width: 14 }} />
               <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
+
               {ad.area && (
                 <>
                   <span style={{ mx: 1 }}>•</span>
-                  <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+                  <Link to={`/cities/${ad.area?.customCitySlug || ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+
                 </>
               )}
               {ad.hotel && (
                 <>
                   <span style={{ mx: 1 }}>•</span>
-                  <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.hotel.name}</Link>
+                  <Link to={`/cities/${ad.hotel?.customCitySlug || ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.hotel.name}</Link>
+
                 </>
               )}
             </div>
@@ -307,7 +310,8 @@ export default function AdDetailPage() {
                 {ad.area && (
                   <>
                     <span style={{ margin: '0 4px', color: '#94a3b8' }}>•</span>
-                    <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+                    <Link to={`/cities/${ad.area?.customCitySlug || ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+
                   </>
                 )}
               </p>
@@ -540,13 +544,15 @@ export default function AdDetailPage() {
                     {ad.area && (
                       <>
                         <span>•</span>
-                        <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} className="hover:text-primary transition-colors">{ad.area.name}</Link>
+                        <Link to={`/cities/${ad.area?.customCitySlug || ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} className="hover:text-primary transition-colors">{ad.area.name}</Link>
+
                       </>
                     )}
                     {ad.hotel && (
                       <>
                         <span>•</span>
-                        <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} className="hover:text-primary transition-colors">{ad.hotel.name}</Link>
+                        <Link to={`/cities/${ad.hotel?.customCitySlug || ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} className="hover:text-primary transition-colors">{ad.hotel.name}</Link>
+
                       </>
                     )}
                   </span>
