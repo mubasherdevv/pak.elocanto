@@ -341,6 +341,49 @@ export default function AdminTitlesSeoPage() {
                 </div>
               )}
 
+              {/* URL Preview Section */}
+              {(selectedCityId || formData.referenceId) && (
+                <div className="p-6 bg-gray-50 rounded-[1.5rem] border-2 border-dashed border-gray-200">
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Target URL Preview</label>
+                  <div className="flex items-center gap-2 text-xs font-bold text-gray-500 break-all bg-white p-3 rounded-xl border border-gray-100">
+                    <GlobeAltIcon className="w-4 h-4 text-orange-500 flex-shrink-0" />
+                    <span>
+                      {(() => {
+                        const city = cities.find(c => c._id === selectedCityId);
+                        if (!city) return 'Select a city to see preview...';
+                        
+                        if (formData.pageType === 'city') return `/cities/${city.slug}`;
+                        if (formData.pageType === 'city-areas') return `/cities/${city.slug}/areas`;
+                        if (formData.pageType === 'city-hotels') return `/cities/${city.slug}/hotels`;
+                        
+                        if (formData.pageType === 'area') {
+                          const area = areas.find(a => a._id === formData.referenceId);
+                          if (!area) return `/cities/${city.slug}/areas/[select-area]`;
+                          const citySlug = area.customCitySlug || city.slug;
+                          return `/cities/${citySlug}/areas/${area.slug}`;
+                        }
+                        
+                        if (formData.pageType === 'hotel') {
+                          const hotel = hotels.find(h => h._id === formData.referenceId);
+                          if (!hotel) return `/cities/${city.slug}/hotels/[select-hotel]`;
+                          const citySlug = hotel.customCitySlug || city.slug;
+                          return `/cities/${citySlug}/hotels/${hotel.slug}`;
+                        }
+
+                        if (formData.pageType === 'category') {
+                           const cat = categories.find(c => c._id === formData.referenceId);
+                           return `/category/${cat?.slug || '[select-category]'}`;
+                        }
+
+                        return 'Dynamic Route';
+                      })()}
+                    </span>
+                  </div>
+                  <p className="text-[9px] text-gray-400 mt-2 italic">* This is the URL where these SEO tags will be applied.</p>
+                </div>
+              )}
+
+
               {formData.pageType === 'category' && (
                 <div>
                   <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Select Category</label>
