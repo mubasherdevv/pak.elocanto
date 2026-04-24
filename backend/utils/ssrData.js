@@ -69,8 +69,20 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
     // 1. Home Page
     if (path === '/') {
       const [featuredAds, latestAds, homeCities, homeAreas, homeHotels] = await Promise.all([
-        Ad.find({ isFeatured: true, isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(10).lean(),
-        Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(12).lean(),
+        Ad.find({ isFeatured: true, isActive: true, isApproved: true, expiresAt: { $gt: new Date() } })
+          .populate('seller', 'name profilePhoto city phone')
+          .populate('category', 'name slug icon')
+          .populate('subcategory', 'name image slug')
+          .sort({ createdAt: -1 })
+          .limit(10)
+          .lean(),
+        Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } })
+          .populate('seller', 'name profilePhoto city phone')
+          .populate('category', 'name slug icon')
+          .populate('subcategory', 'name image slug')
+          .sort({ createdAt: -1 })
+          .limit(12)
+          .lean(),
         City.find({ showOnHome: true }).sort({ name: 1 }).lean(),
         Area.find({ showOnHome: true }).populate('city', 'name slug').lean(),
         Hotel.find({ showOnHome: true }).populate('city', 'name slug').lean()
@@ -128,8 +140,11 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
     else if (path.startsWith('/ads/')) {
       const slug = path.replace('/ads/', '');
       const ad = await Ad.findOne({ slug })
-        .populate('seller', 'name')
-        .populate('area', 'name')
+        .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
+        .populate('category', 'name slug icon')
+        .populate('subcategory', 'name image slug')
+        .populate('area', 'name slug')
+        .populate('hotel', 'name slug')
         .lean();
 
       if (ad) {
@@ -180,7 +195,13 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
           }
         }
 
-        const ads = await Ad.find(adsQuery).sort({ createdAt: -1 }).limit(20).lean();
+        const ads = await Ad.find(adsQuery)
+          .populate('seller', 'name profilePhoto')
+          .populate('category', 'name slug')
+          .populate('subcategory', 'name slug')
+          .sort({ createdAt: -1 })
+          .limit(20)
+          .lean();
         initialData = { ...initialData, city, ads, title };
         contentHtml = renderHeader(settings) + renderGrid(ads, title);
         console.log(`[SSR-DATA] ✅ City resolved: ${city.name} (${ads.length} ads)`);
@@ -191,7 +212,13 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
 
     // 4. Ads Listing Page (/ads)
     else if (path === '/ads') {
-      const ads = await Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).limit(20).lean();
+      const ads = await Ad.find({ isActive: true, isApproved: true, expiresAt: { $gt: new Date() } })
+        .populate('seller', 'name profilePhoto')
+        .populate('category', 'name slug')
+        .populate('subcategory', 'name slug')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean();
       initialData = { ...initialData, ads };
       contentHtml = renderHeader(settings) + renderGrid(ads, 'All Advertisements');
     }
@@ -217,7 +244,13 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
             }
           }
 
-          const ads = await Ad.find(adsQuery).sort({ createdAt: -1 }).limit(20).lean();
+          const ads = await Ad.find(adsQuery)
+            .populate('seller', 'name profilePhoto')
+            .populate('category', 'name slug')
+            .populate('subcategory', 'name slug')
+            .sort({ createdAt: -1 })
+            .limit(20)
+            .lean();
           initialData = { ...initialData, category, ads, title };
           contentHtml = renderGrid(ads, title);
         }
