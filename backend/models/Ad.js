@@ -26,6 +26,10 @@ const adSchema = mongoose.Schema(
       ref: 'SubSubCategory',
     },
     city: { type: String, required: true },
+    cityRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'City',
+    },
     area: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Area',
@@ -120,6 +124,15 @@ adSchema.pre('save', async function () {
     this.listingType = 'simple';
     this.isFeatured = false;
     this.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  }
+
+  // Auto-link cityRef if missing
+  if (this.city && !this.cityRef) {
+    const City = mongoose.model('City');
+    const cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${this.city}$`, 'i') } });
+    if (cityDoc) {
+      this.cityRef = cityDoc._id;
+    }
   }
 });
 

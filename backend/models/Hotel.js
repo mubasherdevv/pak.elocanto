@@ -5,6 +5,8 @@ const hotelSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     slug: { type: String, unique: true },
+    customCitySlug: { type: String, trim: true },
+
     city: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
@@ -22,10 +24,13 @@ hotelSchema.index({ isActive: 1 });
 hotelSchema.index({ showOnHome: 1 });
 
 hotelSchema.pre('save', function () {
-  if (this.isModified('name') || this.isNew) {
-    this.slug = generateSlug(this.name);
+  if (this.isNew || this.isModified('name')) {
+    if (!this.slug || (this.isModified('name') && !this.isModified('slug'))) {
+      this.slug = generateSlug(this.name);
+    }
   }
 });
+
 
 const Hotel = mongoose.model('Hotel', hotelSchema);
 export default Hotel;

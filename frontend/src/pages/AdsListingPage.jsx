@@ -4,7 +4,6 @@ import { useAds } from '../context/AdContext';
 import AdCard from '../components/AdCard';
 import api from '../lib/api';
 import { FunnelIcon, ArrowsUpDownIcon, XMarkIcon, ShieldCheckIcon, AdjustmentsHorizontalIcon, ChevronDownIcon, EyeIcon, MapPinIcon, MapIcon, BuildingOffice2Icon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
-import { AdCardSkeleton } from '../components/Skeleton';
 import { generateAdSlug } from '../utils/urlUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
@@ -1122,7 +1121,8 @@ export default function AdsListingPage() {
                                 {cityFilterAreas[c._id].map(area => (
                                   <Link
                                     key={area._id}
-                                    to={`/cities/${c.slug}/areas/${area.slug}`}
+                                    to={`/cities/${area.customCitySlug || c.slug}/areas/${area.slug}`}
+
                                     style={{ textDecoration: 'none', fontSize: 12, fontWeight: areaSlug === area.slug ? 700 : 500, color: areaSlug === area.slug ? 'var(--primary)' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: areaSlug === area.slug ? 'rgba(62,111,225,0.06)' : 'none' }}
                                   >
                                     📍 {area.name}
@@ -1147,6 +1147,7 @@ export default function AdsListingPage() {
                               <div className="fade-in">
                                 <Link
                                   to={`/cities/${c.slug}/hotels`}
+
                                   style={{ textDecoration: 'none', fontSize: 12, fontWeight: isHotelsPage && citySlug === c.slug ? 700 : 500, color: isHotelsPage && citySlug === c.slug ? '#f97316' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: isHotelsPage && citySlug === c.slug ? 'rgba(249,115,22,0.06)' : 'none' }}
                                 >
                                   🏨 All Hotels
@@ -1154,7 +1155,8 @@ export default function AdsListingPage() {
                                 {cityFilterHotels[c._id].map(hotel => (
                                   <Link
                                     key={hotel._id}
-                                    to={`/cities/${c.slug}/hotels/${hotel.slug}`}
+                                    to={`/cities/${hotel.customCitySlug || c.slug}/hotels/${hotel.slug}`}
+
                                     style={{ textDecoration: 'none', fontSize: 12, fontWeight: hotelSlug === hotel.slug ? 700 : 500, color: hotelSlug === hotel.slug ? '#f97316' : '#64748b', padding: '5px 10px', paddingLeft: 14, borderRadius: 6, display: 'block', background: hotelSlug === hotel.slug ? 'rgba(249,115,22,0.06)' : 'none' }}
                                   >
                                     🏨 {hotel.name}
@@ -1213,13 +1215,7 @@ export default function AdsListingPage() {
           </div>
 
           {loading ? (
-            <div className="ads-grid">
-              {Array(6).fill(0).map((_, i) => (
-                <AdCardSkeleton key={i} loading={true}>
-                  <AdCard ad={{ title: 'Loading...', price: 0, seller: { name: 'Seller' }, images: [] }} viewMode={viewMode} />
-                </AdCardSkeleton>
-              ))}
-            </div>
+            null
           ) : ads.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '100px 0', background: 'white', borderRadius: 16 }}>
               <h3 style={{ fontWeight: 800, marginBottom: 8 }}>No matching ads found</h3>
@@ -1247,9 +1243,7 @@ export default function AdsListingPage() {
 
               <div className="ads-grid">
                 {ads.map(ad => (
-                  <AdCardSkeleton key={ad._id} loading={false}>
-                    <AdCard ad={ad} viewMode={viewMode} />
-                  </AdCardSkeleton>
+                  <AdCard key={ad._id} ad={ad} viewMode={viewMode} />
                 ))}
               </div>
 

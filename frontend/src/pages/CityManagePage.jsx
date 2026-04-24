@@ -236,12 +236,27 @@ export default function CityManagePage() {
         slug: item.slug || ''
       } : { name: '', image: '', isPopular: false, showOnHome: false, slug: '' });
     } else if (activeTab === 'areas') {
-      setFormData(item ? { name: item.name, city: item.city?._id || item.city || '', showOnHome: item.showOnHome || false, slug: item.slug || '' } : { name: '', city: '', showOnHome: false, slug: '' });
+      setFormData(item ? { name: item.name, city: item.city?._id || item.city || '', showOnHome: item.showOnHome || false, slug: item.slug || '', customCitySlug: item.customCitySlug || '' } : { name: '', city: '', showOnHome: false, slug: '', customCitySlug: '' });
     } else {
-      setFormData(item ? { name: item.name, city: item.city?._id || item.city || '', showOnHome: item.showOnHome || false, slug: item.slug || '' } : { name: '', city: '', showOnHome: false, slug: '' });
+      setFormData(item ? { name: item.name, city: item.city?._id || item.city || '', showOnHome: item.showOnHome || false, slug: item.slug || '', customCitySlug: item.customCitySlug || '' } : { name: '', city: '', showOnHome: false, slug: '', customCitySlug: '' });
     }
+
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBulkEditClick = () => {
+    const dataToEdit = selectedIds.map(id => {
+      const item = activeTab === 'cities' ? cities.find(c => c._id === id) : activeTab === 'areas' ? areas.find(a => a._id === id) : hotels.find(h => h._id === id);
+      return { 
+        _id: id, 
+        name: item?.name || '', 
+        slug: item?.slug || '',
+        customCitySlug: item?.customCitySlug || ''
+      };
+    });
+    setBulkEditData(dataToEdit);
+    setShowBulkEditForm(true);
   };
 
   const handleSubmit = async (e) => {
@@ -347,26 +362,23 @@ export default function CityManagePage() {
     }
   };
 
-  const handleOpenBulkEdit = () => {
-    const selectedCities = cities.filter(c => selectedIds.includes(c._id));
-    setBulkEditData(selectedCities.map(c => ({ _id: c._id, name: c.name, slug: c.slug || '' })));
-    setShowBulkEditForm(true);
-    setShowForm(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleBulkEditChange = (id, field, value) => {
-    setBulkEditData(prev => prev.map(item => item._id === id ? { ...item, [field]: value } : item));
-  };
-
   const handleBulkEditSave = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
+      const endpoint = activeTab === 'cities' ? '/cities' : activeTab === 'areas' ? '/areas' : '/hotels';
+      
+      // Update each item individually to ensure slug generation/validation
       await Promise.all(
-        bulkEditData.map(item => api.put(`/cities/${item._id}`, { name: item.name, slug: item.slug }))
+        bulkEditData.map(item => api.put(`${endpoint}/${item._id}`, { 
+          name: item.name, 
+          slug: item.slug, 
+          customCitySlug: item.customCitySlug 
+        }))
       );
-      setMessage(`Successfully updated ${bulkEditData.length} cities.`);
+
+
+      setMessage(`Successfully updated ${bulkEditData.length} items.`);
       setShowBulkEditForm(false);
       setSelectedIds([]);
       fetchAll();
@@ -377,6 +389,25 @@ export default function CityManagePage() {
       setLoading(false);
     }
   };
+
+  const handleBulkCleanSlugs = async () => {
+    if (window.confirm(`Clean slugs for ${selectedIds.length} items? This will auto-generate them from their names.`)) {
+      try {
+        setLoading(true);
+        const endpoint = activeTab === 'areas' ? '/areas/bulk' : '/hotels/bulk';
+        await api.put(endpoint, { ids: selectedIds, pattern: 'clean-name' });
+        setMessage(`Cleaned slugs for ${selectedIds.length} items.`);
+        setSelectedIds([]);
+        fetchAll();
+        setTimeout(() => setMessage(''), 3000);
+      } catch (err) {
+        alert(err.response?.data?.message || 'Bulk clean failed.');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
 
   const tabs = [
     { key: 'cities', label: 'Cities', icon: <GlobeAltIcon style={{ width: 18, height: 18 }} />, count: cities.length },
@@ -397,15 +428,22 @@ export default function CityManagePage() {
 
   const areaFields = [
     { key: 'name', label: 'Area Name', required: true, fullWidth: false },
-    { key: 'city', label: 'City', type: 'select', required: true, options: cityOptions, fullWidth: false },
+    { key: 'slug', label: 'URL Slug (Optional Override)', required: false, fullWidth: false, placeholder: 'e.g. johar-town-vips' },
+    { key: 'customCitySlug', label: 'City Slug Override (Optional)', required: false, fullWidth: true, placeholder: 'e.g. lahore-escorts' },
+    { key: 'city', label: 'Target City (Relation)', type: 'select', required: true, options: cityOptions, fullWidth: false },
+
     { key: 'showOnHome', label: '', type: 'checkbox', checkLabel: 'Show on Homepage Section', fullWidth: true },
   ];
 
   const hotelFields = [
     { key: 'name', label: 'Hotel Name', required: true, fullWidth: false },
-    { key: 'city', label: 'City', type: 'select', required: true, options: cityOptions, fullWidth: false },
+    { key: 'slug', label: 'URL Slug (Optional Override)', required: false, fullWidth: false, placeholder: 'e.g. pc-hotel-lahore' },
+    { key: 'customCitySlug', label: 'City Slug Override (Optional)', required: false, fullWidth: true, placeholder: 'e.g. lahore-escorts' },
+    { key: 'city', label: 'Target City (Relation)', type: 'select', required: true, options: cityOptions, fullWidth: false },
+
     { key: 'showOnHome', label: '', type: 'checkbox', checkLabel: 'Show on Homepage Section', fullWidth: true },
   ];
+
 
   const currentFields = activeTab === 'cities' ? cityFields : activeTab === 'areas' ? areaFields : hotelFields;
   const currentTitle = activeTab === 'cities' ? 'CITY' : activeTab === 'areas' ? 'AREA' : 'HOTEL';
@@ -449,6 +487,7 @@ export default function CityManagePage() {
 
   const areaColumns = [
     { key: 'name', label: 'Area Name', render: (row) => <span style={{ fontWeight: 900 }}>{row.name}</span> },
+    { key: 'slug', label: 'Slug', render: (row) => <span style={{ color: '#6b7280', fontSize: 13, fontFamily: 'monospace' }}>/{row.slug || '—'}</span> },
     { key: 'city', label: 'City', render: (row) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: '#eff6ff', color: '#2563eb', fontSize: 12, fontWeight: 700, borderRadius: 20 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span> },
     {
       key: 'showOnHome', label: 'Status',
@@ -460,6 +499,7 @@ export default function CityManagePage() {
 
   const hotelColumns = [
     { key: 'name', label: 'Hotel Name', render: (row) => <span style={{ fontWeight: 900 }}>{row.name}</span> },
+    { key: 'slug', label: 'Slug', render: (row) => <span style={{ color: '#6b7280', fontSize: 13, fontFamily: 'monospace' }}>/{row.slug || '—'}</span> },
     { key: 'city', label: 'City', render: (row) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: '#eff6ff', color: '#2563eb', fontSize: 12, fontWeight: 700, borderRadius: 20 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span> },
     {
       key: 'showOnHome', label: 'Status',
@@ -468,6 +508,7 @@ export default function CityManagePage() {
       ) : null
     },
   ];
+
 
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 400 }}>
@@ -611,10 +652,10 @@ export default function CityManagePage() {
             </button>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            {activeTab === 'cities' && (
+            {activeTab === 'cities' ? (
               <>
                 <button 
-                  onClick={handleOpenBulkEdit}
+                  onClick={handleBulkEditClick}
                   style={{ padding: '10px 16px', background: '#3e6fe1', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
                 >
                   Bulk Edit Details
@@ -632,7 +673,23 @@ export default function CityManagePage() {
                   Remove Popular
                 </button>
               </>
+            ) : (
+              <>
+                <button 
+                  onClick={handleBulkEditClick}
+                  style={{ padding: '10px 16px', background: '#3e6fe1', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Bulk Edit Slugs
+                </button>
+                <button 
+                  onClick={handleBulkCleanSlugs}
+                  style={{ padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+                >
+                  Clean Slugs (Auto)
+                </button>
+              </>
             )}
+
             <button 
               onClick={handleBulkDelete}
               style={{ padding: '10px 20px', background: '#ef4444', color: 'white', borderRadius: 12, fontSize: 13, fontWeight: 900, border: 'none', cursor: 'pointer' }}
@@ -650,47 +707,103 @@ export default function CityManagePage() {
             <XMarkIcon style={{ width: 22, height: 22, color: '#9ca3af' }} />
           </button>
           <h2 style={{ fontSize: 20, fontWeight: 900, fontStyle: 'italic', marginBottom: 24, color: '#111' }}>
-            BULK EDIT CITY DETAILS
+            BULK EDIT {currentTitle} DETAILS & SLUGS
           </h2>
+
           <form onSubmit={handleBulkEditSave}>
             <div style={{ overflowX: 'auto', marginBottom: 24 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '1px solid #f3f4f6' }}>
-                    <th style={{ padding: '12px 10px', fontSize: 10, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase' }}>City Name</th>
-                    <th style={{ padding: '12px 10px', fontSize: 10, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase' }}>URL Slug</th>
+                  <tr style={{ textAlign: 'left' }}>
+                    <th style={{ padding: '0 10px', fontSize: 10, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase' }}>{currentTitle} Name</th>
+                    <th style={{ padding: '0 10px', fontSize: 10, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase' }}>URL Slug</th>
+                    {activeTab !== 'cities' && (
+                      <th style={{ padding: '0 10px', fontSize: 10, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase' }}>City Slug Override</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
-                  {bulkEditData.map(item => (
-                    <tr key={item._id} style={{ borderBottom: '1px solid #f9fafb' }}>
-                      <td style={{ padding: '12px 10px' }}>
+                  {bulkEditData.map((item, idx) => (
+                    <tr key={item._id}>
+                      <td style={{ padding: '0 5px' }}>
                         <input 
                           type="text" 
                           value={item.name} 
-                          onChange={(e) => handleBulkEditChange(item._id, 'name', e.target.value)}
+                          onChange={(e) => {
+                            const newData = [...bulkEditData];
+                            newData[idx].name = e.target.value;
+                            setBulkEditData(newData);
+                          }}
                           style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 700 }}
                           required
                         />
                       </td>
-                      <td style={{ padding: '12px 10px' }}>
+                      <td style={{ padding: '0 5px' }}>
                         <input 
                           type="text" 
                           value={item.slug} 
-                          onChange={(e) => handleBulkEditChange(item._id, 'slug', e.target.value)}
+                          onChange={(e) => {
+                            const newData = [...bulkEditData];
+                            newData[idx].slug = e.target.value;
+                            setBulkEditData(newData);
+                          }}
                           style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 600, fontFamily: 'monospace' }}
                           required
                         />
                       </td>
+                      {activeTab !== 'cities' && (
+                        <td style={{ padding: '0 5px' }}>
+                          <input 
+                            type="text" 
+                            value={item.customCitySlug} 
+                            placeholder="e.g. lahore-escorts"
+                            onChange={(e) => {
+                              const newData = [...bulkEditData];
+                              newData[idx].customCitySlug = e.target.value;
+                              setBulkEditData(newData);
+                            }}
+                            style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 13, fontWeight: 600 }}
+                          />
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* Quick Bulk Action for all selected rows */}
+            {activeTab !== 'cities' && bulkEditData.length > 1 && (
+              <div style={{ marginTop: 20, marginBottom: 32, padding: 20, background: '#f8fafc', borderRadius: 16, border: '2px dashed #cbd5e1' }}>
+                <p style={{ fontSize: 12, fontWeight: 800, color: '#475569', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>⚡ Quick Apply to All Rows</p>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <input 
+                    type="text" 
+                    placeholder="Enter City Slug Override for all..."
+                    id="bulk-city-override-input"
+                    style={{ flex: 1, padding: '12px 16px', border: '1px solid #e2e8f0', borderRadius: 12, fontSize: 13, fontWeight: 600 }}
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const val = document.getElementById('bulk-city-override-input').value;
+                      const newData = bulkEditData.map(d => ({ ...d, customCitySlug: val }));
+                      setBulkEditData(newData);
+                    }}
+                    style={{ background: '#475569', color: 'white', border: 'none', padding: '0 24px', borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: 'pointer' }}
+                  >
+                    APPLY TO ALL
+                  </button>
+                </div>
+                <p style={{ marginTop: 8, fontSize: 11, color: '#94a3b8', fontWeight: 600 }}>This will set the same City Slug Override for every item in the table above.</p>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 12 }}>
-              <button type="submit" style={{ flex: 1, padding: '16px 0', background: '#3e6fe1', color: 'white', borderRadius: 16, fontWeight: 900, fontSize: 16, border: 'none', cursor: 'pointer' }}>
-                UPDATE {bulkEditData.length} CITIES
+              <button type="submit" style={{ flex: 1, padding: '16px 0', background: '#3e6fe1', color: 'white', borderRadius: 16, fontWeight: 900, fontSize: 16, border: 'none', cursor: 'pointer', boxShadow: '0 4px 12px rgba(62,111,225,0.2)' }}>
+                SAVE {bulkEditData.length} {currentTitle} CHANGES
               </button>
+
               <button type="button" onClick={() => setShowBulkEditForm(false)} style={{ padding: '16px 32px', border: '2px solid #e5e7eb', borderRadius: 16, fontWeight: 900, color: '#9ca3af', background: 'none', cursor: 'pointer' }}>
                 CANCEL
               </button>

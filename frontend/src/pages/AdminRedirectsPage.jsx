@@ -19,6 +19,7 @@ export default function AdminRedirectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
   
   const [formData, setFormData] = useState({
     fromPath: '',
@@ -98,6 +99,35 @@ export default function AdminRedirectsPage() {
       description: '',
       isActive: true
     });
+  };
+
+  const handleToggleSelect = (id) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredRedirects.map(item => item._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Are you sure you want to delete ${selectedIds.length} redirects?`)) return;
+    
+    try {
+      await api.post('/admin/redirects/bulk-delete', { ids: selectedIds }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success('Redirects deleted successfully');
+      setSelectedIds([]);
+      fetchRedirects();
+    } catch (error) {
+      toast.error('Bulk delete failed');
+    }
   };
 
   const filteredRedirects = redirects.filter(item => 
@@ -230,7 +260,15 @@ export default function AdminRedirectsPage() {
         <table className="w-full text-left">
           <thead className="bg-gray-50/50 border-b border-gray-100">
             <tr>
-              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Redirect Rule</th>
+              <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest w-10">
+                <input 
+                  type="checkbox" 
+                  onChange={handleSelectAll}
+                  checked={selectedIds.length === filteredRedirects.length && filteredRedirects.length > 0}
+                  className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                />
+              </th>
+              <th className="px-4 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Redirect Rule</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Type</th>
               <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
@@ -238,8 +276,16 @@ export default function AdminRedirectsPage() {
           </thead>
           <tbody className="divide-y divide-gray-50">
             {filteredRedirects.map((item) => (
-              <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
+              <tr key={item._id} className={`hover:bg-gray-50/50 transition-colors ${selectedIds.includes(item._id) ? 'bg-orange-50/30' : ''}`}>
                 <td className="px-8 py-6">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedIds.includes(item._id)}
+                    onChange={() => handleToggleSelect(item._id)}
+                    className="w-4 h-4 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                  />
+                </td>
+                <td className="px-4 py-6">
                   <div className="flex items-center gap-4">
                     <div className="p-3 bg-orange-50 rounded-2xl text-orange-500">
                       <LinkIcon className="w-5 h-5" />
@@ -282,6 +328,33 @@ export default function AdminRedirectsPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Floating Bulk Actions Bar */}
+      {selectedIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-8 py-4 rounded-3xl shadow-2xl flex items-center gap-8 z-50 animate-slide-up border border-white/10 backdrop-blur-xl">
+          <div className="flex items-center gap-3 pr-8 border-r border-white/10">
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center font-black text-sm">
+              {selectedIds.length}
+            </div>
+            <span className="text-sm font-black uppercase tracking-widest text-gray-400">Rules Selected</span>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={handleBulkDelete}
+              className="flex items-center gap-2 px-6 py-2 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl font-black text-xs transition-all uppercase tracking-widest border border-red-500/20"
+            >
+              <TrashIcon className="w-4 h-4" /> Delete All
+            </button>
+            <button 
+              onClick={() => setSelectedIds([])}
+              className="px-4 py-2 hover:bg-white/5 rounded-xl font-black text-xs transition-all uppercase tracking-widest text-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

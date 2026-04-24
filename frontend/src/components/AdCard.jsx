@@ -128,12 +128,18 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
             src={getOptimizedImageUrl(ad.images?.[0], 400)}
             alt={`${ad.title} in ${locationText || 'Pakistan'}`}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            fallbackSrc={ad.images?.[0] || PLACEHOLDER}
+            fallbackSrc={PLACEHOLDER}
             onError={() => setImgError(true)}
             aspectRatio="16/9"
             width="400"
             height="225"
           />
+          {imgError && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-300">
+              <PhotoIcon className="w-12 h-12 mb-2 opacity-20" />
+              <span className="text-[10px] font-black uppercase tracking-widest opacity-40">No Image Available</span>
+            </div>
+          )}
           {ad.isFeatured && (
             <div className="absolute top-2 left-2 bg-amber-500 text-white text-[9px] font-black px-2 py-1 rounded-md shadow-lg flex items-center gap-1 uppercase tracking-widest">
               <StarSolid className="w-2.5 h-2.5" /> Featured
@@ -226,12 +232,18 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
           src={getOptimizedImageUrl(ad.images?.[0], 400)}
           alt={`${ad.title} in ${locationText || 'Pakistan'}`}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          fallbackSrc={ad.images?.[0] || PLACEHOLDER}
+          fallbackSrc={PLACEHOLDER}
           onError={() => setImgError(true)}
           aspectRatio="1/1"
           width="400"
           height="400"
         />
+        {imgError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 text-gray-300">
+            <PhotoIcon className="w-16 h-16 mb-2 opacity-20" />
+            <span className="text-[10px] font-black uppercase tracking-widest opacity-40">No Image Available</span>
+          </div>
+        )}
         
         {/* Badges Overlay */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
@@ -266,6 +278,8 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
         <div className="flex flex-wrap gap-1 mb-2.5 min-h-[22px] items-center">
           {ad.badges && ad.badges.length > 0 ? ad.badges.map((badge, idx) => {
             const styles = getBadgeStyles(badge);
+            // If it's already an optimized proxy URL, don't re-process
+            if (typeof badge === 'string' && badge.includes('/images/') && !badge.startsWith('http')) return null;
             if (!styles) return null;
             return (
               <span 

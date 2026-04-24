@@ -1,4 +1,8 @@
 import City from '../models/City.js';
+import Area from '../models/Area.js';
+import Hotel from '../models/Hotel.js';
+import mongoose from 'mongoose';
+
 import asyncHandler from '../middleware/asyncHandler.js';
 import { delCache } from '../utils/cache.js';
 
@@ -30,8 +34,27 @@ export const getCities = asyncHandler(async (req, res) => {
 export const getCityBySlug = asyncHandler(async (req, res) => {
   let city = await City.findOne({ slug: req.params.slug });
   
-  // If not found by slug, maybe it doesn't have a slug but exists by name?
   if (!city) {
+    // Try to see if it's a customCitySlug override in Areas
+    const Area = mongoose.model('Area');
+    const areaWithCustomSlug = await Area.findOne({ customCitySlug: req.params.slug }).populate('city');
+    if (areaWithCustomSlug) {
+      city = areaWithCustomSlug.city;
+    }
+  }
+
+  if (!city) {
+    // Try to see if it's a customCitySlug override in Hotels
+    const Hotel = mongoose.model('Hotel');
+    const hotelWithCustomSlug = await Hotel.findOne({ customCitySlug: req.params.slug }).populate('city');
+    if (hotelWithCustomSlug) {
+      city = hotelWithCustomSlug.city;
+    }
+  }
+  
+  // If still not found by slug, maybe it doesn't have a slug but exists by name?
+  if (!city) {
+
     // Try finding by name if slug-like match
     const nameMatch = req.params.slug.replace(/-/g, ' ');
     city = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });

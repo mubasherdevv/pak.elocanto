@@ -262,17 +262,17 @@ export default function AdDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: '#94a3b8', fontSize: 12, marginTop: 16, borderTop: '1px solid #f1f5f9', paddingTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <MapPinIcon style={{ width: 14 }} />
-              <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
+              <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
               {ad.area && (
                 <>
                   <span style={{ mx: 1 }}>•</span>
-                  <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+                  <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
                 </>
               )}
               {ad.hotel && (
                 <>
                   <span style={{ mx: 1 }}>•</span>
-                  <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.hotel.name}</Link>
+                  <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.hotel.name}</Link>
                 </>
               )}
             </div>
@@ -303,11 +303,11 @@ export default function AdDetailPage() {
             <div>
               <p style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Location</p>
               <p style={{ fontSize: 13, color: '#1e293b', fontWeight: 600, marginTop: 2 }}>
-                <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
+                <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.city}</Link>
                 {ad.area && (
                   <>
                     <span style={{ margin: '0 4px', color: '#94a3b8' }}>•</span>
-                    <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
+                    <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ad.area.name}</Link>
                   </>
                 )}
               </p>
@@ -536,17 +536,17 @@ export default function AdDetailPage() {
                 <div className="flex items-center gap-6 mt-8 pt-8 border-t border-gray-50 text-sm text-gray-500">
                   <span className="flex items-center gap-2">
                     <MapPinIcon className="w-5" />
-                    <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-primary transition-colors">{ad.city}</Link>
+                    <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-primary transition-colors">{ad.city}</Link>
                     {ad.area && (
                       <>
                         <span>•</span>
-                        <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} className="hover:text-primary transition-colors">{ad.area.name}</Link>
+                        <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/areas/${ad.area.slug}`} className="hover:text-primary transition-colors">{ad.area.name}</Link>
                       </>
                     )}
                     {ad.hotel && (
                       <>
                         <span>•</span>
-                        <Link to={`/cities/${ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} className="hover:text-primary transition-colors">{ad.hotel.name}</Link>
+                        <Link to={`/cities/${ad.cityRef?.slug || ad.city.toLowerCase().replace(/\s+/g, '-')}/hotels/${ad.hotel.slug}`} className="hover:text-primary transition-colors">{ad.hotel.name}</Link>
                       </>
                     )}
                   </span>

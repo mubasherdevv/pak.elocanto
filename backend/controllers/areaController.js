@@ -14,20 +14,23 @@ export const getAreas = asyncHandler(async (req, res) => {
   if (city) {
     let cityDoc = await City.findOne({ slug: city });
     if (!cityDoc) {
-      console.log(`[getAreas] Slug lookup failed for "${city}". Trying name fallback...`);
       const nameMatch = city.replace(/-/g, ' ');
       cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
     }
 
     if (cityDoc) {
-      console.log(`[getAreas] Found City: "${cityDoc.name}" (${cityDoc._id})`);
-      // Use $or to be safe for both String and ObjectId during transition
-      filter.city = cityDoc._id;
+      filter = {
+        ...filter,
+        $or: [
+          { city: cityDoc._id },
+          { customCitySlug: city }
+        ]
+      };
     } else {
-      console.log(`[getAreas] City not found for "${city}"`);
-      return res.json([]);
+      filter = { ...filter, customCitySlug: city };
     }
   }
+
 
   if (showOnHome === 'true') {
     filter.showOnHome = true;
@@ -67,7 +70,8 @@ export const createArea = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Area already exists in this city' });
   }
 
-  const area = await Area.create({ name, city, showOnHome });
+  const area = await Area.create({ name, slug: req.body.slug, customCitySlug: req.body.customCitySlug, city, showOnHome });
+
   delCache('global_sitemap_xml');
   const populated = await Area.findById(area._id).populate('city', 'name slug');
   res.status(201).json(populated);
@@ -83,9 +87,13 @@ export const updateArea = asyncHandler(async (req, res) => {
   }
 
   area.name = req.body.name || area.name;
+  if (req.body.slug) area.slug = req.body.slug;
+  if (req.body.customCitySlug !== undefined) area.customCitySlug = req.body.customCitySlug;
   if (req.body.city) area.city = req.body.city;
+
   if (req.body.isActive !== undefined) area.isActive = req.body.isActive;
   if (req.body.showOnHome !== undefined) area.showOnHome = req.body.showOnHome;
+
 
   const updated = await area.save();
   delCache('global_sitemap_xml');
@@ -160,3 +168,28 @@ export const bulkDeleteAreas = asyncHandler(async (req, res) => {
   const result = await Area.deleteMany({ _id: { $in: ids } });
   res.json({ message: `${result.deletedCount} areas removed successfully.` });
 });
+
+// @desc    Bulk update areas (slugs/names)
+// @route   PUT /api/areas/bulk
+// @access  Private/Admin
+export const bulkUpdateAreas = asyncHandler(async (req, res) => {
+  const { ids, updateData, pattern } = req.body;
+
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ message: 'Invalid IDs format' });
+  }
+
+  // If pattern is provided, we auto-generate slugs based on area name
+  if (pattern === 'clean-name') {
+    const areas = await Area.find({ _id: { $in: ids } });
+    for (let area of areas) {
+      area.slug = area.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+      await area.save();
+    }
+    return res.json({ message: `${areas.length} area slugs cleaned successfully.` });
+  }
+
+  const result = await Area.updateMany({ _id: { $in: ids } }, { $set: updateData });
+  res.json({ message: `${result.modifiedCount} areas updated successfully.` });
+});
+

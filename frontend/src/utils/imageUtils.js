@@ -37,17 +37,25 @@ export const getOptimizedImageUrl = (url, width) => {
   if (!url || typeof url !== 'string') return '/placeholder.png';
   
   // If it's already an optimized proxy URL, don't re-process
-  if (url.includes('/api/images/')) return url;
+  if (url.includes('/images/')) return url;
 
   // Detect Cloudinary or other external URLs
   if (url.startsWith('http') && (url.includes('cloudinary') || url.includes('res.cloudinary.com'))) {
     // Cloudinary Optimization Injection
-    // Standard URL: .../image/upload/v1234567/public_id.jpg
-    // Optimized: .../image/upload/f_auto,q_auto,w_width/v1234567/public_id.jpg
     if (url.includes('/upload/')) {
+      // Ensure we don't double-inject transformations
+      if (url.includes('/f_auto')) return url;
+      
       const parts = url.split('/upload/');
       const widthParam = width ? `,w_${width}` : '';
-      return `${parts[0]}/upload/f_auto,q_auto${widthParam}/${parts[1]}`;
+      
+      // Remove version segment (v1234567/) if present in parts[1]
+      let pathWithoutVersion = parts[1];
+      if (pathWithoutVersion.startsWith('v') && /v\d+\//.test(pathWithoutVersion.substring(0, pathWithoutVersion.indexOf('/') + 1))) {
+        pathWithoutVersion = pathWithoutVersion.substring(pathWithoutVersion.indexOf('/') + 1);
+      }
+      
+      return `${parts[0]}/upload/f_auto,q_auto${widthParam}/${pathWithoutVersion}`;
     }
     return url;
   }

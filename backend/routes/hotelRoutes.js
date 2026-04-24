@@ -1,5 +1,5 @@
 import express from 'express';
-import { getHotels, getHotelBySlug, createHotel, updateHotel, deleteHotel, bulkCreateHotels, bulkDeleteHotels } from '../controllers/hotelController.js';
+import { getHotels, getHotelBySlug, createHotel, updateHotel, deleteHotel, bulkCreateHotels, bulkDeleteHotels, bulkUpdateHotels } from '../controllers/hotelController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -7,6 +7,7 @@ const router = express.Router();
 router.route('/').get(getHotels).post(protect, admin, createHotel);
 router.route('/bulk')
   .post(protect, admin, bulkCreateHotels)
+  .put(protect, admin, bulkUpdateHotels)
   .delete(protect, admin, bulkDeleteHotels);
 
 router.route('/:id').put(protect, admin, updateHotel).delete(protect, admin, deleteHotel);

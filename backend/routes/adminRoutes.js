@@ -816,4 +816,27 @@ router.delete('/redirects/:id', protect, admin, asyncHandler(async (req, res) =>
   }
 }));
 
+// @desc    Bulk delete redirects
+// @route   POST /api/admin/redirects/bulk-delete
+// @access  Private/Admin
+router.post('/redirects/bulk-delete', protect, admin, asyncHandler(async (req, res) => {
+  const { ids } = req.body;
+
+  if (!ids || !Array.isArray(ids)) {
+    res.status(400);
+    throw new Error('Invalid IDs format');
+  }
+
+  const redirects = await Redirect.find({ _id: { $in: ids } });
+  
+  // Clear cache for each redirect
+  for (const r of redirects) {
+    delCache(`redirect:${r.fromPath}`);
+  }
+
+  await Redirect.deleteMany({ _id: { $in: ids } });
+  
+  res.json({ message: `${ids.length} redirects removed successfully` });
+}));
+
 export default router;

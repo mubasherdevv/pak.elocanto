@@ -33,7 +33,7 @@ const AdminAnalytics = () => {
       try {
         setLoading(true);
         setError('');
-        
+
         try {
           const { data: analyticsData } = await api.get('/admin/ads-analytics');
           setAdsData(analyticsData || {
@@ -111,7 +111,7 @@ const AdminAnalytics = () => {
       {/* Ads Analytics */}
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-dark mb-4">Ads Performance & Engagement</h2>
-        
+
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -171,37 +171,46 @@ const AdminAnalytics = () => {
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="displayDate" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <XAxis
+                  dataKey="displayDate"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
                   dy={10}
                 />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12 }} 
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
                 />
                 <Tooltip cursor={{ fill: '#f8fafc' }} content={<CustomTooltip />} />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="views" 
-                  stroke="#3b82f6" 
+                <Line
+                  type="monotone"
+                  dataKey="views"
+                  stroke="#3b82f6"
                   strokeWidth={2}
                   dot={{ fill: '#3b82f6', r: 4 }}
                   activeDot={{ r: 6 }}
                   name="Views"
                 />
-                <Line 
-                  type="monotone" 
-                  dataKey="impressions" 
-                  stroke="#8b5cf6" 
+                <Line
+                  type="monotone"
+                  dataKey="impressions"
+                  stroke="#8b5cf6"
                   strokeWidth={2}
                   dot={{ fill: '#8b5cf6', r: 4 }}
                   activeDot={{ r: 6 }}
                   name="Impressions"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="inquiries"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  dot={{ fill: '#10b981', r: 4 }}
+                  activeDot={{ r: 6 }}
+                  name="Inquiries"
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -254,8 +263,8 @@ const AdminAnalytics = () => {
               ) : (
                 <p className="text-dark text-center py-4">No category data</p>
               )}
-              </div>
             </div>
+          </div>
         </div>
       </div>
     </div>

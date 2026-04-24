@@ -13,17 +13,23 @@ export const getHotels = asyncHandler(async (req, res) => {
   if (city) {
     let cityDoc = await City.findOne({ slug: city });
     if (!cityDoc) {
-      // Fallback: search by name if slug fails
       const nameMatch = city.replace(/-/g, ' ');
       cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
     }
 
     if (cityDoc) {
-      filter.city = cityDoc._id;
+      filter = {
+        ...filter,
+        $or: [
+          { city: cityDoc._id },
+          { customCitySlug: city }
+        ]
+      };
     } else {
-      return res.json([]);
+      filter = { ...filter, customCitySlug: city };
     }
   }
+
 
   if (showOnHome === 'true') {
     filter.showOnHome = true;
@@ -62,7 +68,8 @@ export const createHotel = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Hotel already exists in this city' });
   }
 
-  const hotel = await Hotel.create({ name, city, showOnHome });
+  const hotel = await Hotel.create({ name, slug: req.body.slug, customCitySlug: req.body.customCitySlug, city, showOnHome });
+
   delCache('global_sitemap_xml');
   const populated = await Hotel.findById(hotel._id).populate('city', 'name slug');
   res.status(201).json(populated);
@@ -78,7 +85,10 @@ export const updateHotel = asyncHandler(async (req, res) => {
   }
 
   hotel.name = req.body.name || hotel.name;
+  if (req.body.slug) hotel.slug = req.body.slug;
+  if (req.body.customCitySlug !== undefined) hotel.customCitySlug = req.body.customCitySlug;
   if (req.body.city) hotel.city = req.body.city;
+
   if (req.body.isActive !== undefined) hotel.isActive = req.body.isActive;
   if (req.body.showOnHome !== undefined) hotel.showOnHome = req.body.showOnHome;
 
@@ -155,3 +165,28 @@ export const bulkDeleteHotels = asyncHandler(async (req, res) => {
   const result = await Hotel.deleteMany({ _id: { $in: ids } });
   res.json({ message: `${result.deletedCount} hotels removed successfully.` });
 });
+
+// @desc    Bulk update hotels (slugs/names)
+// @route   PUT /api/hotels/bulk
+// @access  Private/Admin
+export const bulkUpdateHotels = asyncHandler(async (req, res) => {
+  const { ids, updateData, pattern } = req.body;
+
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ message: 'Invalid IDs format' });
+  }
+
+  // If pattern is provided, we auto-generate slugs based on name
+  if (pattern === 'clean-name') {
+    const hotels = await Hotel.find({ _id: { $in: ids } });
+    for (let hotel of hotels) {
+      hotel.slug = hotel.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+      await hotel.save();
+    }
+    return res.json({ message: `${hotels.length} hotel slugs cleaned successfully.` });
+  }
+
+  const result = await Hotel.updateMany({ _id: { $in: ids } }, { $set: updateData });
+  res.json({ message: `${result.modifiedCount} hotels updated successfully.` });
+});
+
