@@ -95,7 +95,7 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
 
   const categoryText = ad.subcategory?.name 
     ? `${ad.category?.name || 'Category'} > ${ad.subcategory.name}`
-    : (ad.category?.name || ad.category || 'Listing');
+    : (ad.category?.name || (typeof ad.category === 'object' ? 'Listing' : 'Listing'));
 
   const locationText = ad.area?.name 
     ? `${ad.area.name}, ${ad.city || 'Pakistan'}`
@@ -320,7 +320,7 @@ export default function AdCard({ ad, initialFav = false, onFavToggle, viewMode =
                <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-400 border border-gray-200 overflow-hidden">
                   {ad.seller?.profilePhoto ? <img src={ad.seller.profilePhoto} className="w-full h-full object-cover" /> : 'A'}
                </div>
-               <span className="text-[11px] font-bold text-gray-800 truncate max-w-[90px]">{ad.seller?.name || 'Admin'}</span>
+               <span className="text-[11px] font-bold text-gray-800 truncate max-w-[90px]">{ad.seller?.name || 'Seller'}</span>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600">
               <EyeIcon className="w-3.5 h-3.5" />
