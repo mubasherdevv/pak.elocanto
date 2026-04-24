@@ -357,43 +357,51 @@ export default function HomePage() {
         <div className="cat-grid hide-scroll">
           {categories.length > 0 ? (
             categories.map((cat, index) => (
-              <Link
-                key={cat._id}
-                to={`/${cat.slug}`}
-                className="cat-grid-card"
-              >
-                {/* Icon / Image */}
-                <div className="cat-icon-wrap">
-                  {cat.image ? (
-                    <img
-                      src={getOptimizedImageUrl(cat.image, 72)}
-                      alt={`${cat.name} in Pakistan`}
-                      width="72" height="72"
-                      loading={index < 8 ? 'eager' : 'lazy'}
-                      decoding="async"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER;
-                      }}
-                    />
-                  ) : (
-                    <span>{cat.icon || '📦'}</span>
+              <CategorySkeleton key={cat._id} loading={false}>
+                <Link
+                  to={`/${cat.slug}`}
+                  className="cat-grid-card"
+                >
+                  {/* Icon / Image */}
+                  <div className="cat-icon-wrap">
+                    {cat.image ? (
+                      <img
+                        src={getOptimizedImageUrl(cat.image, 72)}
+                        alt={`${cat.name} in Pakistan`}
+                        width="72" height="72"
+                        loading={index < 8 ? 'eager' : 'lazy'}
+                        decoding="async"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = PLACEHOLDER;
+                        }}
+                      />
+                    ) : (
+                      <span>{cat.icon || '📦'}</span>
+                    )}
+                  </div>
+
+                  {/* Name */}
+                  <span className="cat-name">{cat.name}</span>
+
+                  {/* Ad count badge */}
+                  {cat.adCount !== undefined && (
+                    <span className="cat-count">
+                      {cat.adCount.toLocaleString()} {cat.adCount === 1 ? 'ad' : 'ads'}
+                    </span>
                   )}
-                </div>
-
-                {/* Name */}
-                <span className="cat-name">{cat.name}</span>
-
-                {/* Ad count badge */}
-                {cat.adCount !== undefined && (
-                  <span className="cat-count">
-                    {cat.adCount.toLocaleString()} {cat.adCount === 1 ? 'ad' : 'ads'}
-                  </span>
-                )}
-              </Link>
+                </Link>
+              </CategorySkeleton>
             ))
           ) : (
-            Array(10).fill(0).map((_, i) => <CategorySkeleton key={i} />)
+            Array(10).fill(0).map((_, i) => (
+              <CategorySkeleton key={i} loading={true}>
+                <div className="cat-grid-card" style={{ visibility: 'hidden' }}>
+                  <div className="cat-icon-wrap" />
+                  <span className="cat-name">Category</span>
+                </div>
+              </CategorySkeleton>
+            ))
           )}
         </div>
       </section>
@@ -563,13 +571,17 @@ export default function HomePage() {
               {!pageLoading && featuredAds.length > 0 ? (
                 featuredAds.slice(0, 10).map(ad => (
                   <div key={ad._id} className="scroll-item-5">
-                    <AdCard ad={ad} />
+                    <AdCardSkeleton loading={false}>
+                      <AdCard ad={ad} />
+                    </AdCardSkeleton>
                   </div>
                 ))
               ) : (
                 Array(5).fill(0).map((_, i) => (
                   <div key={i} className="scroll-item-5">
-                    <AdCardSkeleton />
+                    <AdCardSkeleton loading={true}>
+                      <AdCard ad={{ title: 'Loading Ad Title...', price: 0, seller: { name: 'Seller' }, images: [] }} />
+                    </AdCardSkeleton>
                   </div>
                 ))
               )}
@@ -596,13 +608,17 @@ export default function HomePage() {
             {!pageLoading && latestAds.length > 0 ? (
               latestAds.slice(0, 10).map(ad => (
                 <div key={ad._id} className="scroll-item-5">
-                  <AdCard ad={ad} />
+                  <AdCardSkeleton loading={false}>
+                    <AdCard ad={ad} />
+                  </AdCardSkeleton>
                 </div>
               ))
             ) : (
               Array(5).fill(0).map((_, i) => (
                 <div key={i} className="scroll-item-5">
-                  <AdCardSkeleton />
+                  <AdCardSkeleton loading={true}>
+                    <AdCard ad={{ title: 'Loading Ad Title...', price: 0, seller: { name: 'Seller' }, images: [] }} />
+                  </AdCardSkeleton>
                 </div>
               ))
             )}

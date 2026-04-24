@@ -1214,7 +1214,11 @@ export default function AdsListingPage() {
 
           {loading ? (
             <div className="ads-grid">
-              {Array(6).fill(0).map((_, i) => <AdCardSkeleton key={i} />)}
+              {Array(6).fill(0).map((_, i) => (
+                <AdCardSkeleton key={i} loading={true}>
+                  <AdCard ad={{ title: 'Loading...', price: 0, seller: { name: 'Seller' }, images: [] }} viewMode={viewMode} />
+                </AdCardSkeleton>
+              ))}
             </div>
           ) : ads.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '100px 0', background: 'white', borderRadius: 16 }}>
@@ -1243,7 +1247,9 @@ export default function AdsListingPage() {
 
               <div className="ads-grid">
                 {ads.map(ad => (
-                  <AdCard key={ad._id} ad={ad} viewMode={viewMode} />
+                  <AdCardSkeleton key={ad._id} loading={false}>
+                    <AdCard ad={ad} viewMode={viewMode} />
+                  </AdCardSkeleton>
                 ))}
               </div>
 

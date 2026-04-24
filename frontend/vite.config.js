@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import viteCompression from 'vite-plugin-compression'
+import boneyard from 'boneyard-js/vite'
 
 export default defineConfig({
   plugins: [
     react(),
+    boneyard(),
     viteCompression({
       algorithm: 'gzip',
       ext: '.gz',
