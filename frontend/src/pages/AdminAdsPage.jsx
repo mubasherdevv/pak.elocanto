@@ -626,6 +626,20 @@ export default function AdminAdsPage() {
                 
                 <div className="flex items-center gap-3">
                   <button 
+                    onClick={() => handleBulkAction('isActive', true)}
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                    title="Make Active"
+                  >
+                    <EyeIcon className="w-4 h-4" /> Live
+                  </button>
+                  <button 
+                    onClick={() => handleBulkAction('isActive', false)}
+                    className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-800 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
+                    title="Hide/Deactivate"
+                  >
+                    <NoSymbolIcon className="w-4 h-4" /> Hide
+                  </button>
+                  <button 
                     onClick={() => handleBulkAction('isApproved', true)}
                     className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 rounded-2xl font-black text-xs uppercase tracking-widest transition-all"
                   >
