@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useAds } from '../context/AdContext';
 import AdCard from '../components/AdCard';
-import { AdCardSkeleton, CategorySkeleton } from '../components/Skeleton';
+import { AdCardSkeleton, CategorySkeleton, PageSkeleton } from '../components/Skeleton';
 import SeoContentSection from '../components/SeoContentSection';
 import HowItWorks from '../components/HowItWorks';
 import api from '../lib/api';
