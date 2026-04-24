@@ -73,12 +73,42 @@ const resolvePathForRecord = async (pageType, referenceId) => {
   return normalizePath(path);
 };
 
-// @desc    Get all SEO settings
+// @desc    Get all SEO settings with pagination and filtering
 // @route   GET /api/seo-settings
 export const getAllSeoSettings = async (req, res) => {
   try {
-    const settings = await SeoSettings.find().sort({ createdAt: -1 });
-    res.json(settings);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const query = {};
+
+    if (req.query.search) {
+      query.$or = [
+        { title: { $regex: req.query.search, $options: 'i' } },
+        { keywords: { $regex: req.query.search, $options: 'i' } },
+        { pagePath: { $regex: req.query.search, $options: 'i' } }
+      ];
+    }
+
+    if (req.query.pageType) query.pageType = req.query.pageType;
+    if (req.query.referenceId) query.referenceId = req.query.referenceId;
+
+    const [total, settings] = await Promise.all([
+      SeoSettings.countDocuments(query),
+      SeoSettings.find(query)
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(skip)
+        .lean()
+    ]);
+
+    res.json({
+      settings,
+      page,
+      pages: Math.ceil(total / limit),
+      total
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

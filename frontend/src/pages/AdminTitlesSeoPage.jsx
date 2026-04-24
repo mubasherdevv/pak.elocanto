@@ -47,19 +47,40 @@ export default function AdminTitlesSeoPage() {
   const [filterCityId, setFilterCityId] = useState('');
   const [filterPageType, setFilterPageType] = useState('');
   const [filterCategoryId, setFilterCategoryId] = useState('');
+  
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchSeoList();
+  }, [page, limit, searchQuery, filterPageType, filterCityId, filterCategoryId]);
+
+  useEffect(() => {
     fetchBaseData();
   }, []);
 
   const fetchSeoList = async () => {
     try {
       setLoading(true);
+      const params = {
+        page,
+        limit,
+        search: searchQuery,
+        pageType: filterPageType,
+        referenceId: filterCityId || filterCategoryId
+      };
+
       const { data } = await api.get('/seo-settings', {
+        params,
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSeoList(Array.isArray(data) ? data : []);
+      
+      setSeoList(data.settings || []);
+      setTotalPages(data.pages || 1);
+      setTotalCount(data.total || 0);
     } catch (err) {
       console.error('Fetch SEO Error:', err);
       setSeoList([]);
@@ -210,17 +231,7 @@ export default function AdminTitlesSeoPage() {
   };
 
   // Filter Logic
-  const filteredSeoList = Array.isArray(seoList) ? seoList.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.pageType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.keywords?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesCity = !filterCityId || (item.pageType === 'city' && item.referenceId === filterCityId);
-    const matchesType = !filterPageType || item.pageType === filterPageType;
-    const matchesCategory = !filterCategoryId || (item.pageType === 'category' && item.referenceId === filterCategoryId);
-    
-    return matchesSearch && matchesCity && matchesType && matchesCategory;
-  }) : [];
+  const filteredSeoList = seoList;
 
   // Get count of entries for a specific city
   const getCityEntryCount = (cityId) => {
@@ -431,82 +442,99 @@ export default function AdminTitlesSeoPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Page Type Filter */}
-          <div className="relative">
-            <GlobeAltIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
-            <select 
-              className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
-              value={filterPageType}
-              onChange={(e) => setFilterPageType(e.target.value)}
-            >
-              <option value="">All Page Types</option>
-              <option value="home">Homepage ({getTypeEntryCount('home')})</option>
-              <option value="ads">Ads Listing ({getTypeEntryCount('ads')})</option>
-              <option value="ad">Individual Ads ({getTypeEntryCount('ad')})</option>
-              <option value="category">Categories ({getTypeEntryCount('category')})</option>
-              <option value="city">Cities ({getTypeEntryCount('city')})</option>
-              <option value="city-hotels">City Hotels ({getTypeEntryCount('city-hotels')})</option>
-              <option value="city-areas">City Areas ({getTypeEntryCount('city-areas')})</option>
-              <option value="area">Areas ({getTypeEntryCount('area')})</option>
-              <option value="hotel">Hotels ({getTypeEntryCount('hotel')})</option>
-              <option value="profile">Profiles ({getTypeEntryCount('profile')})</option>
-            </select>
-            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-4 flex-1">
+            {/* Page Type Filter */}
+            <div className="relative min-w-[180px]">
+              <GlobeAltIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+              <select 
+                className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
+                value={filterPageType}
+                onChange={(e) => { setFilterPageType(e.target.value); setPage(1); }}
+              >
+                <option value="">All Page Types</option>
+                <option value="home">Homepage</option>
+                <option value="ads">Ads Listing</option>
+                <option value="ad">Individual Ads</option>
+                <option value="category">Categories</option>
+                <option value="city">Cities</option>
+                <option value="city-hotels">City Hotels</option>
+                <option value="city-areas">City Areas</option>
+                <option value="area">Areas</option>
+                <option value="hotel">Hotels</option>
+                <option value="profile">Profiles</option>
+              </select>
+              <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* City Filter */}
+            <div className="relative min-w-[180px]">
+              <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+              <select 
+                className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
+                value={filterCityId}
+                onChange={(e) => { setFilterCityId(e.target.value); setPage(1); }}
+              >
+                <option value="">All Cities</option>
+                {cities.map(city => (
+                  <option key={city._id} value={city._id}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Category Filter */}
+            <div className="relative min-w-[180px]">
+              <FolderIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+              <select 
+                className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
+                value={filterCategoryId}
+                onChange={(e) => { setFilterCategoryId(e.target.value); setPage(1); }}
+              >
+                <option value="">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+
+            {/* Per Page Limit */}
+            <div className="relative min-w-[140px]">
+              <DocumentTextIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+              <select 
+                className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
+                value={limit}
+                onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              >
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="500">500 per page</option>
+              </select>
+              <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
 
-          {/* City Filter */}
-          <div className="relative">
-            <MapPinIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
-            <select 
-              className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
-              value={filterCityId}
-              onChange={(e) => setFilterCityId(e.target.value)}
-            >
-              <option value="">All Cities</option>
-              {cities.map(city => (
-                <option key={city._id} value={city._id}>
-                  {city.name} ({getCityEntryCount(city._id)})
-                </option>
-              ))}
-            </select>
-            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Category Filter */}
-          <div className="relative">
-            <FolderIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
-            <select 
-              className="w-full pl-12 pr-10 py-3.5 bg-gray-50/50 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold text-xs appearance-none cursor-pointer tracking-tight"
-              value={filterCategoryId}
-              onChange={(e) => setFilterCategoryId(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat._id} value={cat._id}>
-                  {cat.name} ({getCategoryEntryCount(cat._id)})
-                </option>
-              ))}
-            </select>
-            <ChevronDownIcon className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-        </div>
-
-        {(searchQuery || filterCityId || filterPageType || filterCategoryId) && (
-          <div className="flex justify-end">
+          {(searchQuery || filterCityId || filterPageType || filterCategoryId) && (
             <button 
               onClick={() => { 
                 setSearchQuery(''); 
                 setFilterCityId(''); 
                 setFilterPageType('');
                 setFilterCategoryId('');
+                setPage(1);
               }}
               className="px-6 py-2 bg-red-50 text-red-600 rounded-xl font-black text-[10px] hover:bg-red-100 transition-all uppercase tracking-widest border border-red-100"
             >
-              Clear All Filters
+              Clear
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
@@ -558,6 +586,31 @@ export default function AdminTitlesSeoPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-8 py-6 bg-white border border-gray-100 rounded-[2rem] shadow-sm">
+          <div className="text-xs font-black text-gray-400 uppercase tracking-widest">
+            Showing Page {page} of {totalPages} ({totalCount} total entries)
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              disabled={page === 1}
+              onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo(0, 0); }}
+              className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${page === 1 ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-orange-500 shadow-lg active:scale-95'}`}
+            >
+              Previous
+            </button>
+            <button 
+              disabled={page === totalPages}
+              onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0, 0); }}
+              className={`px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${page === totalPages ? 'bg-gray-50 text-gray-300 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-orange-500 shadow-lg active:scale-95'}`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
