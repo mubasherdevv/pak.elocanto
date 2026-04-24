@@ -28,24 +28,7 @@ export const trackAdView = asyncHandler(async (req, res) => {
   const localStorageId = req.body.localStorageId || null;
   const page = req.body.page || 'ads';
 
-  const ad = await Ad.findById(adId);
-  if (!ad) {
-    return res.status(404).json({ message: 'Ad not found' });
-  }
-
-  if (ad.listingType === 'featured' || ad.adType === 'featured') {
-    await FeaturedAdView.create({
-      adId,
-      page,
-      ipAddress,
-      userAgent
-    });
-    
-    await Ad.findByIdAndUpdate(adId, { $inc: { views: 1 } });
-    
-    return res.json({ success: true, type: 'featured', impressions: true });
-  }
-
+  // All detail page views should be tracked uniquely using SimpleAdView
   const existingView = await SimpleAdView.findOne({
     adId,
     $or: [
@@ -61,7 +44,7 @@ export const trackAdView = asyncHandler(async (req, res) => {
   });
 
   if (existingView) {
-    return res.json({ success: true, type: 'simple', unique: false, message: 'Already viewed' });
+    return res.json({ success: true, unique: false, message: 'Already viewed' });
   }
 
   await SimpleAdView.create({
@@ -75,7 +58,7 @@ export const trackAdView = asyncHandler(async (req, res) => {
 
   await Ad.findByIdAndUpdate(adId, { $inc: { views: 1 } });
 
-  res.json({ success: true, type: 'simple', unique: true });
+  res.json({ success: true, unique: true });
 });
 
 export const trackBulkViews = asyncHandler(async (req, res) => {

@@ -113,38 +113,51 @@ const AdminAnalytics = () => {
         <h2 className="text-xl font-bold text-dark mb-4">Ads Performance & Engagement</h2>
         
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">Total Views</p>
+              <p className="text-sm font-semibold text-gray-medium">7-Day Views</p>
               <EyeIcon className="w-5 h-5 text-blue-500" />
             </div>
             <h3 className="text-3xl font-extrabold text-dark">
               {(adsData?.summary?.totalViews || 0).toLocaleString()}
             </h3>
-            <p className="text-xs text-gray-medium mt-2">Ad detail page clicks</p>
+            <p className="text-xs text-gray-medium mt-2">Unique ad detail page clicks</p>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">Impressions</p>
+              <p className="text-sm font-semibold text-gray-medium">Lifetime Views</p>
+              <div className="w-5 h-5 bg-blue-50 rounded-full flex items-center justify-center">
+                <EyeIcon className="w-4 h-4 text-blue-700" />
+              </div>
+            </div>
+            <h3 className="text-3xl font-extrabold text-dark">
+              {(adsData?.summary?.totalLifetimeViews || 0).toLocaleString()}
+            </h3>
+            <p className="text-xs text-gray-medium mt-2">All-time total ad views</p>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-semibold text-gray-medium">7-Day Impressions</p>
               <PresentationChartLineIcon className="w-5 h-5 text-purple-500" />
             </div>
             <h3 className="text-3xl font-extrabold text-dark">
               {(adsData?.summary?.totalImpressions || 0).toLocaleString()}
             </h3>
-            <p className="text-xs text-gray-medium mt-2">Listing page views</p>
+            <p className="text-xs text-gray-medium mt-2">Listing page visibility</p>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">Inquiries</p>
+              <p className="text-sm font-semibold text-gray-medium">7-Day Inquiries</p>
               <ChatBubbleLeftIcon className="w-5 h-5 text-green-500" />
             </div>
             <h3 className="text-3xl font-extrabold text-dark">
               {(adsData?.summary?.totalInquiries || 0).toLocaleString()}
             </h3>
-            <p className="text-xs text-gray-medium mt-2">User messages</p>
+            <p className="text-xs text-gray-medium mt-2">User messages received</p>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -155,18 +168,18 @@ const AdminAnalytics = () => {
             <h3 className="text-3xl font-extrabold text-dark">
               {adsData?.summary?.engagementRate || '0%'}
             </h3>
-            <p className="text-xs text-gray-medium mt-2">Inquiries per view</p>
+            <p className="text-xs text-gray-medium mt-2">Inquiries per view (7d)</p>
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-medium">Total Users</p>
+              <p className="text-sm font-semibold text-gray-medium">Total Registered Users</p>
               <UsersIcon className="w-5 h-5 text-indigo-500" />
             </div>
             <h3 className="text-3xl font-extrabold text-dark">
               {(adsData?.summary?.totalUsers || 0).toLocaleString()}
             </h3>
-            <p className="text-xs text-gray-medium mt-2">Registered users</p>
+            <p className="text-xs text-gray-medium mt-2">Lifetime users count</p>
           </div>
         </div>
 

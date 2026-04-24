@@ -494,14 +494,17 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
     startDate.setDate(startDate.getDate() - daysToFetch);
     startDate.setHours(0, 0, 0, 0);
 
-    // Total views from SimpleAdView (click-through views)
-    const totalSimpleViews = await SimpleAdView.countDocuments({
-      viewedAt: { $gte: startDate }
-    });
+    // Total views (click-through views on detail page)
+    const [simpleViewsCount, featuredDetailClicksCount] = await Promise.all([
+      SimpleAdView.countDocuments({ viewedAt: { $gte: startDate } }),
+      FeaturedAdView.countDocuments({ viewedAt: { $gte: startDate }, page: 'detail' })
+    ]);
+    const totalSimpleViews = simpleViewsCount + featuredDetailClicksCount;
 
-    // Total impressions from FeaturedAdView (listing page views)
+    // Total impressions (views on listing/homepage/search - NOT detail page)
     const totalFeaturedImpressions = await FeaturedAdView.countDocuments({
-      viewedAt: { $gte: startDate }
+      viewedAt: { $gte: startDate },
+      page: { $ne: 'detail' }
     });
 
     // Total inquiries (messages) in the period
@@ -512,6 +515,7 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
     // Views and impressions trend for last 7 days
     const viewsTrend = await SimpleAdView.aggregate([
       { $match: { viewedAt: { $gte: startDate } } },
+      { $unionWith: { coll: 'featuredadviews', pipeline: [{ $match: { viewedAt: { $gte: startDate }, page: 'detail' } }] } },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$viewedAt" } },
@@ -522,7 +526,7 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
     ]);
 
     const impressionsTrend = await FeaturedAdView.aggregate([
-      { $match: { viewedAt: { $gte: startDate } } },
+      { $match: { viewedAt: { $gte: startDate }, page: { $ne: 'detail' } } },
       {
         $group: {
           _id: { $dateToString: { format: "%Y-%m-%d", date: "$viewedAt" } },
@@ -566,6 +570,7 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
     // Top 5 most viewed ads
     const topAds = await SimpleAdView.aggregate([
       { $match: { viewedAt: { $gte: startDate } } },
+      { $unionWith: { coll: 'featuredadviews', pipeline: [{ $match: { viewedAt: { $gte: startDate }, page: 'detail' } }] } },
       { $group: { _id: '$adId', viewCount: { $sum: 1 } } },
       { $sort: { viewCount: -1 } },
       { $limit: 5 },
@@ -598,6 +603,7 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
     // Category-wise views
     const viewsByCategory = await SimpleAdView.aggregate([
       { $match: { viewedAt: { $gte: startDate } } },
+      { $unionWith: { coll: 'featuredadviews', pipeline: [{ $match: { viewedAt: { $gte: startDate }, page: 'detail' } }] } },
       {
         $lookup: {
           from: 'ads',
@@ -626,6 +632,11 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
       { $limit: 5 }
     ]);
 
+    // Total lifetime views (all time)
+    const lifetimeStats = await Ad.aggregate([
+      { $group: { _id: null, totalViews: { $sum: '$views' } } }
+    ]);
+
     // Total users count
     const totalUsers = await User.countDocuments();
 
@@ -635,6 +646,7 @@ router.get('/ads-analytics', protect, admin, async (req, res) => {
         totalImpressions: totalFeaturedImpressions,
         totalInquiries,
         totalUsers,
+        totalLifetimeViews: lifetimeStats[0]?.totalViews || 0,
         engagementRate: `${engagementRate}%`
       },
       trendData,
