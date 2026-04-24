@@ -127,11 +127,12 @@ export default function AdminTitlesSeoPage() {
     try {
       setDataLoading(true);
       const [areaRes, hotelRes] = await Promise.all([
-        api.get('/areas', { params: { city: city.slug } }),
-        api.get('/hotels', { params: { city: city.slug } })
+        api.get('/areas', { params: { city: cityId } }),
+        api.get('/hotels', { params: { city: cityId } })
       ]);
       setAreas(areaRes.data);
       setHotels(hotelRes.data);
+
     } catch (err) {
       console.error(err);
     } finally {

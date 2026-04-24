@@ -488,7 +488,20 @@ export default function CityManagePage() {
   const areaColumns = [
     { key: 'name', label: 'Area Name', render: (row) => <span style={{ fontWeight: 900 }}>{row.name}</span> },
     { key: 'slug', label: 'Slug', render: (row) => <span style={{ color: '#6b7280', fontSize: 13, fontFamily: 'monospace' }}>/{row.slug || '—'}</span> },
-    { key: 'city', label: 'City', render: (row) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: '#eff6ff', color: '#2563eb', fontSize: 12, fontWeight: 700, borderRadius: 20 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span> },
+    {
+      key: 'city',
+      label: 'City',
+      render: (row) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span>
+          {row.customCitySlug && (
+            <span style={{ fontSize: 9, background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4, fontWeight: 900, textTransform: 'uppercase', width: 'fit-content' }}>
+              Override: {row.customCitySlug}
+            </span>
+          )}
+        </div>
+      )
+    },
     {
       key: 'showOnHome', label: 'Status',
       render: (row) => row.showOnHome ? (
@@ -500,7 +513,20 @@ export default function CityManagePage() {
   const hotelColumns = [
     { key: 'name', label: 'Hotel Name', render: (row) => <span style={{ fontWeight: 900 }}>{row.name}</span> },
     { key: 'slug', label: 'Slug', render: (row) => <span style={{ color: '#6b7280', fontSize: 13, fontFamily: 'monospace' }}>/{row.slug || '—'}</span> },
-    { key: 'city', label: 'City', render: (row) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: '#eff6ff', color: '#2563eb', fontSize: 12, fontWeight: 700, borderRadius: 20 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span> },
+    {
+      key: 'city',
+      label: 'City',
+      render: (row) => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700 }}><MapPinIcon style={{ width: 14, height: 14 }} />{row.city?.name || '—'}</span>
+          {row.customCitySlug && (
+            <span style={{ fontSize: 9, background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4, fontWeight: 900, textTransform: 'uppercase', width: 'fit-content' }}>
+              Override: {row.customCitySlug}
+            </span>
+          )}
+        </div>
+      )
+    },
     {
       key: 'showOnHome', label: 'Status',
       render: (row) => row.showOnHome ? (

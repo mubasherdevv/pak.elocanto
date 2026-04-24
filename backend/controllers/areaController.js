@@ -2,6 +2,8 @@ import Area from '../models/Area.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { delCache } from '../utils/cache.js';
+import mongoose from 'mongoose';
+
 
 // @desc    Get all areas (optionally filter by city slug)
 // @route   GET /api/areas?city=city-slug
@@ -12,23 +14,29 @@ export const getAreas = asyncHandler(async (req, res) => {
 
   console.log(`[getAreas] City Slug: "${city}"`);
   if (city) {
-    let cityDoc = await City.findOne({ slug: city });
-    if (!cityDoc) {
-      const nameMatch = city.replace(/-/g, ' ');
-      cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+    // Check if city is an ID
+    if (mongoose.Types.ObjectId.isValid(city)) {
+       filter.city = city;
+    } else {
+      let cityDoc = await City.findOne({ slug: city });
+      if (!cityDoc) {
+        const nameMatch = city.replace(/-/g, ' ');
+        cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+      }
+
+      if (cityDoc) {
+        filter = {
+          ...filter,
+          $or: [
+            { city: cityDoc._id },
+            { customCitySlug: city }
+          ]
+        };
+      } else {
+        filter = { ...filter, customCitySlug: city };
+      }
     }
 
-    if (cityDoc) {
-      filter = {
-        ...filter,
-        $or: [
-          { city: cityDoc._id },
-          { customCitySlug: city }
-        ]
-      };
-    } else {
-      filter = { ...filter, customCitySlug: city };
-    }
   }
 
 

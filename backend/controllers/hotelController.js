@@ -2,6 +2,8 @@ import Hotel from '../models/Hotel.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
 import { delCache } from '../utils/cache.js';
+import mongoose from 'mongoose';
+
 
 // @desc    Get all hotels (optionally filter by city slug)
 // @route   GET /api/hotels?city=city-slug
@@ -11,23 +13,28 @@ export const getHotels = asyncHandler(async (req, res) => {
   let filter = {};
 
   if (city) {
-    let cityDoc = await City.findOne({ slug: city });
-    if (!cityDoc) {
-      const nameMatch = city.replace(/-/g, ' ');
-      cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+    if (mongoose.Types.ObjectId.isValid(city)) {
+      filter.city = city;
+    } else {
+      let cityDoc = await City.findOne({ slug: city });
+      if (!cityDoc) {
+        const nameMatch = city.replace(/-/g, ' ');
+        cityDoc = await City.findOne({ name: { $regex: new RegExp(`^${nameMatch}$`, 'i') } });
+      }
+
+      if (cityDoc) {
+        filter = {
+          ...filter,
+          $or: [
+            { city: cityDoc._id },
+            { customCitySlug: city }
+          ]
+        };
+      } else {
+        filter = { ...filter, customCitySlug: city };
+      }
     }
 
-    if (cityDoc) {
-      filter = {
-        ...filter,
-        $or: [
-          { city: cityDoc._id },
-          { customCitySlug: city }
-        ]
-      };
-    } else {
-      filter = { ...filter, customCitySlug: city };
-    }
   }
 
 
