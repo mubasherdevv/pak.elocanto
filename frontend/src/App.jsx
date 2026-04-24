@@ -6,7 +6,7 @@ import PrivateRoute from './components/PrivateRoute';
 import AdminRoute from './components/AdminRoute';
 import { PageSkeleton } from './components/Skeleton';
 import ScrollToTop from './components/ScrollToTop';
-import { SkeletonProvider } from 'boneyard-js/react';
+import { registerBones } from 'boneyard-js/react';
 
 import HomePage from './pages/HomePage';
 import AdsListingPage from './pages/AdsListingPage';
@@ -94,12 +94,11 @@ function App() {
       <GlobalHelmet />
       <AuthProvider>
         <Toaster position="top-right" toastOptions={{ duration: 4000, style: { borderRadius: '16px', fontWeight: 'bold' } }} />
-        <SkeletonProvider>
-          <AdProvider>
-            <Router>
-              <ScrollToTop />
-              <Suspense fallback={<PageSkeleton loading={true} />}>
-                <Routes>
+        <AdProvider>
+          <Router>
+            <ScrollToTop />
+            <Suspense fallback={<PageSkeleton loading={true} />}>
+              <Routes>
                   {/* ... rest of routes ... */}
               {/* Marketplace Routes */}
               <Route element={<PublicLayout />}>
@@ -168,7 +167,6 @@ function App() {
           </Suspense>
         </Router>
       </AdProvider>
-    </SkeletonProvider>
   </AuthProvider>
       </SettingsProvider>
     </HelmetProvider>
