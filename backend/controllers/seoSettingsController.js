@@ -26,19 +26,13 @@ const normalizePath = (rawPath) => {
 const resolvePathForRecord = async (pageType, referenceId) => {
   let path = '/';
   
-  const ensureCitySuffix = (slug) => {
-    if (!slug) return '';
-    return slug.endsWith('-call-girls-service') ? slug : `${slug}-call-girls-service`;
-  };
-
   try {
     if (pageType === 'home') path = '/';
     else if (pageType === 'ads') path = '/ads';
     else if (pageType === 'city' && referenceId) {
       const city = await City.findById(referenceId);
-      if (city) path = `/cities/${ensureCitySuffix(city.slug)}`;
+      if (city) path = `/cities/${city.slug}`;
     } else if (pageType === 'category' && referenceId) {
-      // Direct category/subcategory/subsubcategory path
       const subsub = await SubSubCategory.findById(referenceId);
       if (subsub) path = `/${subsub.slug}`;
       else {
@@ -55,14 +49,16 @@ const resolvePathForRecord = async (pageType, referenceId) => {
     } else if (pageType === 'area' && referenceId) {
       const area = await Area.findById(referenceId).populate('city');
       if (area && area.city) {
-        path = `/cities/${ensureCitySuffix(area.city.slug)}/areas/${area.slug}`;
+        const citySlug = area.customCitySlug || area.city.slug;
+        path = `/cities/${citySlug}/areas/${area.slug}`;
       } else if (area) {
         path = `/areas/${area.slug}`;
       }
     } else if (pageType === 'hotel' && referenceId) {
       const hotel = await Hotel.findById(referenceId).populate('city');
       if (hotel && hotel.city) {
-        path = `/cities/${ensureCitySuffix(hotel.city.slug)}/hotels/${hotel.slug}`;
+        const citySlug = hotel.customCitySlug || hotel.city.slug;
+        path = `/cities/${citySlug}/hotels/${hotel.slug}`;
       } else if (hotel) {
         path = `/hotels/${hotel.slug}`;
       }
@@ -72,6 +68,7 @@ const resolvePathForRecord = async (pageType, referenceId) => {
   }
   return normalizePath(path);
 };
+
 
 // @desc    Get all SEO settings with pagination and filtering
 // @route   GET /api/seo-settings
@@ -261,7 +258,12 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       const city = await City.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
       if (city) {
         // Try to find custom SEO for this specific city entity (Fixes the Lahore "City Listings" issue)
-        const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
+        const entitySeo = await SeoSettings.findOne({ 
+          pageType: 'city', 
+          referenceId: city._id.toString(), 
+          isActive: true 
+        }).lean();
+
         if (entitySeo) {
           return {
             title: entitySeo.title,
@@ -301,7 +303,12 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       if (type === 'areas') {
         const area = await Area.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (area) {
-          const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
+          const entitySeo = await SeoSettings.findOne({ 
+            pageType: 'area', 
+            referenceId: area._id.toString(), 
+            isActive: true 
+          }).lean();
+
           if (entitySeo) {
             return {
               title: entitySeo.title,
@@ -332,7 +339,12 @@ export const resolveSeoMetadata = async (normalizedPath, pageType = null, refere
       } else if (type === 'hotels') {
         const hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${slug}$`, 'i') } }).lean();
         if (hotel) {
-          const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
+          const entitySeo = await SeoSettings.findOne({ 
+            pageType: 'hotel', 
+            referenceId: hotel._id.toString(), 
+            isActive: true 
+          }).lean();
+
           if (entitySeo) {
             return {
               title: entitySeo.title,
