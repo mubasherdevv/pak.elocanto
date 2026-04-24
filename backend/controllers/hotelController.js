@@ -13,8 +13,34 @@ export const getHotels = asyncHandler(async (req, res) => {
   let filter = {};
 
   if (city) {
+
     if (mongoose.Types.ObjectId.isValid(city)) {
-      filter.city = city;
+      const cityId = new mongoose.Types.ObjectId(city);
+      const cityDoc = await City.findById(cityId);
+      
+      // Attempt 1: By ID or Custom Slug
+      let searchFilter = {
+        $or: [
+          { city: cityId }
+        ]
+      };
+      if (cityDoc) {
+        searchFilter.$or.push({ customCitySlug: cityDoc.slug });
+      }
+      
+      let results = await Hotel.find({ ...filter, ...searchFilter }).populate('city', 'name slug').sort({ name: 1 });
+      
+      // Fallback: If 0 results and we have a city name, try searching by city name
+      if (results.length === 0 && cityDoc) {
+        const otherCitiesWithSameName = await City.find({ name: cityDoc.name });
+        const cityIds = otherCitiesWithSameName.map(c => c._id);
+        results = await Hotel.find({ 
+           ...filter, 
+           city: { $in: cityIds } 
+        }).populate('city', 'name slug').sort({ name: 1 });
+      }
+      
+      return res.json(results);
     } else {
       let cityDoc = await City.findOne({ slug: city });
       if (!cityDoc) {
@@ -34,8 +60,9 @@ export const getHotels = asyncHandler(async (req, res) => {
         filter = { ...filter, customCitySlug: city };
       }
     }
-
   }
+
+
 
 
   if (showOnHome === 'true') {

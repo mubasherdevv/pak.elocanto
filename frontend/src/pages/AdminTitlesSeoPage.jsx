@@ -305,6 +305,8 @@ export default function AdminTitlesSeoPage() {
                   >
                     <option value="">Select City...</option>
                     {cities.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+
+
                   </select>
                 </div>
               )}
