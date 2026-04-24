@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MagnifyingGlassIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useAds } from '../context/AdContext';
 import AdCard from '../components/AdCard';
-import { AdCardSkeleton, CategorySkeleton, PageSkeleton } from '../components/Skeleton';
+import { AdCardSkeleton, CategorySkeleton, PageSkeleton, HeroSkeleton, SectionHeaderSkeleton } from '../components/Skeleton';
 import SeoContentSection from '../components/SeoContentSection';
 import HowItWorks from '../components/HowItWorks';
 import api from '../lib/api';
@@ -313,20 +313,22 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section style={{ padding: '80px 20px 40px', textAlign: 'center', minHeight: '380px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="container-custom" style={{ maxWidth: 900 }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249, 94, 38, 0.08)', color: 'var(--primary)', padding: '6px 16px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 24 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
-            Most Trusted Classifieds in Pakistan
+        <HeroSkeleton loading={pageLoading}>
+          <div className="container-custom" style={{ maxWidth: 900 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249, 94, 38, 0.08)', color: 'var(--primary)', padding: '6px 16px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 24 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
+              Most Trusted Classifieds in Pakistan
+            </div>
+            <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.1, marginBottom: 20 }}>
+              {seo?.title || (
+                <>Buy, Sell & Discover <span style={{ color: 'var(--primary)' }}>Everything</span> in Pakistan</>
+              )}
+            </h1>
+            <p style={{ fontSize: 'clamp(16px, 2vw, 18px)', color: 'var(--gray-600)', maxWidth: 700, margin: '0 auto', lineHeight: 1.6 }}>
+              Elocanto is the most secure destination to buy, sell, and discover premium items from around the world. Browse thousands of verified listings in your city.
+            </p>
           </div>
-          <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.1, marginBottom: 20 }}>
-            {seo?.title || (
-              <>Buy, Sell & Discover <span style={{ color: 'var(--primary)' }}>Everything</span> in Pakistan</>
-            )}
-          </h1>
-          <p style={{ fontSize: 'clamp(16px, 2vw, 18px)', color: 'var(--gray-600)', maxWidth: 700, margin: '0 auto', lineHeight: 1.6 }}>
-            Elocanto is the most secure destination to buy, sell, and discover premium items from around the world. Browse thousands of verified listings in your city.
-          </p>
-        </div>
+        </HeroSkeleton>
       </section>
 
       {/* Dynamic SEO Content */}
@@ -336,23 +338,25 @@ export default function HomePage() {
       {/* ===== Browse by Category (Card Grid) ===== */}
       <section className="container-custom" style={{ marginBottom: 72, minHeight: 300 }}>
         {/* Section Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,94,38,0.08)', color: 'var(--primary)', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
-              All Categories
+        <SectionHeaderSkeleton loading={pageLoading}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,94,38,0.08)', color: 'var(--primary)', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
+                All Categories
+              </div>
+              <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
+                Browse by Category
+              </h2>
             </div>
-            <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
-              Browse by Category
-            </h2>
+            <Link
+              to="/ads"
+              style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}
+            >
+              View All Ads →
+            </Link>
           </div>
-          <Link
-            to="/ads"
-            style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}
-          >
-            View All Ads →
-          </Link>
-        </div>
+        </SectionHeaderSkeleton>
 
         {/* Grid or Skeleton */}
         <div className="cat-grid hide-scroll">
@@ -411,53 +415,56 @@ export default function HomePage() {
       {cities.length > 0 && (
         <section className="container-custom" style={{ marginBottom: 72 }}>
           {/* Section Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,94,38,0.08)', color: 'var(--primary)', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
-                Top Locations
+          <SectionHeaderSkeleton loading={pageLoading}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,94,38,0.08)', color: 'var(--primary)', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--primary)' }}></div>
+                  Top Locations
+                </div>
+                <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
+                  Browse by City
+                </h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
-                Browse by City
-              </h2>
             </div>
-          </div>
+          </SectionHeaderSkeleton>
 
           <div className="cat-grid hide-scroll">
             {cities.map(city => (
-              <Link
-                key={city._id}
-                to={`/cities/${city.slug || city.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className="cat-grid-card"
-              >
-                {/* Icon / Image */}
-                <div className="cat-icon-wrap" style={{
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  border: city.isPopular ? '2px solid var(--primary)' : '2px solid transparent',
-                  background: '#f8fafc'
-                }}>
-                  {city.image ? (
-                    <img
-                      src={getOptimizedImageUrl(city.image, 120)}
-                      alt={`${city.name} City in Pakistan`}
-                      width="120" height="120"
-                      loading="lazy"
-                      decoding="async"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER;
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '1.5rem' }}>{city.isPopular ? '🌟' : '📍'}</span>
-                  )}
-                </div>
+              <CategorySkeleton key={city._id} loading={false}>
+                <Link
+                  to={`/cities/${city.slug || city.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="cat-grid-card"
+                >
+                  {/* Icon / Image */}
+                  <div className="cat-icon-wrap" style={{
+                    borderRadius: '50%',
+                    overflow: 'hidden',
+                    border: city.isPopular ? '2px solid var(--primary)' : '2px solid transparent',
+                    background: '#f8fafc'
+                  }}>
+                    {city.image ? (
+                      <img
+                        src={getOptimizedImageUrl(city.image, 120)}
+                        alt={`${city.name} City in Pakistan`}
+                        width="120" height="120"
+                        loading="lazy"
+                        decoding="async"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = PLACEHOLDER;
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: '1.5rem' }}>{city.isPopular ? '🌟' : '📍'}</span>
+                    )}
+                  </div>
 
-                {/* Name */}
-                <span className="cat-name">{city.name}</span>
-              </Link>
+                  {/* Name */}
+                  <span className="cat-name">{city.name}</span>
+                </Link>
+              </CategorySkeleton>
             ))}
           </div>
         </section>
@@ -466,43 +473,46 @@ export default function HomePage() {
       {/* ===== Browse by Areas ===== */}
       {areas.length > 0 && (
         <section className="container-custom" style={{ marginBottom: 72 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(37,99,235,0.08)', color: '#2563eb', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb' }}></div>
-                Explore Areas
+          <SectionHeaderSkeleton loading={pageLoading}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(37,99,235,0.08)', color: '#2563eb', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#2563eb' }}></div>
+                  Explore Areas
+                </div>
+                <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
+                  Browse by Area
+                </h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
-                Browse by Area
-              </h2>
             </div>
-          </div>
+          </SectionHeaderSkeleton>
 
           <div className="cat-grid hide-scroll">
             {areas.map(area => (
-              <Link
-                key={area._id}
-                to={`/cities/${area.city?.slug || 'unknown'}/areas/${area.slug}`}
-                className="cat-grid-card"
-              >
-                <div className="cat-icon-wrap" style={{ background: '#f8fafc' }}>
-                  {area.image ? (
-                    <img
-                      src={getOptimizedImageUrl(area.image, 120)}
-                      alt={`${area.name} Area in ${area.city?.name || 'Pakistan'}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER;
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '1.5rem' }}>📍</span>
-                  )}
-                </div>
-                <span className="cat-name">{area.name}</span>
-                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>{area.city?.name || ''}</span>
-              </Link>
+              <CategorySkeleton key={area._id} loading={false}>
+                <Link
+                  to={`/cities/${area.city?.slug || 'unknown'}/areas/${area.slug}`}
+                  className="cat-grid-card"
+                >
+                  <div className="cat-icon-wrap" style={{ background: '#f8fafc' }}>
+                    {area.image ? (
+                      <img
+                        src={getOptimizedImageUrl(area.image, 120)}
+                        alt={`${area.name} Area in ${area.city?.name || 'Pakistan'}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = PLACEHOLDER;
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: '1.5rem' }}>📍</span>
+                    )}
+                  </div>
+                  <span className="cat-name">{area.name}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>{area.city?.name || ''}</span>
+                </Link>
+              </CategorySkeleton>
             ))}
           </div>
         </section>
@@ -511,43 +521,47 @@ export default function HomePage() {
       {/* ===== Browse by Hotels ===== */}
       {hotels.length > 0 && (
         <section className="container-custom" style={{ marginBottom: 72 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
-            <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,115,22,0.08)', color: '#f97316', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f97316' }}></div>
-                Find Hotels
+          <SectionHeaderSkeleton loading={pageLoading}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, gap: 12, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(249,115,22,0.08)', color: '#f97316', padding: '4px 14px', borderRadius: 999, fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#f97316' }}></div>
+                  Find Hotels
+                </div>
+                <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
+                  Browse by Hotel
+                </h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(22px, 3.5vw, 28px)', fontWeight: 900, color: 'var(--dark)', lineHeight: 1.2, margin: 0 }}>
-                Browse by Hotel
-              </h2>
             </div>
-          </div>
+          </SectionHeaderSkeleton>
 
           <div className="cat-grid hide-scroll">
             {hotels.map(hotel => (
-              <Link
-                key={hotel._id}
-                to={`/cities/${hotel.city?.slug || 'unknown'}/hotels/${hotel.slug}`}
-                className="cat-grid-card"
-              >
-                <div className="cat-icon-wrap" style={{ background: '#f8fafc' }}>
-                  {hotel.image ? (
-                    <img
-                      src={getOptimizedImageUrl(hotel.image, 120)}
-                      alt={`${hotel.name} Hotel in ${hotel.city?.name || 'Pakistan'}`}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = PLACEHOLDER;
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '1.5rem' }}>🏨</span>
-                  )}
-                </div>
-                <span className="cat-name">{hotel.name}</span>
-                <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>{hotel.city?.name || ''}</span>
-              </Link>
+              <CategorySkeleton key={hotel._id} loading={false}>
+                <Link
+                  key={hotel._id}
+                  to={`/cities/${hotel.city?.slug || 'unknown'}/hotels/${hotel.slug}`}
+                  className="cat-grid-card"
+                >
+                  <div className="cat-icon-wrap" style={{ background: '#f8fafc' }}>
+                    {hotel.image ? (
+                      <img
+                        src={getOptimizedImageUrl(hotel.image, 120)}
+                        alt={`${hotel.name} Hotel in ${hotel.city?.name || 'Pakistan'}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = PLACEHOLDER;
+                        }}
+                      />
+                    ) : (
+                      <span style={{ fontSize: '1.5rem' }}>🏨</span>
+                    )}
+                  </div>
+                  <span className="cat-name">{hotel.name}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280', fontWeight: 600 }}>{hotel.city?.name || ''}</span>
+                </Link>
+              </CategorySkeleton>
             ))}
           </div>
         </section>
@@ -557,16 +571,18 @@ export default function HomePage() {
       {(pageLoading || featuredAds.length > 0) && (
         <section className="container-custom" style={{ marginBottom: 64 }}>
           <div style={{ background: 'white', border: '1px solid #f1f5f9', borderRadius: 32, padding: 'clamp(24px, 4vw, 32px)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#d97706', fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#d97706' }}></div>
-                  Premium Selection
+            <SectionHeaderSkeleton loading={pageLoading}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: '#d97706', fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#d97706' }}></div>
+                    Premium Selection
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(20px, 4vw, 26px)', fontWeight: 900, color: '#1e293b', margin: 0 }}>Featured Ads</h2>
                 </div>
-                <h2 style={{ fontSize: 'clamp(20px, 4vw, 26px)', fontWeight: 900, color: '#1e293b', margin: 0 }}>Featured Ads</h2>
+                <Link to="/ads?listingType=featured&page=1" style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5 }}>VIEW ALL &rarr;</Link>
               </div>
-              <Link to="/ads?listingType=featured&page=1" style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5 }}>VIEW ALL &rarr;</Link>
-            </div>
+            </SectionHeaderSkeleton>
 
             <div className="hide-scroll scroll-container">
               {!pageLoading && featuredAds.length > 0 ? (
@@ -594,16 +610,18 @@ export default function HomePage() {
       {/* Latest Ads */}
       <section className="container-custom" style={{ marginBottom: 64 }}>
         <div style={{ background: 'white', border: '1px solid #f1f5f9', borderRadius: 32, padding: 'clamp(24px, 4vw, 32px)', boxShadow: '0 10px 40px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--primary)', fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }}></div>
-                Verified Listings
+          <SectionHeaderSkeleton loading={pageLoading}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--primary)', fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase' }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--primary)' }}></div>
+                  Verified Listings
+                </div>
+                <h2 style={{ fontSize: 'clamp(20px, 4vw, 26px)', fontWeight: 900, color: '#1e293b', margin: 0 }}>Latest Recommendations</h2>
               </div>
-              <h2 style={{ fontSize: 'clamp(20px, 4vw, 26px)', fontWeight: 900, color: '#1e293b', margin: 0 }}>Latest Recommendations</h2>
+              <Link to="/ads?listingType=simple&page=1" style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5 }}>EXPLORE ALL &rarr;</Link>
             </div>
-            <Link to="/ads?listingType=simple&page=1" style={{ color: 'var(--primary)', fontWeight: 700, fontSize: 13, textDecoration: 'none', textTransform: 'uppercase', letterSpacing: 0.5 }}>EXPLORE ALL &rarr;</Link>
-          </div>
+          </SectionHeaderSkeleton>
 
           <div className="hide-scroll scroll-container">
             {!pageLoading && latestAds.length > 0 ? (
