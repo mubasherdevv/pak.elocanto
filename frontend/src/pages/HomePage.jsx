@@ -90,7 +90,8 @@ export default function HomePage() {
 
   return (
     <div style={{ background: 'var(--white)', paddingBottom: 64 }}>
-      {seoReady && (
+      <PageSkeleton loading={pageLoading}>
+        {seoReady && (
         <Helmet>
           <title>{seo.title}</title>
           <meta name="description" content={seo.metaDescription} />
@@ -651,6 +652,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <SeoContentSection />
+      </PageSkeleton>
     </div>
   );
 }
