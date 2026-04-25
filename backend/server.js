@@ -685,7 +685,18 @@ app.get('*', async (req, res) => {
     }
 
     console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
-    res.status(seo.status || 200).setHeader('Cache-Control', 'no-cache').send(html);
+
+    // If 404, inject noindex and prevent caching
+    if (seo.status === 404) {
+      if (html.includes('</head>')) {
+        html = html.replace('</head>', '  <meta name="robots" content="noindex, nofollow" />\n</head>');
+      }
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache');
+    }
+
+    res.status(seo.status || 200).send(html);
   } catch (err) {
     console.error('[SSR] ❌ Panic Error:', err);
     res.status(500).send('An error occurred');
