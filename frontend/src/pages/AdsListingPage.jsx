@@ -305,16 +305,16 @@ export default function AdsListingPage() {
                       return newBc;
                     }
                     foundSpecific = true;
-                    if (!newBc.find(b => b.path.includes(areaSlug))) {
-                      newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
-                    }
+                    const realCitySlug = cityDoc?.slug || citySlug;
+                    newBc.push({ name: area.name, path: `/cities/${realCitySlug}/areas/${areaSlug}` });
                   } else {
                     setNotFound(true);
                   }
                 }
                 if (isHotelsPage || hotelSlug) {
+                  const realCitySlug = cityDoc?.slug || citySlug;
                   if (!newBc.find(b => b.name === 'Hotels')) {
-                    newBc.push({ name: 'Hotels', path: `/cities/${citySlug}/hotels` });
+                    newBc.push({ name: 'Hotels', path: `/cities/${realCitySlug}/hotels` });
                   }
                   if (hotelSlug) {
                     const hotel = hotelsRes.data.find(h => h.slug === hotelSlug);
@@ -325,9 +325,8 @@ export default function AdsListingPage() {
                         return newBc;
                       }
                       foundSpecific = true;
-                      if (!newBc.find(b => b.path.includes(hotelSlug))) {
-                        newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
-                      }
+                      const realCitySlug = cityDoc?.slug || citySlug;
+                      newBc.push({ name: hotel.name, path: `/cities/${realCitySlug}/hotels/${hotelSlug}` });
                     } else {
                       setNotFound(true);
                     }
@@ -627,7 +626,7 @@ export default function AdsListingPage() {
             {/* Navigation Badges / Stats - Only show back-link on sub-pages */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: (areaSlug || hotelSlug || isHotelsPage) ? 16 : 0 }}>
               {(areaSlug || hotelSlug || isHotelsPage) && (
-                <Link to={`/cities/${citySlug}`} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 800, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Link to={`/cities/${cityInfo?.slug || citySlug}`} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', padding: '4px 12px', borderRadius: 8, fontSize: 11, fontWeight: 800, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <MapIcon style={{ width: 12 }} /> ALL {cityInfo?.name?.toUpperCase()}
                 </Link>
               )}
@@ -678,19 +677,22 @@ export default function AdsListingPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
                       {cityAreas
                         .filter(a => a.name.toLowerCase().includes(areaSearch.toLowerCase()))
-                        .map(area => (
-                          <Link key={area._id} to={`/cities/${citySlug}/areas/${area.slug}`}
-                            style={{
-                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
-                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                              border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
-                              display: 'block', textAlign: 'center'
-                            }}
-                            className="hover:bg-white/10"
-                          >
-                            {area.name}
-                          </Link>
-                        ))}
+                        .map(area => {
+                          const areaCitySlug = area.customCitySlug || citySlug;
+                          return (
+                            <Link key={area._id} to={`/cities/${areaCitySlug}/areas/${area.slug}`}
+                              style={{
+                                padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                                borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                                border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
+                                display: 'block', textAlign: 'center'
+                              }}
+                              className="hover:bg-white/10"
+                            >
+                              {area.name}
+                            </Link>
+                          );
+                        })}
                     </div>
                   </div>
                 </div>
@@ -729,19 +731,22 @@ export default function AdsListingPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
                       {cityHotels
                         .filter(h => h.name.toLowerCase().includes(hotelSearch.toLowerCase()))
-                        .map(hotel => (
-                          <Link key={hotel._id} to={`/cities/${citySlug}/hotels/${hotel.slug}`}
-                            style={{
-                              padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
-                              borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
-                              border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
-                              display: 'block', textAlign: 'center'
-                            }}
-                            className="hover:bg-white/10"
-                          >
-                            {hotel.name}
-                          </Link>
-                        ))}
+                        .map(hotel => {
+                          const hotelCitySlug = hotel.customCitySlug || citySlug;
+                          return (
+                            <Link key={hotel._id} to={`/cities/${hotelCitySlug}/hotels/${hotel.slug}`}
+                              style={{
+                                padding: '8px 12px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                                borderRadius: 10, fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                                border: '1px solid rgba(255,255,255,0.08)', transition: 'all 0.2s',
+                                display: 'block', textAlign: 'center'
+                              }}
+                              className="hover:bg-white/10"
+                            >
+                              {hotel.name}
+                            </Link>
+                          );
+                        })}
                     </div>
                   </div>
                 </div>
