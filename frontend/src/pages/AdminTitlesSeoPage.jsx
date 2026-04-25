@@ -143,11 +143,14 @@ export default function AdminTitlesSeoPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = { ...formData };
+      const payload = { 
+        ...formData,
+        referenceId: formData.referenceId || null
+      };
       
       // If we are on city pageType, referenceId should be the selectedCityId
       if (formData.pageType === 'city') {
-        payload.referenceId = selectedCityId;
+        payload.referenceId = selectedCityId || null;
       }
 
       await api.post('/seo-settings', payload, {

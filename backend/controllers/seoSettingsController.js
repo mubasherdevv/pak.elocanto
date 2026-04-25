@@ -127,7 +127,7 @@ export const getSeoSettingById = async (req, res) => {
 // @route   POST /api/seo-settings
 export const saveSeoSettings = async (req, res) => {
   try {
-    const { 
+    let { 
       pageType, 
       referenceId, 
       title, 
@@ -138,6 +138,11 @@ export const saveSeoSettings = async (req, res) => {
       whatsappNumber,
       isActive 
     } = req.body;
+
+    // Normalize referenceId: treat empty string or 'null' as actual null
+    if (!referenceId || referenceId === '' || referenceId === 'null' || referenceId === 'undefined') {
+      referenceId = null;
+    }
 
     const pagePath = await resolvePathForRecord(pageType, referenceId);
     
