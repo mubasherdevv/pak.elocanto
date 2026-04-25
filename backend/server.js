@@ -477,7 +477,10 @@ app.get('*', async (req, res) => {
       getSettings()
     ]);
 
-    const { initialData, contentHtml } = await resolveRouteData(req.path, seo, settings);
+    // SSR-lite resolved data (minimal now for React hydration)
+    const initialData = {}; 
+    const contentHtml = '';
+    // const { initialData, contentHtml } = await resolveRouteData(req.path, seo, settings);
 
     // GA4 Script Injection
     let analyticsScript = '';
@@ -607,8 +610,8 @@ app.get('*', async (req, res) => {
       .replace(/{{OG_TITLE}}/g, seo.ogTitle || seo.title)
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription || seo.description)
       .replace(/{{OG_IMAGE}}/g, ogImage)
-      .replace(/{{CANONICAL_URL}}/g, seo.url)
-      .replace(/{{CONTENT}}/g, contentHtml); // Inject SEO HTML into root
+      .replace(/{{CANONICAL_URL}}/g, seo.url);
+      // .replace(/{{CONTENT}}/g, contentHtml); // Removed for Prerender.io parity
 
     // Inject Initial Data for React Hydration
     const initialDataWithSettings = { ...initialData, settings, seo, path: req.path };
