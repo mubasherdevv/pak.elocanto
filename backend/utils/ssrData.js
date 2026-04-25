@@ -174,7 +174,28 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
       const type = parts[3];
       const subSlug = parts[4];
 
-      const city = await City.findOne({ slug: { $regex: new RegExp(`^${citySlug}$`, 'i') } }).lean();
+      let city = null;
+      let area = null;
+      let hotel = null;
+
+      if (type === 'areas' && subSlug) {
+        area = await Area.findOne({ slug: { $regex: new RegExp(`^${subSlug}$`, 'i') } }).populate('city').lean();
+        if (area) city = area.city;
+      } else if (type === 'hotels' && subSlug) {
+        hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${subSlug}$`, 'i') } }).populate('city').lean();
+        if (hotel) city = hotel.city;
+      } else {
+        city = await City.findOne({ slug: { $regex: new RegExp(`^${citySlug}$`, 'i') } }).lean();
+        if (!city) {
+           const customArea = await Area.findOne({ customCitySlug: { $regex: new RegExp(`^${citySlug}$`, 'i') } }).populate('city').lean();
+           if (customArea) city = customArea.city;
+           else {
+             const customHotel = await Hotel.findOne({ customCitySlug: { $regex: new RegExp(`^${citySlug}$`, 'i') } }).populate('city').lean();
+             if (customHotel) city = customHotel.city;
+           }
+        }
+      }
+
       if (city) {
         let adsQuery = { city: { $regex: `^${city.name}$`, $options: 'i' }, isActive: true, isApproved: true };
         let title = seo.title || `Ads in ${city.name}`;

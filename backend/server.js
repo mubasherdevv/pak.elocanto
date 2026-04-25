@@ -337,16 +337,41 @@ const getSeoMetadata = async (reqPath) => {
 
     // ─── LAYER 3: Cities /cities/:citySlug ───
     if (parts[0] === 'cities' && parts.length >= 2) {
-      const city = await City.findOne({ slug: { $regex: new RegExp(`^${parts[1]}$`, 'i') } }).lean();
-      if (!city) {
-        console.log(`[SEO-SSR] ⛔ City not found: ${parts[1]}`);
-        return make404(normalizedPath);
-      }
+      const urlCitySlug = parts[1];
+      let city = null;
+      let area = null;
+      let hotel = null;
 
       // /cities/:citySlug/areas/:areaSlug
       if (parts[2] === 'areas' && parts[3]) {
-        const area = await Area.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).lean();
-        if (!area) { console.log(`[SEO-SSR] ⛔ Area not found: ${parts[3]}`); return make404(normalizedPath); }
+        area = await Area.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).populate('city').lean();
+        if (area) city = area.city;
+        else { console.log(`[SEO-SSR] ⛔ Area not found: ${parts[3]}`); return make404(normalizedPath); }
+      }
+      // /cities/:citySlug/hotels/:hotelSlug
+      else if (parts[2] === 'hotels' && parts[3]) {
+        hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).populate('city').lean();
+        if (hotel) city = hotel.city;
+        else { console.log(`[SEO-SSR] ⛔ Hotel not found: ${parts[3]}`); return make404(normalizedPath); }
+      }
+      // /cities/:citySlug or /cities/:citySlug/hotels
+      else {
+        city = await City.findOne({ slug: { $regex: new RegExp(`^${urlCitySlug}$`, 'i') } }).lean();
+        if (!city) {
+          const customArea = await Area.findOne({ customCitySlug: { $regex: new RegExp(`^${urlCitySlug}$`, 'i') } }).populate('city').lean();
+          if (customArea) city = customArea.city;
+          else {
+            const customHotel = await Hotel.findOne({ customCitySlug: { $regex: new RegExp(`^${urlCitySlug}$`, 'i') } }).populate('city').lean();
+            if (customHotel) city = customHotel.city;
+          }
+        }
+        if (!city) {
+          console.log(`[SEO-SSR] ⛔ City not found: ${urlCitySlug}`);
+          return make404(normalizedPath);
+        }
+      }
+
+      if (area) {
         const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
         const title = entitySeo?.title || `${area.name} Escorts - Call Girls in ${city.name} | Elocanto`;
         const desc = entitySeo?.metaDescription || `Find verified escorts and call girls in ${area.name}, ${city.name}.`;
@@ -361,10 +386,7 @@ const getSeoMetadata = async (reqPath) => {
         return { title, description: `Browse all hotels in ${city.name} on Elocanto.`, keywords: `${city.name} hotels`, ogTitle: title, ogDescription: `Hotels in ${city.name}.`, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
       }
 
-      // /cities/:citySlug/hotels/:hotelSlug
-      if (parts[2] === 'hotels' && parts[3]) {
-        const hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).lean();
-        if (!hotel) { console.log(`[SEO-SSR] ⛔ Hotel not found: ${parts[3]}`); return make404(normalizedPath); }
+      if (hotel) {
         const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
         const title = entitySeo?.title || `${hotel.name} Escorts - Exclusive Call Girls | Elocanto`;
         const desc = entitySeo?.metaDescription || `Verified escorts at ${hotel.name}, ${city.name}.`;

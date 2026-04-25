@@ -61,7 +61,13 @@ const redirectMiddleware = async (req, res, next) => {
 
       // If it's an API request, we should redirect to the API version of the destination
       if (isApiRequest && !destination.startsWith('http')) {
-        const cleanDest = destination.startsWith('/') ? destination : '/' + destination;
+        let cleanDest = destination.startsWith('/') ? destination : '/' + destination;
+        
+        // Restore /slug/ for API routes if it was stripped during fuzzy matching
+        if (req.path.toLowerCase().includes('/slug/') && cleanDest.startsWith('/cities/')) {
+          cleanDest = cleanDest.replace('/cities/', '/cities/slug/');
+        }
+        
         destination = `/api${cleanDest}`;
       }
 

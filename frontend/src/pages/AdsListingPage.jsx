@@ -194,7 +194,7 @@ export default function AdsListingPage() {
         const essentialPromises = [];
         if (!pageCache.categories) essentialPromises.push(api.get('/categories'));
         if (!pageCache.cities) essentialPromises.push(api.get('/cities'));
-        if (citySlug) essentialPromises.push(api.get(`/cities/slug/${citySlug}`).catch(() => null));
+        if (citySlug) essentialPromises.push(api.get(`/cities/slug/${citySlug}?_t=${Date.now()}`).catch(() => null));
 
         const essentialResults = await Promise.all(essentialPromises);
 
