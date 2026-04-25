@@ -287,8 +287,22 @@ export default function AdsListingPage() {
             api.get(`/areas?city=${citySlug}`).catch(() => ({ data: [] })),
             api.get(`/hotels?city=${citySlug}`).catch(() => ({ data: [] })),
           ]).then(([areasRes, hotelsRes]) => {
-            if (areasRes?.data) setCityAreas(areasRes.data);
-            if (hotelsRes?.data) setCityHotels(hotelsRes.data);
+            const currentCitySlug = (citySlug || '').toLowerCase();
+            
+            // Strictly filter areas by city slug
+            const validAreas = (areasRes.data || []).filter(a => {
+              const expected = (a.customCitySlug || a.city?.slug || '').toLowerCase();
+              return expected === currentCitySlug;
+            });
+            
+            // Strictly filter hotels by city slug
+            const validHotels = (hotelsRes.data || []).filter(h => {
+              const expected = (h.customCitySlug || h.city?.slug || '').toLowerCase();
+              return expected === currentCitySlug;
+            });
+
+            setCityAreas(validAreas);
+            setCityHotels(validHotels);
             setIsLocationsLoading(false);
 
             if (areaSlug || hotelSlug || isHotelsPage) {
