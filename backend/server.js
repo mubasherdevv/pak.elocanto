@@ -345,14 +345,26 @@ const getSeoMetadata = async (reqPath) => {
       // /cities/:citySlug/areas/:areaSlug
       if (parts[2] === 'areas' && parts[3]) {
         area = await Area.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).populate('city').lean();
-        if (area) city = area.city;
-        else { console.log(`[SEO-SSR] ⛔ Area not found: ${parts[3]}`); return make404(normalizedPath); }
+        if (area) {
+          const expectedCitySlug = area.customCitySlug || area.city?.slug;
+          if (urlCitySlug.toLowerCase() !== expectedCitySlug?.toLowerCase()) {
+            console.log(`[SEO-SSR] ⛔ Area city slug mismatch: ${urlCitySlug} vs expected ${expectedCitySlug}`);
+            return make404(normalizedPath);
+          }
+          city = area.city;
+        } else { console.log(`[SEO-SSR] ⛔ Area not found: ${parts[3]}`); return make404(normalizedPath); }
       }
       // /cities/:citySlug/hotels/:hotelSlug
       else if (parts[2] === 'hotels' && parts[3]) {
         hotel = await Hotel.findOne({ slug: { $regex: new RegExp(`^${parts[3]}$`, 'i') } }).populate('city').lean();
-        if (hotel) city = hotel.city;
-        else { console.log(`[SEO-SSR] ⛔ Hotel not found: ${parts[3]}`); return make404(normalizedPath); }
+        if (hotel) {
+          const expectedCitySlug = hotel.customCitySlug || hotel.city?.slug;
+          if (urlCitySlug.toLowerCase() !== expectedCitySlug?.toLowerCase()) {
+            console.log(`[SEO-SSR] ⛔ Hotel city slug mismatch: ${urlCitySlug} vs expected ${expectedCitySlug}`);
+            return make404(normalizedPath);
+          }
+          city = hotel.city;
+        } else { console.log(`[SEO-SSR] ⛔ Hotel not found: ${parts[3]}`); return make404(normalizedPath); }
       }
       // /cities/:citySlug or /cities/:citySlug/hotels
       else {

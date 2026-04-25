@@ -136,11 +136,12 @@ export const getAreasSitemap = async (req, res) => {
     return res.status(200).send(cached);
   }
 
-  const areas = await Area.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city').lean();
+  const areas = await Area.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city customCitySlug').lean();
   const urls = [];
   areas.forEach(area => {
-    if (area.city?.slug && area.slug) {
-      urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(area.city.slug)}/areas/${escapeXml(area.slug)}</loc>${formatDate(area.updatedAt)}</url>`);
+    const citySlug = area.customCitySlug || area.city?.slug;
+    if (citySlug && area.slug) {
+      urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(citySlug)}/areas/${escapeXml(area.slug)}</loc>${formatDate(area.updatedAt)}</url>`);
     }
   });
 
@@ -165,11 +166,12 @@ export const getHotelsSitemap = async (req, res) => {
     return res.status(200).send(cached);
   }
 
-  const hotels = await Hotel.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city').lean();
+  const hotels = await Hotel.find({ isActive: true }).populate('city', 'slug').select('slug updatedAt city customCitySlug').lean();
   const urls = [];
   hotels.forEach(hotel => {
-    if (hotel.city?.slug && hotel.slug) {
-      urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(hotel.city.slug)}/hotels/${escapeXml(hotel.slug)}</loc>${formatDate(hotel.updatedAt)}</url>`);
+    const citySlug = hotel.customCitySlug || hotel.city?.slug;
+    if (citySlug && hotel.slug) {
+      urls.push(`  <url><loc>${BASE_URL}/cities/${escapeXml(citySlug)}/hotels/${escapeXml(hotel.slug)}</loc>${formatDate(hotel.updatedAt)}</url>`);
     }
   });
 

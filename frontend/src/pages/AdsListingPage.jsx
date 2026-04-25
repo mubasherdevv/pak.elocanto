@@ -299,6 +299,11 @@ export default function AdsListingPage() {
                 if (areaSlug) {
                   const area = areasRes.data.find(a => a.slug === areaSlug);
                   if (area) {
+                    const expectedCitySlug = area.customCitySlug || area.city?.slug;
+                    if (citySlug.toLowerCase() !== expectedCitySlug?.toLowerCase()) {
+                      setNotFound(true);
+                      return newBc;
+                    }
                     foundSpecific = true;
                     if (!newBc.find(b => b.path.includes(areaSlug))) {
                       newBc.push({ name: area.name, path: `/cities/${citySlug}/areas/${areaSlug}` });
@@ -314,6 +319,11 @@ export default function AdsListingPage() {
                   if (hotelSlug) {
                     const hotel = hotelsRes.data.find(h => h.slug === hotelSlug);
                     if (hotel) {
+                      const expectedCitySlug = hotel.customCitySlug || hotel.city?.slug;
+                      if (citySlug.toLowerCase() !== expectedCitySlug?.toLowerCase()) {
+                        setNotFound(true);
+                        return newBc;
+                      }
                       foundSpecific = true;
                       if (!newBc.find(b => b.path.includes(hotelSlug))) {
                         newBc.push({ name: hotel.name, path: `/cities/${citySlug}/hotels/${hotelSlug}` });
