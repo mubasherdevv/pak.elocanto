@@ -112,6 +112,8 @@ const settingsSchema = mongoose.Schema(
     // 11. Analytics & Tracking
     googleAnalyticsId: { type: String, default: '' },
     googleSearchConsoleId: { type: String, default: '' }, // For site verification
+    googleIndexingKey: { type: String, default: '' }, // For Google Indexing API (JSON)
+    siteUrl: { type: String, default: '' }, // Site canonical URL
     headerScripts: { type: String, default: '' }, // Custom scripts for <head>
     footerScripts: { type: String, default: '' }  // Custom scripts before </body>
   },

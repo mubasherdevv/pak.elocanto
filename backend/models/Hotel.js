@@ -20,6 +20,9 @@ const hotelSchema = new mongoose.Schema(
 
 // Indexes for performance
 hotelSchema.index({ city: 1 });
+hotelSchema.index({ slug: 1 });
+hotelSchema.index({ customCitySlug: 1 });
+hotelSchema.index({ city: 1, slug: 1 });
 hotelSchema.index({ isActive: 1 });
 hotelSchema.index({ showOnHome: 1 });
 

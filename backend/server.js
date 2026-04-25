@@ -156,19 +156,16 @@ app.use('/api', (req, res, next) => {
 });
 
 // Serve uploaded files with caching
-const __dirname2 = path.resolve();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
-app.use('/uploads', express.static(path.join(__dirname2, 'uploads'), {
-  maxAge: '1y',
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
+  maxAge: '30d',
   etag: true,
   lastModified: true,
-  dotfiles: 'deny',
-  index: false,
   setHeaders: (res, filePath) => {
-    // Aggressive caching for images in uploads
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.setHeader('Cache-Control', 'public, max-age=2592000');
   }
 }));
 
