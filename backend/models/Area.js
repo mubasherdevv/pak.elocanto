@@ -20,7 +20,6 @@ const areaSchema = new mongoose.Schema(
 
 // Indexes for performance
 areaSchema.index({ city: 1 });
-areaSchema.index({ slug: 1 });
 areaSchema.index({ customCitySlug: 1 });
 areaSchema.index({ city: 1, slug: 1 });
 
