@@ -305,14 +305,14 @@ export default function AdsListingPage() {
                       return newBc;
                     }
                     foundSpecific = true;
-                    const realCitySlug = cityDoc?.slug || citySlug;
+                    const realCitySlug = cityInfo?.slug || citySlug;
                     newBc.push({ name: area.name, path: `/cities/${realCitySlug}/areas/${areaSlug}` });
                   } else {
                     setNotFound(true);
                   }
                 }
                 if (isHotelsPage || hotelSlug) {
-                  const realCitySlug = cityDoc?.slug || citySlug;
+                  const realCitySlug = cityInfo?.slug || citySlug;
                   if (!newBc.find(b => b.name === 'Hotels')) {
                     newBc.push({ name: 'Hotels', path: `/cities/${realCitySlug}/hotels` });
                   }
@@ -325,7 +325,7 @@ export default function AdsListingPage() {
                         return newBc;
                       }
                       foundSpecific = true;
-                      const realCitySlug = cityDoc?.slug || citySlug;
+                      const realCitySlug = cityInfo?.slug || citySlug;
                       newBc.push({ name: hotel.name, path: `/cities/${realCitySlug}/hotels/${hotelSlug}` });
                     } else {
                       setNotFound(true);
