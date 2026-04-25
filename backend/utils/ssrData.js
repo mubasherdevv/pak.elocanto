@@ -5,6 +5,7 @@ import City from '../models/City.js';
 import Area from '../models/Area.js';
 import Hotel from '../models/Hotel.js';
 import Settings from '../models/Settings.js';
+import { getCache, setCache } from './cache.js';
 
 /**
  * Resolves data and generates initial HTML content for SSR-lite.
@@ -33,10 +34,20 @@ export const resolveRouteData = async (reqPath, seo = {}, settings = {}) => {
   const path = reqPath.split('?')[0].toLowerCase().replace(/\/+$/, '') || '/';
   console.log(`[SSR-DATA] 🛠️ Resolving path: ${path}`);
   
-  const [allCategories, allCities] = await Promise.all([
-    Category.find().lean(),
-    City.find().sort({ name: 1 }).lean()
-  ]);
+  // Performance: Use Cache for global data
+  let allCategories = getCache('ssr_all_categories');
+  let allCities = getCache('ssr_all_cities');
+
+  if (!allCategories || !allCities) {
+    const [cats, cits] = await Promise.all([
+      Category.find().lean(),
+      City.find().sort({ name: 1 }).lean()
+    ]);
+    allCategories = cats;
+    allCities = cits;
+    setCache('ssr_all_categories', cats, 3600); // 1 hour
+    setCache('ssr_all_cities', cits, 3600); // 1 hour
+  }
 
   let initialData = { 
     categories: allCategories, 
