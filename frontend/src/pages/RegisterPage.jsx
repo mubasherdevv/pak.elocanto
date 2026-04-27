@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { UserIcon, EnvelopeIcon, LockClosedIcon, PhoneIcon, MapPinIcon, ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
+import NoIndex from '../components/NoIndex';
 
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
@@ -62,6 +63,7 @@ export default function RegisterPage() {
 
   return (
     <div className="page-wrapper flex-center" style={{ background: '#f7f8fa' }}>
+      <NoIndex />
       <div style={{ background: 'white', borderRadius: 24, padding: 40, width: '100%', maxWidth: 480, border: '1px solid #e5e7eb', boxShadow: 'var(--shadow-sm)' }}>
         {step === 1 ? (
           <>

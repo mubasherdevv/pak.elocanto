@@ -22,6 +22,7 @@ import {
 import { TagIcon as TagIconMini } from '@heroicons/react/20/solid';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import FloatingScrollToTop from './FloatingScrollToTop';
+import NoIndex from './NoIndex';
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
@@ -81,6 +82,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      <NoIndex />
       {/* Sidebar for Desktop */}
       <aside className={`
         fixed inset-y-0 left-0 z-50 bg-[#1a2332] text-white 

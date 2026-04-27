@@ -19,6 +19,7 @@ import { getOptimizedImageUrl } from '../utils/imageUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { usePageSeo } from '../hooks/usePageSeo';
+import NoIndex from '../components/NoIndex';
 
 export default function UserProfile() {
   const { userId } = useParams();
@@ -94,6 +95,7 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <NoIndex />
       {seoReady && (
         <Helmet>
           <title>{seo.title}</title>

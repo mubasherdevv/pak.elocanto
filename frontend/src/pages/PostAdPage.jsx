@@ -7,6 +7,7 @@ import { compressMultipleImages, getOptimizedImageUrl } from '../utils/imageUtil
 import ImageEditorModal from '../components/ImageEditorModal';
 import { PencilSquareIcon } from '@heroicons/react/24/solid';
 import NotFoundPage from './NotFoundPage';
+import NoIndex from '../components/NoIndex';
 
 export default function PostAdPage() {
   const { user } = useAuth();
@@ -276,6 +277,7 @@ export default function PostAdPage() {
 
   return (
     <div className="page-wrapper" style={{ background: '#f7f8fa' }}>
+      <NoIndex />
       <div className="container-custom" style={{ maxWidth: 720 }}>
         {/* Progress Header */}
         <div style={{ background: 'white', borderRadius: 16, padding: '24px 32px', border: '1px solid #e5e7eb', marginBottom: 24 }}>

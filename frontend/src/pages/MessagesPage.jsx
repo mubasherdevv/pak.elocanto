@@ -4,6 +4,7 @@ import api from '../lib/api';
 import { PaperAirplaneIcon, MapPinIcon, ChevronLeftIcon } from '@heroicons/react/24/solid';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import NoIndex from '../components/NoIndex';
 
 export default function MessagesPage() {
   const { user } = useAuth();
@@ -87,6 +88,7 @@ export default function MessagesPage() {
 
   return (
     <div className="page-wrapper container-custom flex flex-col md:grid md:grid-cols-[320px_1fr]" style={{ height: 'calc(100vh - 84px)', gap: 0, padding: 0, overflow: 'hidden', background: 'white', border: '1px solid #e5e7eb', borderRadius: 16, margin: '20px auto' }}>
+      <NoIndex />
       {/* Sidebar */}
       <aside style={{ borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', background: '#fcfcfd' }}>
         <div style={{ padding: '20px 16px', borderBottom: '1px solid #e5e7eb' }}>

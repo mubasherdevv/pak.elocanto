@@ -2,6 +2,19 @@
 User-agent: *
 Allow: /
 
+# Private & User Specific Pages (No Index)
+Disallow: /login
+Disallow: /register
+Disallow: /post-ad
+Disallow: /edit-ad/
+Disallow: /dashboard
+Disallow: /profile/
+Disallow: /messages/
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /admin/
+
 # Sitemaps
 Sitemap: https://pk.elocanto.com/sitemap-categories.xml
 Sitemap: https://pk.elocanto.com/sitemap-cities.xml

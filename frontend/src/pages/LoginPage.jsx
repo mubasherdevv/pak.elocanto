@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { EnvelopeIcon, LockClosedIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import NoIndex from '../components/NoIndex';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,7 @@ export default function LoginPage() {
 
   return (
     <div className="page-wrapper flex-center" style={{ background: '#f7f8fa' }}>
+      <NoIndex />
       <div style={{ background: 'white', borderRadius: 24, padding: 40, width: '100%', maxWidth: 440, border: '1px solid #e5e7eb', boxShadow: 'var(--shadow-sm)' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link to="/" style={{ display: 'inline-block', marginBottom: 16 }}>

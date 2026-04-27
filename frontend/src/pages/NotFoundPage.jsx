@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { HomeIcon, ArrowLeftIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import NoIndex from '../components/NoIndex';
 
 export default function NotFoundPage() {
   return (
@@ -11,6 +12,7 @@ export default function NotFoundPage() {
       padding: '40px 20px',
       background: '#f8fafc'
     }}>
+      <NoIndex />
       <div style={{ 
         maxWidth: 500, 
         textAlign: 'center',

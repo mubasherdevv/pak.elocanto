@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
 import { EnvelopeIcon, LockClosedIcon, ExclamationCircleIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import NoIndex from '../components/NoIndex';
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1);
@@ -52,6 +53,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="page-wrapper flex-center" style={{ background: '#f7f8fa' }}>
+      <NoIndex />
       <div style={{ background: 'white', borderRadius: 24, padding: 40, width: '100%', maxWidth: 440, border: '1px solid #e5e7eb', boxShadow: 'var(--shadow-sm)' }}>
         <Link to="/login" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#6b7280', fontSize: 14, marginBottom: 24, textDecoration: 'none' }}>
           <ArrowLeftIcon style={{ width: 16, height: 16 }} /> Back to Login

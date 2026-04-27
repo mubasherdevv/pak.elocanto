@@ -15,6 +15,7 @@ import { compressImage } from '../utils/imageUtils';
 import { timeAgo } from '../utils/timeUtils';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import { PhotoIcon } from '@heroicons/react/24/outline';
+import NoIndex from '../components/NoIndex';
 
 export default function UserDashboardPage() {
   const { user, updateProfile, logout, fetchUserProfile } = useAuth();
@@ -186,6 +187,7 @@ export default function UserDashboardPage() {
 
   return (
     <div className="page-wrapper container-custom bg-[#f7f8fa] min-h-screen">
+      <NoIndex />
       <div className="dashboard-layout flex flex-col lg:grid lg:grid-cols-[280px_1fr] gap-8 py-6">
 
         {/* Sidebar */}
