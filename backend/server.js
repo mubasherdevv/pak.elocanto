@@ -76,10 +76,6 @@ await connectDB();
 const app = express();
 app.set('trust proxy', 1);
 
-// Prerender.io middleware - Must be before SPA route handler
-if (process.env.PRERENDER_TOKEN) {
-  app.use(prerender.set('prerenderToken', process.env.PRERENDER_TOKEN));
-}
 const PORT = process.env.PORT || 5000;
 console.log('Server starting...');
 
@@ -125,7 +121,7 @@ app.use(
         "script-src-elem": ["'self'", "'unsafe-inline'", "data:", "https://elocanto.com", "https://*.elocanto.com", "https://cdn.jsdelivr.net", "https://www.googletagmanager.com", "https://www.google-analytics.com"],
         "script-src-attr": ["'unsafe-inline'"],
         "frame-src": ["'self'", "https://elocanto.com", "https://*.elocanto.com"],
-        "connect-src": ["'self'", "data:", "blob:", "https://elocanto.up.railway.app", "https://elocanto.com", "https://*.elocanto.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com"],
+        "connect-src": ["'self'", "data:", "blob:", "https://elocanto.up.railway.app", "https://elocanto.com", "https://*.elocanto.com", "https://www.google-analytics.com", "https://*.google-analytics.com", "https://*.analytics.google.com", "https://*.googletagmanager.com", "https://service.prerender.io"],
         "img-src": ["'self'", "data:", "blob:", "https:", "http:", "https://www.google-analytics.com", "https://www.googletagmanager.com"],
         "font-src": ["'self'", "data:", "https://fonts.gstatic.com"],
         "style-src": ["'self'", "'unsafe-inline'", "data:", "https://fonts.googleapis.com"],
@@ -252,7 +248,7 @@ const normalizePath = (rawPath) => {
  */
 const getSeoMetadata = async (reqPath) => {
   const normalizedPath = normalizePath(reqPath);
-  
+
   // Performance: Check SEO Cache
   const cacheKey = `seo_meta_${normalizedPath}`;
   const cachedMeta = getCache(cacheKey);
@@ -402,6 +398,22 @@ const make404 = (normalizedPath) => ({
   status: 404
 });
 
+// --- PRERENDER.IO MIDDLEWARE ---
+if (process.env.PRERENDER_TOKEN) {
+  app.use(prerender
+    .set('prerenderToken', process.env.PRERENDER_TOKEN)
+    .set('prerenderServiceUrl', 'https://service.prerender.io/')
+    .set('shouldPrerender', (req) => {
+      const userAgent = req.headers['user-agent']?.toLowerCase() || '';
+      const bots = [
+        'googlebot', 'bingbot', 'yandexbot', 'facebookexternalhit',
+        'twitterbot', 'linkedinbot', 'whatsapp', 'telegrambot', 'prerender'
+      ];
+      return bots.some(bot => userAgent.includes(bot));
+    })
+  );
+}
+
 // Handle SPA routing with dynamic SEO injection
 app.get('*', async (req, res) => {
   // Skip static assets
@@ -439,7 +451,7 @@ app.get('*', async (req, res) => {
         if (normalized.length > 1 && normalized.endsWith('/')) {
           normalized = normalized.slice(0, -1);
         }
-        
+
         // Preserve query string if any
         const queryString = req.url.split('?')[1];
         const destination = normalized + (queryString ? `?${queryString}` : '');
@@ -478,7 +490,7 @@ app.get('*', async (req, res) => {
     ]);
 
     // SSR-lite resolved data (minimal now for React hydration)
-    const initialData = {}; 
+    const initialData = {};
     const contentHtml = '';
     // const { initialData, contentHtml } = await resolveRouteData(req.path, seo, settings);
 
@@ -611,7 +623,6 @@ app.get('*', async (req, res) => {
       .replace(/{{OG_DESCRIPTION}}/g, seo.ogDescription || seo.description)
       .replace(/{{OG_IMAGE}}/g, ogImage)
       .replace(/{{CANONICAL_URL}}/g, seo.url);
-      // .replace(/{{CONTENT}}/g, contentHtml); // Removed for Prerender.io parity
 
     // Inject Initial Data for React Hydration
     const initialDataWithSettings = { ...initialData, settings, seo, path: req.path };
