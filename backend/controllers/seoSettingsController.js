@@ -141,10 +141,19 @@ export const saveSeoSettings = async (req, res) => {
 
     const pagePath = await resolvePathForRecord(pageType, referenceId);
     
-    // Check if record exists for this unique combination
-    let setting = await SeoSettings.findOne({ pageType, referenceId });
+    // Check if record exists for this unique combination OR for the normalized pagePath
+    // This prevents E11000 duplicate key errors if a path is already taken by another type
+    let setting = await SeoSettings.findOne({ 
+      $or: [
+        { pageType, referenceId },
+        { pagePath }
+      ]
+    });
 
     if (setting) {
+      // Update existing record
+      setting.pageType = pageType;
+      setting.referenceId = referenceId;
       setting.title = title;
       setting.metaDescription = metaDescription;
       setting.keywords = keywords;
@@ -155,6 +164,7 @@ export const saveSeoSettings = async (req, res) => {
       setting.isActive = isActive !== undefined ? isActive : true;
       await setting.save();
     } else {
+      // Create new record
       setting = new SeoSettings({
         pageType,
         referenceId,

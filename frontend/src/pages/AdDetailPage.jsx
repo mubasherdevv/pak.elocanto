@@ -43,6 +43,30 @@ export default function AdDetailPage() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [reportData, setReportData] = useState({ reason: '', message: '', guestEmail: '' });
   const [reporting, setReporting] = useState(false);
+  const [liveWatching, setLiveWatching] = useState(0);
+
+  useEffect(() => {
+    if (ad) {
+      const views = ad.views || 0;
+      let min, max;
+      
+      if (views < 20) {
+        min = 2;
+        max = Math.max(3, Math.floor(views / 2) + 2);
+      } else if (views < 100) {
+        min = 5;
+        max = 15;
+      } else if (views < 500) {
+        min = 10;
+        max = 30;
+      } else {
+        min = 20;
+        max = 50;
+      }
+
+      setLiveWatching(Math.floor(Math.random() * (max - min + 1)) + min);
+    }
+  }, [ad?._id]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -295,6 +319,12 @@ export default function AdDetailPage() {
             <div>{new Date(ad.createdAt).toLocaleDateString()}</div>
             <div style={{ width: 3, height: 3, borderRadius: '50%', background: '#cbd5e1' }}></div>
             <div>{ad.views} Views</div>
+          </div>
+          <div className="mt-4">
+            <div className="live-badge">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-blink"></span>
+              <span>{liveWatching} people watching now</span>
+            </div>
           </div>
         </div>
 
@@ -569,6 +599,12 @@ export default function AdDetailPage() {
                   </span>
                   <span className="flex items-center gap-2"><CalendarIcon className="w-5" /> {new Date(ad.createdAt).toLocaleDateString()}</span>
                   <span className="flex items-center gap-2"><EyeIcon className="w-5" /> {ad.views} Views</span>
+                </div>
+                <div className="mt-6">
+                  <div className="live-badge">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-blink"></span>
+                    <span>{liveWatching} People are viewing this ad right now</span>
+                  </div>
                 </div>
               </div>
 
