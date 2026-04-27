@@ -22,7 +22,8 @@ import {
   XMarkIcon,
   DocumentTextIcon,
   ExclamationCircleIcon,
-  PlusIcon
+  PlusIcon,
+  BuildingStorefrontIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import toast from 'react-hot-toast';
@@ -57,9 +58,15 @@ export default function AdminAdsPage() {
   // Bulk Selection State
   const [selectedAds, setSelectedAds] = useState([]);
 
+  // Location State
+  const [cities, setCities] = useState([]);
+  const [cityAreas, setCityAreas] = useState([]);
+  const [cityHotels, setCityHotels] = useState([]);
+
   useEffect(() => {
     fetchSettings();
     fetchData();
+    fetchCities();
 
     const handleVisibilityChange = () => {
       if (!document.hidden) fetchSettings();
@@ -81,6 +88,40 @@ export default function AdminAdsPage() {
       console.error('Error fetching settings:', err);
     }
   };
+
+  const fetchCities = async () => {
+    try {
+      const { data } = await api.get('/cities');
+      setCities(data);
+    } catch (err) {
+      console.error('Error fetching cities:', err);
+    }
+  };
+
+  // Fetch areas and hotels when editingAd.city changes
+  useEffect(() => {
+    const fetchLocations = async () => {
+      if (editingAd?.city) {
+        try {
+          const cityObj = cities.find(c => c.name === editingAd.city);
+          if (cityObj?.slug) {
+            const [areasRes, hotelsRes] = await Promise.all([
+              api.get(`/areas?city=${cityObj.slug}`).catch(() => ({ data: [] })),
+              api.get(`/hotels?city=${cityObj.slug}`).catch(() => ({ data: [] }))
+            ]);
+            setCityAreas(areasRes.data);
+            setCityHotels(hotelsRes.data);
+          }
+        } catch (err) {
+          console.error('Error fetching areas/hotels:', err);
+        }
+      } else {
+        setCityAreas([]);
+        setCityHotels([]);
+      }
+    };
+    fetchLocations();
+  }, [editingAd?.city, cities]);
 
   const fetchData = async () => {
     try {
@@ -150,7 +191,10 @@ export default function AdminAdsPage() {
         badges: editingAd.badges || [],
         images: editingAd.images || [],
         rejectionReason: editingAd.rejectionReason || '',
-        website: editingAd.website || ''
+        website: editingAd.website || '',
+        city: editingAd.city,
+        area: editingAd.area?._id || editingAd.area || null,
+        hotel: editingAd.hotel?._id || editingAd.hotel || null
       };
       await api.put(`/ads/${editingAd._id}`, updateData);
 
@@ -814,6 +858,58 @@ export default function AdminAdsPage() {
                         />
                       </div>
                       <p className="px-1 text-[10px] font-bold text-gray-400 uppercase">Originally Posted: {formatFullDate(editingAd.createdAt)}</p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">City</label>
+                      <div className="relative">
+                        <MapPinIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-300 pointer-events-none" />
+                        <select
+                          className="w-full pl-14 pr-12 py-4.5 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 focus:outline-none appearance-none font-black text-gray-900 transition-all cursor-pointer"
+                          value={editingAd.city || ''}
+                          onChange={(e) => setEditingAd({ ...editingAd, city: e.target.value, area: null, hotel: null })}
+                          required
+                        >
+                          <option value="">Select City</option>
+                          {cities.map(c => (
+                            <option key={c._id} value={c.name}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Area</label>
+                      <div className="relative">
+                        <MapPinIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-300 pointer-events-none" />
+                        <select
+                          className="w-full pl-14 pr-12 py-4.5 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 focus:outline-none appearance-none font-black text-gray-900 transition-all cursor-pointer"
+                          value={editingAd.area?._id || editingAd.area || ''}
+                          onChange={(e) => setEditingAd({ ...editingAd, area: e.target.value, hotel: null })}
+                        >
+                          <option value="">No Area / Generic City</option>
+                          {cityAreas.map(a => (
+                            <option key={a._id} value={a._id}>{a.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-xs font-black text-gray-400 uppercase tracking-widest px-1">Hotel (If Applicable)</label>
+                      <div className="relative">
+                        <BuildingStorefrontIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-300 pointer-events-none" />
+                        <select
+                          className="w-full pl-14 pr-12 py-4.5 rounded-[24px] border-2 border-gray-50 bg-gray-50 focus:bg-white focus:border-orange-500 focus:outline-none appearance-none font-black text-gray-900 transition-all cursor-pointer"
+                          value={editingAd.hotel?._id || editingAd.hotel || ''}
+                          onChange={(e) => setEditingAd({ ...editingAd, hotel: e.target.value, area: null })}
+                        >
+                          <option value="">No Hotel</option>
+                          {cityHotels.map(h => (
+                            <option key={h._id} value={h._id}>{h.name}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="space-y-3 md:col-span-2">
