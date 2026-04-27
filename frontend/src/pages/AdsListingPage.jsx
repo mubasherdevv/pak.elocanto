@@ -1417,8 +1417,6 @@ export default function AdsListingPage() {
         </>
       )}
 
-      {/* Dynamic WhatsApp Widget */}
-      {settings?.supportPhone && <WhatsAppWidget number={settings.supportPhone} />}
     </div>
   );
 }
