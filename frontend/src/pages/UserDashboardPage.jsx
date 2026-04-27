@@ -138,6 +138,7 @@ export default function UserDashboardPage() {
       const compressedFile = await compressImage(file, { maxSizeMB: 0.5, maxWidthOrHeight: 500 });
       const upData = new FormData();
       upData.append('images', compressedFile);
+      upData.append('isProfile', 'true');
       const { data } = await api.post('/upload', upData);
       setProfileData(prev => ({ ...prev, profilePhoto: data.urls[0] }));
     } catch (err) {

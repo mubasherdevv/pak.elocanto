@@ -74,13 +74,20 @@ export const uploadImages = asyncHandler(async (req, res) => {
       // Construct Tags
       const tags = ['ad', slugify(category), slugify(city)].filter(Boolean);
 
-      console.log(`[UPLOAD] Applying watermark to buffer...`);
-      // Apply watermark to the buffer
-      const watermarkedBuffer = await addWatermarkToBuffer(file.buffer);
+      // Check if watermark should be skipped (e.g., for profile photos)
+      const skipWatermark = req.body.isProfile === 'true' || req.body.noWatermark === 'true';
+
+      let finalBuffer = file.buffer;
+      if (!skipWatermark) {
+        console.log(`[UPLOAD] Applying watermark to buffer...`);
+        finalBuffer = await addWatermarkToBuffer(file.buffer);
+      } else {
+        console.log(`[UPLOAD] Skipping watermark (isProfile/noWatermark flag detected)`);
+      }
 
       console.log(`[UPLOAD] Uploading to Cloudinary (Folder: ${cloudinaryFolder}, Name: ${publicId})...`);
-      // Upload the watermarked buffer to Cloudinary with SEO metadata
-      const result = await uploadBuffer(watermarkedBuffer, cloudinaryFolder, publicId, { context, tags });
+      // Upload the final buffer to Cloudinary with SEO metadata
+      const result = await uploadBuffer(finalBuffer, cloudinaryFolder, publicId, { context, tags });
       
       console.log(`[UPLOAD] Success: ${result.secure_url}`);
       urls.push(result.secure_url);
