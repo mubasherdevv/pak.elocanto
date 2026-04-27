@@ -32,7 +32,6 @@ export default function AdminTitlesSeoPage() {
     title: '',
     metaDescription: '',
     keywords: '',
-    whatsappNumber: '',
     isActive: true
   });
 
@@ -172,7 +171,6 @@ export default function AdminTitlesSeoPage() {
       title: item.title,
       metaDescription: item.metaDescription,
       keywords: item.keywords,
-      whatsappNumber: item.whatsappNumber || '',
       isActive: item.isActive
     });
     
@@ -209,7 +207,6 @@ export default function AdminTitlesSeoPage() {
       title: '',
       metaDescription: '',
       keywords: '',
-      whatsappNumber: '',
       isActive: true
     });
     setSelectedCityId('');
@@ -411,20 +408,7 @@ export default function AdminTitlesSeoPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">WhatsApp Number (e.g. 923xxxxxxxx)</label>
-                <input 
-                  type="text"
-                  className="w-full px-6 py-4 rounded-[1.5rem] border-2 border-gray-50 focus:border-orange-500 outline-none font-bold bg-gray-50/50"
-                  placeholder="Only for city pages..."
-                  value={formData.whatsappNumber}
-                  onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div>
+              <div className="space-y-6">
                 <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Meta Description</label>
                 <textarea 
                   className="w-full px-6 py-4 rounded-[1.5rem] border-2 border-gray-50 focus:border-orange-500 outline-none font-bold bg-gray-50/50 h-32 resize-none"

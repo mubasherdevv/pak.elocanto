@@ -7,10 +7,13 @@ import SeoContentSection from './SeoContentSection';
 import FloatingScrollToTop from './FloatingScrollToTop';
 import { XMarkIcon, HomeIcon, MagnifyingGlassIcon, PlusCircleIcon, UserIcon, ChatBubbleLeftRightIcon, HeartIcon, Cog6ToothIcon, ArrowLeftOnRectangleIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
+import WhatsAppWidget from './WhatsAppWidget';
 
 export default function PublicLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -125,6 +128,7 @@ export default function PublicLayout() {
       )}
       <MobileNav onMenuClick={() => setIsSidebarOpen(true)} />
       <FloatingScrollToTop />
+      {settings?.supportPhone && <WhatsAppWidget number={settings.supportPhone} />}
     </div>
   );
 }

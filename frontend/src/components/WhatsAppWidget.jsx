@@ -10,7 +10,8 @@ export default function WhatsAppWidget({ number, message = "Hi, I'm interested i
 
   // Clean number: remove spaces and non-digits
   const cleanNumber = number.replace(/\D/g, '');
-  const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+  const fullMessage = `${message}\n\nSource: ${window.location.href}`;
+  const whatsappUrl = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(fullMessage)}`;
 
   return (
     <div className="fixed bottom-6 right-6 z-[9999] animate-bounce-subtle">

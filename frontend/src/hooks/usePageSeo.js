@@ -34,16 +34,14 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
           setSeo({
             title: data.title,
             metaDescription: data.metaDescription,
-            keywords: data.keywords || '',
-            whatsappNumber: data.whatsappNumber || ''
+            keywords: data.keywords || ''
           });
         } else {
           // API returned nothing — now use fallbacks
           setSeo({
             title: fallbacks.title || settings?.defaultMetaTitle || settings?.siteName || 'Marketplace',
             metaDescription: fallbacks.description || settings?.defaultMetaDescription || 'Buy and sell locally.',
-            keywords: fallbacks.keywords || settings?.defaultKeywords || '',
-            whatsappNumber: ''
+            keywords: fallbacks.keywords || settings?.defaultKeywords || ''
           });
         }
       } catch (error) {
@@ -52,8 +50,7 @@ export const usePageSeo = (pageType, referenceId = null, fallbacks = {}) => {
         setSeo({
           title: fallbacks.title || settings?.defaultMetaTitle || settings?.siteName || 'Marketplace',
           metaDescription: fallbacks.description || settings?.defaultMetaDescription || 'Buy and sell locally.',
-          keywords: fallbacks.keywords || settings?.defaultKeywords || '',
-          whatsappNumber: ''
+          keywords: fallbacks.keywords || settings?.defaultKeywords || ''
         });
       } finally {
         setLoading(false);

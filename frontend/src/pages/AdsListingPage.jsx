@@ -9,7 +9,6 @@ import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { usePageSeo } from '../hooks/usePageSeo';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
-import WhatsAppWidget from '../components/WhatsAppWidget';
 import HowItWorks from '../components/HowItWorks';
 import { getInitialData } from '../utils/ssr';
 
@@ -1419,7 +1418,7 @@ export default function AdsListingPage() {
       )}
 
       {/* Dynamic WhatsApp Widget */}
-      {seo?.whatsappNumber && <WhatsAppWidget number={seo.whatsappNumber} />}
+      {settings?.supportPhone && <WhatsAppWidget number={settings.supportPhone} />}
     </div>
   );
 }
