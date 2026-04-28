@@ -94,7 +94,7 @@ export const getAds = asyncHandler(async (req, res) => {
   const [count, ads] = await Promise.all([
     Ad.countDocuments(query),
     Ad.find(query)
-      .select('title price description category subcategory images city slug createdAt isFeatured views seller badges')
+      .select('title price description category subcategory images city slug createdAt isFeatured views seller badges phone')
       .populate('seller', 'name profilePhoto city phone createdAt')
       .populate('category', 'name slug icon')
       .populate('subcategory', 'name image slug')
@@ -157,7 +157,7 @@ export const getLatestAds = asyncHandler(async (req, res) => {
     isApproved: true,
     expiresAt: { $gt: new Date() }
   })
-    .select('title price description category subcategory images city slug createdAt isFeatured views seller badges')
+    .select('title price description category subcategory images city slug createdAt isFeatured views seller badges phone')
     .populate('seller', 'name profilePhoto city phone')
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name image slug')
