@@ -64,11 +64,17 @@ export const uploadImages = asyncHandler(async (req, res) => {
       const baseSlug = slugify(title) || 'ad-image';
       const publicId = `${baseSlug}-${randomNum}`;
 
+      // Helper to sanitize context values for Cloudinary (removes | and =)
+      const sanitizeContext = (val) => {
+        if (!val) return '';
+        return val.toString().replace(/[|=]/g, ' ').trim();
+      };
+
       // Construct SEO Metadata (Cloudinary Context)
       const context = {
-        alt: title || 'Ad Image',
-        caption: `${category}${subcategory ? ' > ' + subcategory : ''}`,
-        subject: city || 'Pakistan'
+        alt: sanitizeContext(title) || 'Ad Image',
+        caption: sanitizeContext(`${category}${subcategory ? ' > ' + subcategory : ''}`),
+        subject: sanitizeContext(city) || 'Pakistan'
       };
 
       // Construct Tags
