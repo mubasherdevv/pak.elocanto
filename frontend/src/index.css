@@ -411,8 +411,8 @@ textarea.input-field { resize: vertical; min-height: 120px; }
 .marquee-container {
   width: 100%;
   overflow: hidden;
-  /* Luxurious Black & White Gradient */
-  background: linear-gradient(270deg, #000000, #171717, #000000);
+  /* Brand Specific: Orange & Black Gradient */
+  background: linear-gradient(270deg, #000000, #f95e26, #000000);
   background-size: 200% 200%;
   animation: gradientShift 15s ease infinite;
   padding: 10px 0;
