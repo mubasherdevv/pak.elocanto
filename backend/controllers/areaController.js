@@ -1,7 +1,7 @@
 import Area from '../models/Area.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { delCache } from '../utils/cache.js';
+import { delCache, flushCache } from '../utils/cache.js';
 import mongoose from 'mongoose';
 
 
@@ -180,6 +180,8 @@ export const bulkCreateAreas = asyncHandler(async (req, res) => {
     created.push(area);
   }
 
+  if (created.length > 0) flushCache();
+
   res.status(201).json({
     message: `Created ${created.length} areas in ${cityDoc.name}, skipped ${skipped.length} duplicates.`,
     created,
@@ -197,6 +199,7 @@ export const bulkDeleteAreas = asyncHandler(async (req, res) => {
   }
 
   const result = await Area.deleteMany({ _id: { $in: ids } });
+  if (result.deletedCount > 0) flushCache();
   res.json({ message: `${result.deletedCount} areas removed successfully.` });
 });
 
@@ -217,10 +220,12 @@ export const bulkUpdateAreas = asyncHandler(async (req, res) => {
       area.slug = area.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
       await area.save();
     }
+    flushCache();
     return res.json({ message: `${areas.length} area slugs cleaned successfully.` });
   }
 
   const result = await Area.updateMany({ _id: { $in: ids } }, { $set: updateData });
+  flushCache();
   res.json({ message: `${result.modifiedCount} areas updated successfully.` });
 });
 
