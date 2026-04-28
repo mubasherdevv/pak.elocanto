@@ -16,8 +16,10 @@ export default function PublicLayout() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const [showPopupAd, setShowPopupAd] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     // SEO Friendly & Professional: Only show once per session with a slight delay
     const hasShown = sessionStorage.getItem('adPopupShown');
     if (!hasShown) {
@@ -137,7 +139,7 @@ export default function PublicLayout() {
       <Footer />
 
       {/* Auto Popup Ad Modal - Global */}
-      {showPopupAd && (
+      {isMounted && showPopupAd && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(6px)',

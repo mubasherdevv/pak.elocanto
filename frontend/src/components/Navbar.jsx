@@ -35,7 +35,7 @@ export default function Navbar({ onMenuClick }) {
 
 
     return (
-        <header style={{ background: 'white', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #f1f5f9', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', width: '100%', overflowX: 'hidden' }}>
+        <header style={{ background: 'white', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid #f1f5f9', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', width: '100%' }}>
             {/* Top Marquee Banner */}
             <div className="marquee-container">
                 <div className="marquee-content">
