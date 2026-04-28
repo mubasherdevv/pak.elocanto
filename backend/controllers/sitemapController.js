@@ -8,6 +8,7 @@ import Hotel from '../models/Hotel.js';
 import { getCache, setCache } from '../utils/cache.js';
 
 const BASE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+// Cache reset trigger
 
 // Helper to escape XML special characters
 const escapeXml = (unsafe) => {
