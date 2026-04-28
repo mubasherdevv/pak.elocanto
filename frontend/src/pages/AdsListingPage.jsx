@@ -219,7 +219,8 @@ export default function AdsListingPage() {
           // Validate City
           if (cityInfoRes?.data) {
             setCityInfo(cityInfoRes.data);
-            setBreadcrumbs([{ name: 'Home', path: '/' }, { name: cityInfoRes.data.name, path: `/cities/${citySlug}` }]);
+            const resolvedCitySlug = cityInfoRes.data.slug || citySlug;
+            setBreadcrumbs([{ name: 'Home', path: '/' }, { name: cityInfoRes.data.name, path: `/cities/${resolvedCitySlug}` }]);
           } else {
             setNotFound(true);
             setDataLoading(false);

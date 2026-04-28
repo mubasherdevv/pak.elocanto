@@ -1,7 +1,7 @@
 import Hotel from '../models/Hotel.js';
 import City from '../models/City.js';
 import asyncHandler from '../middleware/asyncHandler.js';
-import { delCache } from '../utils/cache.js';
+import { delCache, flushCache } from '../utils/cache.js';
 import mongoose from 'mongoose';
 
 
@@ -180,6 +180,8 @@ export const bulkCreateHotels = asyncHandler(async (req, res) => {
     created.push(hotel);
   }
 
+  if (created.length > 0) flushCache();
+
   res.status(201).json({
     message: `Created ${created.length} hotels in ${cityDoc.name}, skipped ${skipped.length} duplicates.`,
     created,
@@ -197,6 +199,7 @@ export const bulkDeleteHotels = asyncHandler(async (req, res) => {
   }
 
   const result = await Hotel.deleteMany({ _id: { $in: ids } });
+  if (result.deletedCount > 0) flushCache();
   res.json({ message: `${result.deletedCount} hotels removed successfully.` });
 });
 
@@ -217,10 +220,12 @@ export const bulkUpdateHotels = asyncHandler(async (req, res) => {
       hotel.slug = hotel.name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
       await hotel.save();
     }
+    flushCache();
     return res.json({ message: `${hotels.length} hotel slugs cleaned successfully.` });
   }
 
   const result = await Hotel.updateMany({ _id: { $in: ids } }, { $set: updateData });
+  flushCache();
   res.json({ message: `${result.modifiedCount} hotels updated successfully.` });
 });
 
