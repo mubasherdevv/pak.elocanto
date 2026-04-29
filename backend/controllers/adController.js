@@ -99,7 +99,7 @@ export const getAds = asyncHandler(async (req, res) => {
       .populate('category', 'name slug icon')
       .populate('subcategory', 'name image slug')
       .populate('subSubCategory', 'name image')
-      .populate('cityRef', 'name slug')
+      .populate('cityRef', 'name slug whatsappNumber')
       .sort(sortBy)
       .limit(pageSize)
       .skip(pageSize * (page - 1))
@@ -138,7 +138,7 @@ export const getFeaturedAds = asyncHandler(async (req, res) => {
     .populate('seller', 'name profilePhoto city phone email')
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name slug')
-    .populate('cityRef', 'name slug')
+    .populate('cityRef', 'name slug whatsappNumber')
     .populate('area', 'name slug customCitySlug')
     .populate('hotel', 'name slug customCitySlug');
 
@@ -180,7 +180,7 @@ export const getAdById = asyncHandler(async (req, res) => {
     .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
     .populate('category', 'name slug icon')
     .populate('subcategory', 'name image slug')
-    .populate('cityRef', 'name slug')
+    .populate('cityRef', 'name slug whatsappNumber')
     .populate('area', 'name slug customCitySlug')
     .populate('hotel', 'name slug customCitySlug');
 
@@ -191,7 +191,7 @@ export const getAdById = asyncHandler(async (req, res) => {
       .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
       .populate('category', 'name slug icon')
       .populate('subcategory', 'name image slug')
-      .populate('cityRef', 'name slug')
+      .populate('cityRef', 'name slug whatsappNumber')
       .populate('area', 'name slug customCitySlug')
       .populate('hotel', 'name slug customCitySlug');
 
@@ -207,7 +207,7 @@ export const getAdById = asyncHandler(async (req, res) => {
         .populate('seller', 'name profilePhoto city phone bio createdAt isAdmin')
         .populate('category', 'name slug icon')
         .populate('subcategory', 'name image slug')
-        .populate('cityRef', 'name slug')
+        .populate('cityRef', 'name slug whatsappNumber')
         .populate('area', 'name slug customCitySlug')
         .populate('hotel', 'name slug customCitySlug');
 

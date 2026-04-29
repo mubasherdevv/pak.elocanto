@@ -76,14 +76,14 @@ export const getCityBySlug = asyncHandler(async (req, res) => {
 // @route   POST /api/cities
 // @access  Private/Admin
 export const createCity = asyncHandler(async (req, res) => {
-  const { name, image, isPopular, showOnHome } = req.body;
+  const { name, image, isPopular, showOnHome, whatsappNumber } = req.body;
   const cityExists = await City.findOne({ name });
 
   if (cityExists) {
     return res.status(400).json({ message: 'City already exists' });
   }
 
-  const city = await City.create({ name, image, isPopular, showOnHome });
+  const city = await City.create({ name, image, isPopular, showOnHome, whatsappNumber });
   delCache('global_sitemap_xml');
   res.status(201).json(city);
 });
@@ -99,6 +99,7 @@ export const updateCity = asyncHandler(async (req, res) => {
     city.image = req.body.image !== undefined ? req.body.image : city.image;
     city.isPopular = req.body.isPopular !== undefined ? req.body.isPopular : city.isPopular;
     city.showOnHome = req.body.showOnHome !== undefined ? req.body.showOnHome : city.showOnHome;
+    city.whatsappNumber = req.body.whatsappNumber !== undefined ? req.body.whatsappNumber : city.whatsappNumber;
     
     // Allow manual slug override
     if (req.body.slug) {

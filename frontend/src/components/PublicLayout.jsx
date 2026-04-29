@@ -13,7 +13,7 @@ import WhatsAppWidget from './WhatsAppWidget';
 export default function PublicLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
-  const { settings } = useSettings();
+  const { settings, locationWhatsApp } = useSettings();
   const navigate = useNavigate();
 
 
@@ -126,7 +126,9 @@ export default function PublicLayout() {
 
       <MobileNav onMenuClick={() => setIsSidebarOpen(true)} />
       <FloatingScrollToTop />
-      {settings?.supportPhone && <WhatsAppWidget number={settings.supportPhone} />}
+      {(locationWhatsApp || settings?.supportPhone) && (
+        <WhatsAppWidget number={locationWhatsApp || settings.supportPhone} />
+      )}
     </div>
   );
 }

@@ -12,6 +12,7 @@ export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState(() => initialSettings || cache.get('settings'));
   const [loading, setLoading] = useState(!settings);
   const [error, setError] = useState(null);
+  const [locationWhatsApp, setLocationWhatsApp] = useState(null);
 
   const fetchSettings = async () => {
     try {
@@ -89,7 +90,7 @@ export const SettingsProvider = ({ children }) => {
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, loading, error, refreshSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, error, refreshSettings, locationWhatsApp, setLocationWhatsApp }}>
       {children}
     </SettingsContext.Provider>
   );

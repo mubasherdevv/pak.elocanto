@@ -24,6 +24,10 @@ const citySchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  whatsappNumber: {
+    type: String,
+    default: '',
+  },
   createdAt: {
     type: Date,
     default: Date.now,

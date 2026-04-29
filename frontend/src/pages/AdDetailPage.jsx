@@ -26,7 +26,7 @@ export default function AdDetailPage() {
   const slug = params.slug || params.subSubcatSlug || params.subCategorySlug || params.categorySlug;
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { settings } = useSettings();
+  const { settings, setLocationWhatsApp } = useSettings();
   const initialData = getInitialData();
   const initialAd = initialData?.ad;
   const isInitialValid = initialAd && (initialAd.slug === slug || slug?.includes(initialAd._id));
@@ -101,6 +101,9 @@ export default function AdDetailPage() {
   useEffect(() => {
     const fetchAd = async () => {
       if (isInitialValid && ad) {
+        if (ad.cityRef?.whatsappNumber) {
+          setLocationWhatsApp(ad.cityRef.whatsappNumber);
+        }
         // Still fetch recommendations and check favorites in background
         fetchExtras(ad);
         return;
@@ -110,6 +113,11 @@ export default function AdDetailPage() {
         const id = extractIdFromSlug(slug);
         const { data } = await api.get(`/ads/${id}`);
         setAd(data);
+        if (data.cityRef?.whatsappNumber) {
+          setLocationWhatsApp(data.cityRef.whatsappNumber);
+        } else {
+          setLocationWhatsApp(null);
+        }
         fetchExtras(data);
 
         const correctSlug = generateAdSlug(data);
@@ -126,7 +134,11 @@ export default function AdDetailPage() {
     };
     if (slug) fetchAd();
     window.scrollTo(0, 0);
-  }, [slug, user, navigate]);
+
+    return () => {
+      setLocationWhatsApp(null);
+    };
+  }, [slug, user, navigate, setLocationWhatsApp]);
 
   // Define SEO context for consistency
   // Dynamic title and description based on location context

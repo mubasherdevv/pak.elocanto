@@ -8,6 +8,7 @@ import { generateAdSlug } from '../utils/urlUtils';
 import NotFoundPage from './NotFoundPage';
 import { Helmet } from 'react-helmet-async';
 import { usePageSeo } from '../hooks/usePageSeo';
+import { useSettings } from '../context/SettingsContext';
 import { getOptimizedImageUrl } from '../utils/imageUtils';
 import HowItWorks from '../components/HowItWorks';
 import { getInitialData } from '../utils/ssr';
@@ -25,7 +26,8 @@ export default function AdsListingPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug } = useParams();
-  const { ads, loading, fetchAds, totalPages, totalCount, currentPage, settings } = useAds();
+  const { ads, loading, fetchAds, totalPages, totalCount, currentPage, settings: adSettings } = useAds();
+  const { setLocationWhatsApp, settings: siteSettings } = useSettings();
   const initialData = getInitialData();
   const isFirstRender = useRef(true);
 
@@ -36,7 +38,20 @@ export default function AdsListingPage() {
   const [dataLoading, setDataLoading] = useState(!initialData?.categories);
 
   // City/Area/Hotel hub data
-  const [cityInfo, setCityInfo] = useState(initialData?.city || null);
+  const [cityInfo, setCityInfo] = useState(() => {
+    const city = initialData?.city || null;
+    if (city?.whatsappNumber) {
+      // This is a bit tricky since we can't call setLocationWhatsApp here directly in useState init if it's not purely functional
+      // But we can use an effect
+    }
+    return city;
+  });
+
+  useEffect(() => {
+    if (cityInfo?.whatsappNumber) {
+      setLocationWhatsApp(cityInfo.whatsappNumber);
+    }
+  }, []); // Only on mount
 
   const [cityAreas, setCityAreas] = useState([]);
   const [cityHotels, setCityHotels] = useState([]);
@@ -189,7 +204,7 @@ export default function AdsListingPage() {
         }
         setNotFound(false); // Reset on every load
 
-        const galleryLimit = settings?.featuredAdsLimit || 10;
+        const galleryLimit = adSettings?.featuredAdsLimit || 10;
 
         const essentialPromises = [];
         if (!pageCache.categories) essentialPromises.push(api.get('/categories'));
@@ -220,13 +235,22 @@ export default function AdsListingPage() {
           // Validate City
           if (cityInfoRes?.data) {
             setCityInfo(cityInfoRes.data);
+            if (cityInfoRes.data.whatsappNumber) {
+              setLocationWhatsApp(cityInfoRes.data.whatsappNumber);
+            } else {
+              setLocationWhatsApp(null);
+            }
             const resolvedCitySlug = cityInfoRes.data.slug || citySlug;
             setBreadcrumbs([{ name: 'Home', path: '/' }, { name: cityInfoRes.data.name, path: `/cities/${resolvedCitySlug}` }]);
           } else {
             setNotFound(true);
             setDataLoading(false);
+            setLocationWhatsApp(null);
             return;
           }
+        } else {
+          // If not a city page, ensure override is cleared
+          setLocationWhatsApp(null);
         }
 
         if (pageCache.categories) {
@@ -351,7 +375,11 @@ export default function AdsListingPage() {
       }
     };
     loadData();
-  }, [fetchAds, location.search, keyword, categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug, city, sort, listingType, settings, priceMin, priceMax, tags]);
+
+    return () => {
+      setLocationWhatsApp(null);
+    };
+  }, [fetchAds, location.search, keyword, categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug, city, sort, listingType, adSettings, priceMin, priceMax, tags]);
 
   // Infinite Scroll Hook
   const sentinelRef = useRef(null);
@@ -445,7 +473,7 @@ export default function AdsListingPage() {
   };
 
   const seoContext = getSeoContext();
-  const siteName = settings?.siteName || 'Elocanto.pk';
+  const siteName = siteSettings?.siteName || 'Elocanto.pk';
 
   const { seo } = usePageSeo(seoContext.type, seoContext.id, {
     title: seoContext.fallbackTitle,
@@ -458,7 +486,7 @@ export default function AdsListingPage() {
   const displayTitle = seoReady
     ? finalSeoTitle.replace(/{name}/gi, seoContext.placeholderName)
     : (initialData?.title || seoContext.fallbackTitle);
-  const finalSeoDesc = seoReady ? (seo?.metaDescription || settings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
+  const finalSeoDesc = seoReady ? (seo?.metaDescription || siteSettings?.defaultMetaDescription || 'Secure destination to buy and sell.') : '';
   const displayDesc = seoReady ? finalSeoDesc.replace(/{name}/gi, seoContext.placeholderName) : '';
 
   const displayKeywords = seoReady ? (seo?.keywords || '').replace(/{name}/gi, seoContext.placeholderName) : '';
@@ -937,7 +965,7 @@ export default function AdsListingPage() {
             }}>
               <div className="gallery-marquee">
                 {/* Original Items */}
-                {featuredAds.slice(0, settings?.featuredAdsLimit || 10).map(ad => (
+                {featuredAds.slice(0, siteSettings?.featuredAdsLimit || 10).map(ad => (
                   <Link key={ad._id} to={`/ads/${generateAdSlug(ad)}`} style={{ textDecoration: 'none', textAlign: 'center', flexShrink: 0, width: 130 }}>
                     <div style={{ width: 130, height: 130, borderRadius: '50%', background: 'white', border: '4px solid white', boxShadow: '0 10px 20px rgba(0,0,0,0.06)', marginBottom: 12, overflow: 'hidden', transition: 'all 0.3s' }} className="hover:scale-105 hover:shadow-lg group">
                       <img
@@ -952,12 +980,12 @@ export default function AdsListingPage() {
                         onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.png'; }}
                       />
                     </div>
-                    <div style={{ color: '#854d0e', fontSize: 15, fontWeight: 900, marginBottom: 2 }}>{settings?.priceFormat || 'PKR'} {ad.price.toLocaleString()}</div>
+                    <div style={{ color: '#854d0e', fontSize: 15, fontWeight: 900, marginBottom: 2 }}>{siteSettings?.priceFormat || 'PKR'} {ad.price.toLocaleString()}</div>
                     <div style={{ color: '#a16207', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 4px' }}>{ad.title}</div>
                   </Link>
                 ))}
                 {/* Duplicate Items for Seamless Loop */}
-                {featuredAds.slice(0, settings?.featuredAdsLimit || 10).map(ad => (
+                {featuredAds.slice(0, siteSettings?.featuredAdsLimit || 10).map(ad => (
                   <Link key={`${ad._id}-clone`} to={`/ads/${generateAdSlug(ad)}`} style={{ textDecoration: 'none', textAlign: 'center', flexShrink: 0, width: 130 }}>
                     <div style={{ width: 130, height: 130, borderRadius: '50%', background: 'white', border: '4px solid white', boxShadow: '0 10px 20px rgba(0,0,0,0.06)', marginBottom: 12, overflow: 'hidden', transition: 'all 0.3s' }} className="hover:scale-105 hover:shadow-lg group">
                       <img
@@ -982,7 +1010,7 @@ export default function AdsListingPage() {
                         }}
                       />
                     </div>
-                    <div style={{ color: '#854d0e', fontSize: 15, fontWeight: 900, marginBottom: 2 }}>{settings?.priceFormat || 'PKR'} {ad.price.toLocaleString()}</div>
+                    <div style={{ color: '#854d0e', fontSize: 15, fontWeight: 900, marginBottom: 2 }}>{siteSettings?.priceFormat || 'PKR'} {ad.price.toLocaleString()}</div>
                     <div style={{ color: '#a16207', fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', padding: '0 4px' }}>{ad.title}</div>
                   </Link>
                 ))}

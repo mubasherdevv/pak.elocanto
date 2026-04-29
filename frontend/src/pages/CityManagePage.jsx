@@ -233,8 +233,9 @@ export default function CityManagePage() {
         image: item.image || '', 
         isPopular: item.isPopular || false,
         showOnHome: item.showOnHome || false,
+        whatsappNumber: item.whatsappNumber || '',
         slug: item.slug || ''
-      } : { name: '', image: '', isPopular: false, showOnHome: false, slug: '' });
+      } : { name: '', image: '', isPopular: false, showOnHome: false, whatsappNumber: '', slug: '' });
     } else if (activeTab === 'areas') {
       setFormData(item ? { name: item.name, city: item.city?._id || item.city || '', showOnHome: item.showOnHome || false, slug: item.slug || '', customCitySlug: item.customCitySlug || '' } : { name: '', city: '', showOnHome: false, slug: '', customCitySlug: '' });
     } else {
@@ -420,6 +421,7 @@ export default function CityManagePage() {
     { key: 'name', label: 'City Name', required: true, fullWidth: false },
     { key: 'slug', label: 'URL Slug (Optional Override)', required: false, fullWidth: false, placeholder: 'e.g. karachi-city' },
     { key: 'image', label: 'City Image', type: 'file', required: false, fullWidth: false },
+    { key: 'whatsappNumber', label: 'WhatsApp Number (Optional Override)', required: false, fullWidth: false, placeholder: 'e.g. 923001234567' },
     { key: 'isPopular', label: '', type: 'checkbox', checkLabel: 'Mark as Popular (Browse Section)', fullWidth: false },
     { key: 'showOnHome', label: '', type: 'checkbox', checkLabel: 'Show on Homepage Section', fullWidth: false },
   ];
