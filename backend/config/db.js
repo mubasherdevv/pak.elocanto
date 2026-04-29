@@ -8,7 +8,6 @@ const connectDB = async () => {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 30000, // Increased from 5000
       socketTimeoutMS: 60000, // Increased
-      family: 4, // Use IPv4, skip trying IPv6
       bufferCommands: false, // Error immediately if not connected
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
