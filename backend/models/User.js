@@ -47,13 +47,13 @@ userSchema.methods.incrementLoginAttempts = async function () {
     });
     return;
   }
-  
+
   const updates = { $inc: { failedLoginAttempts: 1 } };
-  
+
   if (this.failedLoginAttempts + 1 >= 5) {
     updates.$set = { lockUntil: new Date(Date.now() + 15 * 60 * 1000) };
   }
-  
+
   await this.updateOne(updates);
 };
 
