@@ -7,7 +7,7 @@ import Area from '../models/Area.js';
 import Hotel from '../models/Hotel.js';
 import { getCache, setCache } from '../utils/cache.js';
 
-const BASE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+const BASE_URL = process.env.SITE_URL || 'https://pak.elocanto.com';
 // Cache reset trigger
 
 // Helper to escape XML special characters
@@ -215,16 +215,7 @@ export const getAdsSitemap = async (req, res) => {
   ads.forEach(ad => {
     const slug = ad.slug;
     if (slug) {
-      let path = '';
-      if (ad.category?.slug && ad.subcategory?.slug && ad.subSubCategory?.slug) {
-        path = `/${ad.category.slug}/${ad.subcategory.slug}/${ad.subSubCategory.slug}/${slug}`;
-      } else if (ad.category?.slug && ad.subcategory?.slug) {
-        path = `/${ad.category.slug}/${ad.subcategory.slug}/${slug}`;
-      } else if (ad.category?.slug) {
-        path = `/${ad.category.slug}/${slug}`;
-      } else {
-        path = `/ads/${slug}`;
-      }
+      const path = `/ads/${slug}`;
       urls.push(`  <url><loc>${BASE_URL}${escapeXml(path)}</loc>${formatDate(ad.updatedAt)}</url>`);
     }
   });

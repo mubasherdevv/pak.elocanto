@@ -55,7 +55,7 @@ export const createBackup = async (options = {}) => {
     }
 
     console.log('[BACKUP] Building URL lookups...');
-    const SITE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+    const SITE_URL = process.env.SITE_URL || 'https://pak.elocanto.com';
     
     // Fetch critical collections for mapping
     const [rawCats, rawSubs, rawCities] = await Promise.all([

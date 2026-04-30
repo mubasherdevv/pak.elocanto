@@ -300,7 +300,7 @@ export const createAd = asyncHandler(async (req, res) => {
 
   // Auto-Indexing for newly created ads (if approved)
   if (ad.isApproved && settings.enableGoogleIndexing) {
-    const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
+    const adUrl = `${settings.siteUrl || 'https://pak.elocanto.com'}/ads/${ad.slug}`;
     publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
   }
 
@@ -403,7 +403,7 @@ export const updateAd = asyncHandler(async (req, res) => {
     // Auto-Indexing on Update
     const settings = await getSettings();
     if (updated.isApproved && settings.enableGoogleIndexing) {
-      const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${updated.slug}`;
+      const adUrl = `${settings.siteUrl || 'https://pak.elocanto.com'}/ads/${updated.slug}`;
       publishToGoogleIndexing(adUrl, 'URL_UPDATED').catch(err => console.error('[Indexing] Error:', err));
     }
 
@@ -464,7 +464,7 @@ export const deleteAd = asyncHandler(async (req, res) => {
   // Auto-Indexing for Deletion
   const settings = await getSettings();
   if (settings.enableGoogleIndexing) {
-    const adUrl = `${settings.siteUrl || 'https://pk.elocanto.com'}/ads/${ad.slug}`;
+    const adUrl = `${settings.siteUrl || 'https://pak.elocanto.com'}/ads/${ad.slug}`;
     publishToGoogleIndexing(adUrl, 'URL_DELETED').catch(err => console.error('[Indexing] Error:', err));
   }
 

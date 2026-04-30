@@ -103,11 +103,11 @@ Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
 
-Sitemap: https://pk.elocanto.com/sitemap-categories.xml
-Sitemap: https://pk.elocanto.com/sitemap-cities.xml
-Sitemap: https://pk.elocanto.com/sitemap-areas.xml
-Sitemap: https://pk.elocanto.com/sitemap-hotels.xml
-Sitemap: https://pk.elocanto.com/sitemap-ads.xml`;
+Sitemap: https://pak.elocanto.com/sitemap-categories.xml
+Sitemap: https://pak.elocanto.com/sitemap-cities.xml
+Sitemap: https://pak.elocanto.com/sitemap-areas.xml
+Sitemap: https://pak.elocanto.com/sitemap-hotels.xml
+Sitemap: https://pak.elocanto.com/sitemap-ads.xml`;
   res.type('text/plain');
   res.send(robots);
 });
@@ -277,7 +277,7 @@ const getSeoMetadata = async (reqPath) => {
       keywords: siteSettings?.siteKeywords || '',
       ogTitle: siteSettings?.siteTitle || 'Elocanto',
       ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
-      url: `https://pk.elocanto.com${normalizedPath}`,
+      url: `https://pak.elocanto.com${normalizedPath}`,
       status: 200
     };
 
@@ -291,7 +291,7 @@ const getSeoMetadata = async (reqPath) => {
             keywords: customSeo.keywords || '',
             ogTitle: customSeo.ogTitle || customSeo.title,
             ogDescription: customSeo.ogDescription || customSeo.metaDescription,
-            url: `https://pk.elocanto.com${normalizedPath}`,
+            url: `https://pak.elocanto.com${normalizedPath}`,
             status: 200
           };
         }
@@ -306,7 +306,7 @@ const getSeoMetadata = async (reqPath) => {
           keywords: customSeo.keywords || '',
           ogTitle: customSeo.ogTitle || customSeo.title,
           ogDescription: customSeo.ogDescription || customSeo.metaDescription,
-          url: `https://pk.elocanto.com${normalizedPath}`,
+          url: `https://pak.elocanto.com${normalizedPath}`,
           status: 200
         };
       }
@@ -317,7 +317,7 @@ const getSeoMetadata = async (reqPath) => {
         if (!ad) return make404(normalizedPath);
         const title = `${ad.title} | PKR ${ad.price?.toLocaleString()} | Elocanto`;
         const desc = ad.description?.substring(0, 160) || `Buy ${ad.title} on Elocanto.`;
-        return { title, description: desc, keywords: ad.tags?.join(','), ogTitle: title, ogDescription: desc, image: ad.images?.[0], type: 'ad', entity: ad, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+        return { title, description: desc, keywords: ad.tags?.join(','), ogTitle: title, ogDescription: desc, image: ad.images?.[0], type: 'ad', entity: ad, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
       }
 
       if (normalizedPath.startsWith('/cities/')) {
@@ -343,7 +343,7 @@ const getSeoMetadata = async (reqPath) => {
           if (!area) return make404(normalizedPath);
           const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
           const title = entitySeo?.title || `${area.name}, ${city.name} Escorts | Elocanto`;
-          return { title, description: entitySeo?.metaDescription || `Verified services in ${area.name}.`, keywords: entitySeo?.keywords, type: 'area', entity: area, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+          return { title, description: entitySeo?.metaDescription || `Verified services in ${area.name}.`, keywords: entitySeo?.keywords, type: 'area', entity: area, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
         }
 
         if (type === 'hotels' && subSlug) {
@@ -351,11 +351,11 @@ const getSeoMetadata = async (reqPath) => {
           if (!hotel) return make404(normalizedPath);
           const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
           const title = entitySeo?.title || `${hotel.name} Escorts | Elocanto`;
-          return { title, description: entitySeo?.metaDescription || `Verified services at ${hotel.name}.`, keywords: entitySeo?.keywords, type: 'hotel', entity: hotel, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+          return { title, description: entitySeo?.metaDescription || `Verified services at ${hotel.name}.`, keywords: entitySeo?.keywords, type: 'hotel', entity: hotel, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
         }
 
         const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
-        return { title: entitySeo?.title || `${city.name} Escorts | Elocanto`, description: entitySeo?.metaDescription, type: 'city', entity: city, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+        return { title: entitySeo?.title || `${city.name} Escorts | Elocanto`, description: entitySeo?.metaDescription, type: 'city', entity: city, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
       }
 
       const parts = normalizedPath.split('/').filter(Boolean);
@@ -366,11 +366,11 @@ const getSeoMetadata = async (reqPath) => {
             const sub = await Subcategory.findOne({ slug: parts[1], category: category._id }).lean();
             if (sub) {
               const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-              return { title: entitySeo?.title || `${sub.name} in ${category.name}`, description: entitySeo?.metaDescription, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+              return { title: entitySeo?.title || `${sub.name} in ${category.name}`, description: entitySeo?.metaDescription, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
             }
           }
           const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-          return { title: entitySeo?.title || category.name, description: entitySeo?.metaDescription, url: `https://pk.elocanto.com${normalizedPath}`, status: 200 };
+          return { title: entitySeo?.title || category.name, description: entitySeo?.metaDescription, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
         }
       }
 
@@ -394,7 +394,7 @@ const make404 = (normalizedPath) => ({
   keywords: '',
   ogTitle: 'Page Not Found',
   ogDescription: 'The page you are looking for does not exist.',
-  url: `https://pk.elocanto.com${normalizedPath}`,
+  url: `https://pak.elocanto.com${normalizedPath}`,
   status: 404
 });
 
@@ -510,16 +510,16 @@ app.get('*', async (req, res) => {
 
     // Resolve og:image — use ad image if available, else fallback to site default
     const ogImage = seo.image
-      ? (seo.image.startsWith('http') ? seo.image : `https://pk.elocanto.com${seo.image}`)
-      : (settings?.ogImage || 'https://pk.elocanto.com/og-default.jpg');
+      ? (seo.image.startsWith('http') ? seo.image : `https://pak.elocanto.com${seo.image}`)
+      : (settings?.ogImage || 'https://pak.elocanto.com/og-default.jpg');
 
     // Build SSR JSON-LD Schema for ad pages (Google ko static HTML mein milega)
     let schemaScript = '';
     if (seo.type === 'ad' && seo.entity) {
       const ad = seo.entity;
-      const adUrl = `https://pk.elocanto.com${normalizePath(req.path)}`;
+      const adUrl = `https://pak.elocanto.com${normalizePath(req.path)}`;
       const adImages = Array.isArray(ad.images)
-        ? ad.images.map(img => img.startsWith('http') ? img : `https://pk.elocanto.com${img}`)
+        ? ad.images.map(img => img.startsWith('http') ? img : `https://pak.elocanto.com${img}`)
         : [];
 
       const productSchema = {
@@ -582,22 +582,22 @@ app.get('*', async (req, res) => {
 
       // Breadcrumb positions: Home > Category > Subcategory? > City > Area? > Hotel? > Ad
       const breadcrumbItems = [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pk.elocanto.com/" }
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pak.elocanto.com/" }
       ];
       let pos = 2;
       if (ad.category) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pk.elocanto.com/${ad.category.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pak.elocanto.com/${ad.category.slug}` });
       }
       if (ad.subcategory) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.subcategory.name, "item": `https://pk.elocanto.com/${ad.category?.slug}/${ad.subcategory.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.subcategory.name, "item": `https://pak.elocanto.com/${ad.category?.slug}/${ad.subcategory.slug}` });
       }
       const citySlug = ad.city?.toLowerCase().replace(/\s+/g, '-');
-      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.city, "item": `https://pk.elocanto.com/cities/${citySlug}` });
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.city, "item": `https://pak.elocanto.com/cities/${citySlug}` });
       if (ad.area) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.area.name, "item": `https://pk.elocanto.com/cities/${citySlug}/areas/${ad.area.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.area.name, "item": `https://pak.elocanto.com/cities/${citySlug}/areas/${ad.area.slug}` });
       }
       if (ad.hotel) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.hotel.name, "item": `https://pk.elocanto.com/cities/${citySlug}/hotels/${ad.hotel.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.hotel.name, "item": `https://pak.elocanto.com/cities/${citySlug}/hotels/${ad.hotel.slug}` });
       }
       breadcrumbItems.push({ "@type": "ListItem", "position": pos, "name": ad.title, "item": adUrl });
 
