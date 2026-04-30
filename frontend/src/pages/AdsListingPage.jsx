@@ -25,7 +25,7 @@ const pageCache = {
 export default function AdsListingPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { categorySlug, subCategorySlug, subSubcatSlug, citySlug, areaSlug, hotelSlug } = useParams();
+  const { categorySlug, subCategorySlug, subSubcatSlug, slug, citySlug, areaSlug, hotelSlug } = useParams();
   const { ads, loading, fetchAds, totalPages, totalCount, currentPage, settings: adSettings } = useAds();
   const { setLocationWhatsApp, settings: siteSettings } = useSettings();
   const initialData = getInitialData();
@@ -262,8 +262,8 @@ export default function AdsListingPage() {
             let bc = [{ name: 'Home', path: '/' }];
 
             if (categorySlug && !foundCat) {
-              setNotFound(true);
-              setDataLoading(false);
+              // Intelligent Fallback: If category not found, it might be an ad slug (legacy URL)
+              navigate(`/ads/${categorySlug}`, { replace: true });
               return;
             }
 
@@ -272,19 +272,25 @@ export default function AdsListingPage() {
               if (subCategorySlug) {
                 foundSub = foundCat.subcategories?.find(s => s.slug === subCategorySlug);
                 if (!foundSub) {
-                  setNotFound(true);
-                  setDataLoading(false);
+                  // Intelligent Fallback: If subcategory not found, it might be an ad slug (legacy URL)
+                  navigate(`/ads/${subCategorySlug}`, { replace: true });
                   return;
                 }
                 bc.push({ name: foundSub.name, path: `/${foundCat.slug}/${foundSub.slug}` });
                 if (subSubcatSlug) {
                   foundSubSub = foundSub.subSubCategories?.find(ss => ss.slug === subSubcatSlug);
                   if (!foundSubSub) {
-                    setNotFound(true);
-                    setDataLoading(false);
+                    // Intelligent Fallback: If sub-subcategory not found, it might be an ad slug (legacy URL)
+                    navigate(`/ads/${subSubcatSlug}`, { replace: true });
                     return;
                   }
                   bc.push({ name: foundSubSub.name, path: `/${foundCat.slug}/${foundSub.slug}/${foundSubSub.slug}` });
+                }
+                
+                // 4-Segment Ad URL Support (e.g. /cat/sub/subsub/ad-slug)
+                if (slug) {
+                  navigate(`/ads/${slug}`, { replace: true });
+                  return;
                 }
               }
             } else if (!categorySlug) {
