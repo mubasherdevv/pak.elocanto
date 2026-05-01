@@ -90,7 +90,7 @@ Allow: /about-us
 Allow: /contact-us
 Allow: /terms
 Allow: /privacy
-
+ 
 # Disallow private and administrative areas
 Disallow: /login
 Disallow: /register
@@ -102,7 +102,7 @@ Disallow: /profile/
 Disallow: /post-ad/
 Disallow: /edit-ad/
 Disallow: /admin/
-
+ 
 # Sitemap (Primary domain sitemap)
 Sitemap: https://pk.elocanto.com/sitemap-ads.xml`);
 });
