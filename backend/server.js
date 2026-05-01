@@ -146,6 +146,15 @@ app.use(compression({
 }));
 app.use(express.json());
 
+// Global Domain Migration Redirect (pak.elocanto.com -> pk.elocanto.com)
+app.use((req, res, next) => {
+  const host = req.get('host');
+  if (host === 'pak.elocanto.com') {
+    return res.redirect(301, `https://pk.elocanto.com${req.url}`);
+  }
+  next();
+});
+
 // Apply Redirect Middleware before everything else
 app.use(redirectMiddleware);
 

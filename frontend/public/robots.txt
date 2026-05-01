@@ -18,4 +18,4 @@ Disallow: /cities/
 Disallow: /
 
 # Sitemaps (Only for Ads since other sections are NoIndex)
-Sitemap: https://pak.elocanto.com/sitemap-ads.xml
+Sitemap: https://pk.elocanto.com/sitemap-ads.xml
