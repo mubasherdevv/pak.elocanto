@@ -157,7 +157,8 @@ app.use((req, res, next) => {
                        path.startsWith('/api') || 
                        path.startsWith('/uploads') ||
                        path.startsWith('/assets') ||
-                       path.startsWith('/login'); 
+                       path.startsWith('/login') ||
+                       path.startsWith('/ads/'); 
     
     if (!isExcluded) {
       return res.redirect(301, `https://pk.elocanto.com${req.url}`);
