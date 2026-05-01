@@ -544,8 +544,13 @@ app.get('*', async (req, res) => {
       ? (seo.image.startsWith('http') ? seo.image : `https://pk.elocanto.com${seo.image}`)
       : (settings?.ogImage || 'https://pk.elocanto.com/og-default.jpg');
 
-    // Build SSR JSON-LD Schema for ad pages (Google ko static HTML mein milega)
+    // Build SSR JSON-LD Schema
     let schemaScript = '';
+    const breadcrumbItems = [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pk.elocanto.com/" }
+    ];
+    let pos = 2;
+
     if (seo.type === 'ad' && seo.entity) {
       const ad = seo.entity;
       const adUrl = `https://pk.elocanto.com${normalizePath(req.path)}`;
@@ -611,11 +616,7 @@ app.get('*', async (req, res) => {
         ]
       };
 
-      // Breadcrumb positions: Home > Category > Subcategory? > City > Area? > Hotel? > Ad
-      const breadcrumbItems = [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pk.elocanto.com/" }
-      ];
-      let pos = 2;
+      // Ad Breadcrumbs
       if (ad.category) {
         breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pk.elocanto.com/${ad.category.slug}` });
       }
@@ -632,17 +633,30 @@ app.get('*', async (req, res) => {
       }
       breadcrumbItems.push({ "@type": "ListItem", "position": pos, "name": ad.title, "item": adUrl });
 
+      schemaScript = `
+        <script type="application/ld+json">${JSON.stringify(productSchema)}</script>
+        <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
+      `;
+    } else if (seo.type === 'city' && seo.entity) {
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": seo.entity.name, "item": `https://pk.elocanto.com/cities/${seo.entity.slug}` });
+    } else if (seo.type === 'area' && seo.entity) {
+      const city = seo.entity.city;
+      if (city) breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": city.name, "item": `https://pk.elocanto.com/cities/${city.slug}` });
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": seo.entity.name, "item": `https://pk.elocanto.com/cities/${city?.slug || 'pakistan'}/areas/${seo.entity.slug}` });
+    } else if (seo.type === 'hotel' && seo.entity) {
+      const city = seo.entity.city;
+      if (city) breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": city.name, "item": `https://pk.elocanto.com/cities/${city.slug}` });
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": "Hotels", "item": `https://pk.elocanto.com/cities/${city?.slug || 'pakistan'}/hotels` });
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": seo.entity.name, "item": `https://pk.elocanto.com/cities/${city?.slug || 'pakistan'}/hotels/${seo.entity.slug}` });
+    }
+
+    if (breadcrumbItems.length > 1) {
       const breadcrumbSchema = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         "itemListElement": breadcrumbItems
       };
-
-      schemaScript = `
-        <script type="application/ld+json">${JSON.stringify(productSchema)}</script>
-        <script type="application/ld+json">${JSON.stringify(faqSchema)}</script>
-        <script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>
-      `;
+      schemaScript += `<script type="application/ld+json">${JSON.stringify(breadcrumbSchema)}</script>`;
     }
 
     // High Performance Placeholder Replacement
