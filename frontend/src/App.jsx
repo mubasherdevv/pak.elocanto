@@ -53,7 +53,30 @@ import { Toaster } from 'react-hot-toast';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
+function DomainRedirect() {
+  const location = useLocation();
 
+  useEffect(() => {
+    const host = window.location.host;
+    const path = location.pathname;
+
+    if (host === 'pak.elocanto.com') {
+      // Keep these paths on the old domain if requested
+      const isExcluded = path.startsWith('/admin') ||
+        path.startsWith('/api') ||
+        path.startsWith('/uploads') ||
+        path.startsWith('/assets') ||
+        path.startsWith('/login') ||
+        path.startsWith('/ads/');
+
+      if (!isExcluded) {
+        window.location.href = `https://pk.elocanto.com${path}${location.search}`;
+      }
+    }
+  }, [location]);
+
+  return null;
+}
 
 function GlobalHelmet() {
   const { settings } = useSettings();
@@ -100,7 +123,7 @@ function App() {
           <AdProvider>
 
             <Router>
-
+              <DomainRedirect />
               <ScrollToTop />
               <Suspense fallback={null}>
                 <Routes>
