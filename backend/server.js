@@ -91,26 +91,28 @@ app.get('/sitemap-hotels.xml', getHotelsSitemap);
 app.get('/sitemap-ads.xml', getAdsSitemap);
 app.get('/robots.txt', (req, res) => {
   const robots = `User-agent: *
-# Only allow individual ads to be crawled
+# Allow crawling of public content to facilitate redirection and indexing
+Allow: /
 Allow: /ads/
+Allow: /cities/
+Allow: /about-us
+Allow: /contact-us
+Allow: /terms
+Allow: /privacy
+
+# Disallow private and administrative areas
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
+Disallow: /reset-password
 Disallow: /dashboard/
 Disallow: /messages/
 Disallow: /profile/
 Disallow: /post-ad/
 Disallow: /edit-ad/
-Disallow: /about-us
-Disallow: /contact-us
-Disallow: /terms
-Disallow: /privacy
-Disallow: /anti-scam
-Disallow: /copyright-policy
-Disallow: /cities/
-Disallow: /
+Disallow: /admin/
 
-# Sitemap (Only for Ads since other sections are NoIndex)
+# Sitemap (Primary domain sitemap)
 Sitemap: https://pk.elocanto.com/sitemap-ads.xml`;
   res.type('text/plain');
   res.send(robots);

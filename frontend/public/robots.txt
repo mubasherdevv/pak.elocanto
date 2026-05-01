@@ -1,21 +1,26 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 
-# Only allow individual ads to be crawled
+# Allow crawling of public content to facilitate redirection and indexing
+Allow: /
 Allow: /ads/
+Allow: /cities/
+Allow: /about-us
+Allow: /contact-us
+Allow: /terms
+Allow: /privacy
+
+# Disallow private and administrative areas
 Disallow: /login
 Disallow: /register
-Disallow: /post-ad
-Disallow: /edit-ad/
-Disallow: /dashboard
-Disallow: /profile/
-Disallow: /messages/
 Disallow: /forgot-password
 Disallow: /reset-password
-Disallow: /verify-email
+Disallow: /dashboard
+Disallow: /messages/
+Disallow: /profile/
+Disallow: /post-ad
+Disallow: /edit-ad/
 Disallow: /admin/
-Disallow: /cities/
-Disallow: /
 
-# Sitemaps (Only for Ads since other sections are NoIndex)
+# Sitemap (Primary domain sitemap)
 Sitemap: https://pk.elocanto.com/sitemap-ads.xml
