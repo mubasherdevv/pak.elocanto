@@ -82,27 +82,9 @@ console.log('Server starting...');
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.send(`User-agent: *
-# Allow crawling of public content to facilitate redirection and indexing
+# Allow all pages to be crawled and indexed
 Allow: /
-Allow: /ads/
-Allow: /cities/
-Allow: /about-us
-Allow: /contact-us
-Allow: /terms
-Allow: /privacy
- 
-# Disallow private and administrative areas
-Disallow: /login
-Disallow: /register
-Disallow: /forgot-password
-Disallow: /reset-password
-Disallow: /dashboard/
-Disallow: /messages/
-Disallow: /profile/
-Disallow: /post-ad/
-Disallow: /edit-ad/
-Disallow: /admin/
- 
+
 # Sitemap (Primary domain sitemap)
 Sitemap: https://pk.elocanto.com/sitemap-ads.xml`);
 });
@@ -155,14 +137,14 @@ app.use((req, res, next) => {
 
   if (host === 'pak.elocanto.com') {
     // Exclude admin panel, API, and uploads from redirection
-    const isExcluded = path.startsWith('/admin') || 
-                       path.startsWith('/api') || 
-                       path.startsWith('/uploads') ||
-                       path.startsWith('/assets') ||
-                       path.startsWith('/login') ||
-                       path.startsWith('/ads/') ||
-                       path === '/robots.txt'; 
-    
+    const isExcluded = path.startsWith('/admin') ||
+      path.startsWith('/api') ||
+      path.startsWith('/uploads') ||
+      path.startsWith('/assets') ||
+      path.startsWith('/login') ||
+      path.startsWith('/ads/') ||
+      path === '/robots.txt';
+
     if (!isExcluded) {
       return res.redirect(301, `https://pk.elocanto.com${req.url}`);
     }
@@ -311,8 +293,8 @@ const getSeoMetadata = async (reqPath) => {
     };
 
     const runResolution = async () => {
-      // Default all pages to NoIndex as per user request
-      const resultMeta = { ...defaultMeta, noIndex: true };
+      // Allow all pages to be indexed by default
+      const resultMeta = { ...defaultMeta, noIndex: false };
 
       // ─── LAYER 1: Ad Detail Pages (The ONLY pages to be indexed) ───
       if (normalizedPath.startsWith('/ads/') && normalizedPath !== '/ads') {
@@ -334,7 +316,7 @@ const getSeoMetadata = async (reqPath) => {
           entity: ad,
           url: `https://pk.elocanto.com${normalizedPath}`,
           status: 200,
-          noIndex: false // ONLY ads are indexed
+          noIndex: false
         };
       }
 
