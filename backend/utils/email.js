@@ -98,7 +98,7 @@ export const sendPasswordChangeNotification = async (user) => {
 export const sendAdRejectionEmail = async (user, ad, reason) => {
   const settings = await getSettings();
   const siteName = settings?.siteName || 'Elocanto';
-  const siteUrl = settings?.siteUrl || 'https://pak.elocanto.com';
+  const siteUrl = settings?.siteUrl || 'https://pk.elocanto.com';
   
   const subject = `Listing Update: Your ad "${ad.title}" has been rejected`;
   
@@ -181,7 +181,7 @@ export const sendReportAlertEmail = async (user, ad, reason) => {
 export const sendWarningEmail = async (user, ad, warningNumber, adminNotes) => {
   const settings = await getSettings();
   const siteName = settings?.siteName || 'Elocanto';
-  const siteUrl = settings?.siteUrl || 'https://pak.elocanto.com';
+  const siteUrl = settings?.siteUrl || 'https://pk.elocanto.com';
   
   const subject = `Official Warning #${warningNumber}: Account Moderation Notice`;
   

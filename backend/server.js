@@ -111,7 +111,7 @@ Disallow: /cities/
 Disallow: /
 
 # Sitemap (Only for Ads since other sections are NoIndex)
-Sitemap: https://pak.elocanto.com/sitemap-ads.xml`;
+Sitemap: https://pk.elocanto.com/sitemap-ads.xml`;
   res.type('text/plain');
   res.send(robots);
 });
@@ -149,8 +149,19 @@ app.use(express.json());
 // Global Domain Migration Redirect (pak.elocanto.com -> pk.elocanto.com)
 app.use((req, res, next) => {
   const host = req.get('host');
+  const path = req.path;
+
   if (host === 'pak.elocanto.com') {
-    return res.redirect(301, `https://pk.elocanto.com${req.url}`);
+    // Exclude admin panel, API, and uploads from redirection
+    const isExcluded = path.startsWith('/admin') || 
+                       path.startsWith('/api') || 
+                       path.startsWith('/uploads') ||
+                       path.startsWith('/assets') ||
+                       path.startsWith('/login'); 
+    
+    if (!isExcluded) {
+      return res.redirect(301, `https://pk.elocanto.com${req.url}`);
+    }
   }
   next();
 });
@@ -290,7 +301,7 @@ const getSeoMetadata = async (reqPath) => {
       keywords: siteSettings?.siteKeywords || '',
       ogTitle: siteSettings?.siteTitle || 'Elocanto',
       ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
-      url: `https://pak.elocanto.com${normalizedPath}`,
+      url: `https://pk.elocanto.com${normalizedPath}`,
       status: 200,
       noIndex: false
     };
@@ -317,7 +328,7 @@ const getSeoMetadata = async (reqPath) => {
           image: ad.images?.[0],
           type: 'ad',
           entity: ad,
-          url: `https://pak.elocanto.com${normalizedPath}`,
+          url: `https://pk.elocanto.com${normalizedPath}`,
           status: 200,
           noIndex: false // ONLY ads are indexed
         };
@@ -413,7 +424,7 @@ const make404 = (normalizedPath) => ({
   keywords: '',
   ogTitle: 'Page Not Found',
   ogDescription: 'The page you are looking for does not exist.',
-  url: `https://pak.elocanto.com${normalizedPath}`,
+  url: `https://pk.elocanto.com${normalizedPath}`,
   status: 404
 });
 
@@ -529,16 +540,16 @@ app.get('*', async (req, res) => {
 
     // Resolve og:image — use ad image if available, else fallback to site default
     const ogImage = seo.image
-      ? (seo.image.startsWith('http') ? seo.image : `https://pak.elocanto.com${seo.image}`)
-      : (settings?.ogImage || 'https://pak.elocanto.com/og-default.jpg');
+      ? (seo.image.startsWith('http') ? seo.image : `https://pk.elocanto.com${seo.image}`)
+      : (settings?.ogImage || 'https://pk.elocanto.com/og-default.jpg');
 
     // Build SSR JSON-LD Schema for ad pages (Google ko static HTML mein milega)
     let schemaScript = '';
     if (seo.type === 'ad' && seo.entity) {
       const ad = seo.entity;
-      const adUrl = `https://pak.elocanto.com${normalizePath(req.path)}`;
+      const adUrl = `https://pk.elocanto.com${normalizePath(req.path)}`;
       const adImages = Array.isArray(ad.images)
-        ? ad.images.map(img => img.startsWith('http') ? img : `https://pak.elocanto.com${img}`)
+        ? ad.images.map(img => img.startsWith('http') ? img : `https://pk.elocanto.com${img}`)
         : [];
 
       const productSchema = {
@@ -601,22 +612,22 @@ app.get('*', async (req, res) => {
 
       // Breadcrumb positions: Home > Category > Subcategory? > City > Area? > Hotel? > Ad
       const breadcrumbItems = [
-        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pak.elocanto.com/" }
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://pk.elocanto.com/" }
       ];
       let pos = 2;
       if (ad.category) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pak.elocanto.com/${ad.category.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.category.name, "item": `https://pk.elocanto.com/${ad.category.slug}` });
       }
       if (ad.subcategory) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.subcategory.name, "item": `https://pak.elocanto.com/${ad.category?.slug}/${ad.subcategory.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.subcategory.name, "item": `https://pk.elocanto.com/${ad.category?.slug}/${ad.subcategory.slug}` });
       }
       const citySlug = ad.city?.toLowerCase().replace(/\s+/g, '-');
-      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.city, "item": `https://pak.elocanto.com/cities/${citySlug}` });
+      breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.city, "item": `https://pk.elocanto.com/cities/${citySlug}` });
       if (ad.area) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.area.name, "item": `https://pak.elocanto.com/cities/${citySlug}/areas/${ad.area.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.area.name, "item": `https://pk.elocanto.com/cities/${citySlug}/areas/${ad.area.slug}` });
       }
       if (ad.hotel) {
-        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.hotel.name, "item": `https://pak.elocanto.com/cities/${citySlug}/hotels/${ad.hotel.slug}` });
+        breadcrumbItems.push({ "@type": "ListItem", "position": pos++, "name": ad.hotel.name, "item": `https://pk.elocanto.com/cities/${citySlug}/hotels/${ad.hotel.slug}` });
       }
       breadcrumbItems.push({ "@type": "ListItem", "position": pos, "name": ad.title, "item": adUrl });
 
