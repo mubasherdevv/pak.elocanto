@@ -91,22 +91,26 @@ app.get('/sitemap-hotels.xml', getHotelsSitemap);
 app.get('/sitemap-ads.xml', getAdsSitemap);
 app.get('/robots.txt', (req, res) => {
   const robots = `User-agent: *
-Allow: /
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /messages/
-Disallow: /post-ad/
-Disallow: /edit-ad/
-Disallow: /api/
-Disallow: /profile/
+# Only allow individual ads to be crawled
+Allow: /ads/
 Disallow: /login
 Disallow: /register
 Disallow: /forgot-password
+Disallow: /dashboard/
+Disallow: /messages/
+Disallow: /profile/
+Disallow: /post-ad/
+Disallow: /edit-ad/
+Disallow: /about-us
+Disallow: /contact-us
+Disallow: /terms
+Disallow: /privacy
+Disallow: /anti-scam
+Disallow: /copyright-policy
+Disallow: /cities/
+Disallow: /
 
-Sitemap: https://pak.elocanto.com/sitemap-categories.xml
-Sitemap: https://pak.elocanto.com/sitemap-cities.xml
-Sitemap: https://pak.elocanto.com/sitemap-areas.xml
-Sitemap: https://pak.elocanto.com/sitemap-hotels.xml
+# Sitemap (Only for Ads since other sections are NoIndex)
 Sitemap: https://pak.elocanto.com/sitemap-ads.xml`;
   res.type('text/plain');
   res.send(robots);
@@ -278,46 +282,52 @@ const getSeoMetadata = async (reqPath) => {
       ogTitle: siteSettings?.siteTitle || 'Elocanto',
       ogDescription: siteSettings?.siteDescription || 'Secure destination to buy and sell.',
       url: `https://pak.elocanto.com${normalizedPath}`,
-      status: 200
+      status: 200,
+      noIndex: false
     };
 
     const runResolution = async () => {
+      // Default all pages to NoIndex as per user request
+      const resultMeta = { ...defaultMeta, noIndex: true };
+
+      // ─── LAYER 1: Ad Detail Pages (The ONLY pages to be indexed) ───
+      if (normalizedPath.startsWith('/ads/') && normalizedPath !== '/ads') {
+        const slug = normalizedPath.replace('/ads/', '');
+        const ad = await Ad.findOne({ slug }).populate('seller category subcategory area hotel').lean();
+        if (!ad) return make404(normalizedPath);
+
+        const title = `${ad.title} | PKR ${ad.price?.toLocaleString()} | Elocanto`;
+        const desc = ad.description?.substring(0, 160) || `Buy ${ad.title} on Elocanto.`;
+
+        return {
+          title,
+          description: desc,
+          keywords: ad.tags?.join(','),
+          ogTitle: title,
+          ogDescription: desc,
+          image: ad.images?.[0],
+          type: 'ad',
+          entity: ad,
+          url: `https://pak.elocanto.com${normalizedPath}`,
+          status: 200,
+          noIndex: false // ONLY ads are indexed
+        };
+      }
+
+      // ─── LAYER 2: All Other Pages (NoIndex) ───
+      // We still resolve their titles/descriptions for social sharing, but mark as noIndex
       if (STATIC_ROUTES.has(normalizedPath) || isAdminRoute || isMessageRoute || isProfileRoute || isEditAdRoute) {
         const customSeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-        if (customSeo) {
-          return {
+        return {
+          ...resultMeta,
+          ...(customSeo ? {
             title: customSeo.title,
             description: customSeo.metaDescription,
             keywords: customSeo.keywords || '',
             ogTitle: customSeo.ogTitle || customSeo.title,
             ogDescription: customSeo.ogDescription || customSeo.metaDescription,
-            url: `https://pak.elocanto.com${normalizedPath}`,
-            status: 200
-          };
-        }
-        return defaultMeta;
-      }
-
-      const customSeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-      if (customSeo) {
-        return {
-          title: customSeo.title,
-          description: customSeo.metaDescription,
-          keywords: customSeo.keywords || '',
-          ogTitle: customSeo.ogTitle || customSeo.title,
-          ogDescription: customSeo.ogDescription || customSeo.metaDescription,
-          url: `https://pak.elocanto.com${normalizedPath}`,
-          status: 200
+          } : {})
         };
-      }
-
-      if (normalizedPath.startsWith('/ads/')) {
-        const slug = normalizedPath.replace('/ads/', '');
-        const ad = await Ad.findOne({ slug }).populate('seller category subcategory area hotel').lean();
-        if (!ad) return make404(normalizedPath);
-        const title = `${ad.title} | PKR ${ad.price?.toLocaleString()} | Elocanto`;
-        const desc = ad.description?.substring(0, 160) || `Buy ${ad.title} on Elocanto.`;
-        return { title, description: desc, keywords: ad.tags?.join(','), ogTitle: title, ogDescription: desc, image: ad.images?.[0], type: 'ad', entity: ad, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
       }
 
       if (normalizedPath.startsWith('/cities/')) {
@@ -343,7 +353,7 @@ const getSeoMetadata = async (reqPath) => {
           if (!area) return make404(normalizedPath);
           const entitySeo = await SeoSettings.findOne({ pageType: 'area', referenceId: area._id, isActive: true }).lean();
           const title = entitySeo?.title || `${area.name}, ${city.name} Escorts | Elocanto`;
-          return { title, description: entitySeo?.metaDescription || `Verified services in ${area.name}.`, keywords: entitySeo?.keywords, type: 'area', entity: area, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
+          return { ...resultMeta, title, description: entitySeo?.metaDescription || `Verified services in ${area.name}.`, keywords: entitySeo?.keywords, type: 'area', entity: area };
         }
 
         if (type === 'hotels' && subSlug) {
@@ -351,11 +361,11 @@ const getSeoMetadata = async (reqPath) => {
           if (!hotel) return make404(normalizedPath);
           const entitySeo = await SeoSettings.findOne({ pageType: 'hotel', referenceId: hotel._id, isActive: true }).lean();
           const title = entitySeo?.title || `${hotel.name} Escorts | Elocanto`;
-          return { title, description: entitySeo?.metaDescription || `Verified services at ${hotel.name}.`, keywords: entitySeo?.keywords, type: 'hotel', entity: hotel, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
+          return { ...resultMeta, title, description: entitySeo?.metaDescription || `Verified services at ${hotel.name}.`, keywords: entitySeo?.keywords, type: 'hotel', entity: hotel };
         }
 
         const entitySeo = await SeoSettings.findOne({ pageType: 'city', referenceId: city._id, isActive: true }).lean();
-        return { title: entitySeo?.title || `${city.name} Escorts | Elocanto`, description: entitySeo?.metaDescription, type: 'city', entity: city, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
+        return { ...resultMeta, title: entitySeo?.title || `${city.name} Escorts | Elocanto`, description: entitySeo?.metaDescription, type: 'city', entity: city };
       }
 
       const parts = normalizedPath.split('/').filter(Boolean);
@@ -366,11 +376,11 @@ const getSeoMetadata = async (reqPath) => {
             const sub = await Subcategory.findOne({ slug: parts[1], category: category._id }).lean();
             if (sub) {
               const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-              return { title: entitySeo?.title || `${sub.name} in ${category.name}`, description: entitySeo?.metaDescription, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
+              return { ...resultMeta, title: entitySeo?.title || `${sub.name} in ${category.name}`, description: entitySeo?.metaDescription };
             }
           }
           const entitySeo = await SeoSettings.findOne({ pagePath: normalizedPath, isActive: true }).lean();
-          return { title: entitySeo?.title || category.name, description: entitySeo?.metaDescription, url: `https://pak.elocanto.com${normalizedPath}`, status: 200 };
+          return { ...resultMeta, title: entitySeo?.title || category.name, description: entitySeo?.metaDescription };
         }
       }
 
@@ -641,12 +651,14 @@ app.get('*', async (req, res) => {
 
     console.log(`[SSR] 🚀 Served: ${req.path} (${seo.status})`);
 
-    // If 404, inject noindex and prevent caching
-    if (seo.status === 404) {
+    // If 404 or explicitly set to noIndex, inject noindex meta tag
+    if (seo.status === 404 || seo.noIndex) {
       if (html.includes('</head>')) {
         html = html.replace('</head>', '  <meta name="robots" content="noindex, nofollow" />\n</head>');
       }
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      if (seo.status === 404) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      }
     } else {
       res.setHeader('Cache-Control', 'no-cache');
     }

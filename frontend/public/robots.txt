@@ -1,8 +1,8 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Allow: /
 
-# Private & User Specific Pages (No Index)
+# Only allow individual ads to be crawled
+Allow: /ads/
 Disallow: /login
 Disallow: /register
 Disallow: /post-ad
@@ -14,10 +14,8 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /verify-email
 Disallow: /admin/
+Disallow: /cities/
+Disallow: /
 
-# Sitemaps
-Sitemap: https://pk.elocanto.com/sitemap-categories.xml
-Sitemap: https://pk.elocanto.com/sitemap-cities.xml
-Sitemap: https://pk.elocanto.com/sitemap-areas.xml
-Sitemap: https://pk.elocanto.com/sitemap-hotels.xml
-Sitemap: https://pk.elocanto.com/sitemap-ads.xml
+# Sitemaps (Only for Ads since other sections are NoIndex)
+Sitemap: https://pak.elocanto.com/sitemap-ads.xml

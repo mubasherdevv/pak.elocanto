@@ -10,7 +10,7 @@ import Settings from '../models/Settings.js';
 export const publishToGoogleIndexing = async (url, type = 'URL_UPDATED') => {
   try {
     const settings = await Settings.findOne({}).lean();
-    
+
     if (!settings || !settings.enableGoogleIndexing || !settings.googleIndexingKey) {
       console.log('[Google Indexing] Skipping: Disabled or credentials missing.');
       return null;
@@ -33,7 +33,7 @@ export const publishToGoogleIndexing = async (url, type = 'URL_UPDATED') => {
     });
 
     const accessToken = await auth.getAccessToken();
-    
+
     const response = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
       method: 'POST',
       headers: {
@@ -47,7 +47,7 @@ export const publishToGoogleIndexing = async (url, type = 'URL_UPDATED') => {
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
       console.error('[Google Indexing] API Error:', data);
       const msg = data.error?.message || 'Google API Error';
