@@ -79,18 +79,9 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 console.log('Server starting...');
 
-// 1. Immediate Healthcheck (Railway Requirement)
-app.get('/api/health', (req, res) => res.status(200).send('OK'));
-app.get('/health', (req, res) => res.status(200).send('OK'));
-
-// 2. High-Priority SEO Routes (Must be early to avoid SPA fallback)
-app.get('/sitemap-categories.xml', getCategoriesSitemap);
-app.get('/sitemap-cities.xml', getCitiesSitemap);
-app.get('/sitemap-areas.xml', getAreasSitemap);
-app.get('/sitemap-hotels.xml', getHotelsSitemap);
-app.get('/sitemap-ads.xml', getAdsSitemap);
 app.get('/robots.txt', (req, res) => {
-  const robots = `User-agent: *
+  res.type('text/plain');
+  res.send(`User-agent: *
 # Allow crawling of public content to facilitate redirection and indexing
 Allow: /
 Allow: /ads/
@@ -113,10 +104,19 @@ Disallow: /edit-ad/
 Disallow: /admin/
 
 # Sitemap (Primary domain sitemap)
-Sitemap: https://pk.elocanto.com/sitemap-ads.xml`;
-  res.type('text/plain');
-  res.send(robots);
+Sitemap: https://pk.elocanto.com/sitemap-ads.xml`);
 });
+
+// 1. Immediate Healthcheck (Railway Requirement)
+app.get('/api/health', (req, res) => res.status(200).send('OK'));
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// 2. High-Priority SEO Routes (Must be early to avoid SPA fallback)
+app.get('/sitemap-categories.xml', getCategoriesSitemap);
+app.get('/sitemap-cities.xml', getCitiesSitemap);
+app.get('/sitemap-areas.xml', getAreasSitemap);
+app.get('/sitemap-hotels.xml', getHotelsSitemap);
+app.get('/sitemap-ads.xml', getAdsSitemap);
 
 app.use(
   helmet({
@@ -160,7 +160,8 @@ app.use((req, res, next) => {
                        path.startsWith('/uploads') ||
                        path.startsWith('/assets') ||
                        path.startsWith('/login') ||
-                       path.startsWith('/ads/'); 
+                       path.startsWith('/ads/') ||
+                       path === '/robots.txt'; 
     
     if (!isExcluded) {
       return res.redirect(301, `https://pk.elocanto.com${req.url}`);
