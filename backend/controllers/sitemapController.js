@@ -7,7 +7,7 @@ import Area from '../models/Area.js';
 import Hotel from '../models/Hotel.js';
 import { getCache, setCache } from '../utils/cache.js';
 
-const BASE_URL = process.env.SITE_URL || 'https://pk.elocanto.com';
+const BASE_URL = process.env.SITE_URL || 'https://pak.elocanto.com';
 // Cache reset trigger
 
 // Helper to escape XML special characters
