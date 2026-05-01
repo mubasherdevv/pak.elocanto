@@ -13,7 +13,10 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate('/dashboard');
+    if (user) {
+      if (user.isAdmin) navigate('/admin');
+      else navigate('/dashboard');
+    }
   }, [user, navigate]);
 
   const handleSubmit = async (e) => {

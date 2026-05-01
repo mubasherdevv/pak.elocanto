@@ -5,5 +5,5 @@ export default function AdminRoute() {
   const { user, loading } = useAuth();
   
   if (loading) return null;
-  return user && user.isAdmin ? <Outlet /> : <Navigate to="/" />;
+  return user && user.isAdmin ? <Outlet /> : <Navigate to="/login" />;
 }
