@@ -130,27 +130,6 @@ app.use(compression({
 }));
 app.use(express.json());
 
-// Global Domain Migration Redirect (pak.elocanto.com -> pk.elocanto.com)
-app.use((req, res, next) => {
-  const host = req.get('host');
-  const path = req.path;
-
-  if (host === 'pak.elocanto.com') {
-    // Exclude admin panel, API, and uploads from redirection
-    const isExcluded = path.startsWith('/admin') ||
-      path.startsWith('/api') ||
-      path.startsWith('/uploads') ||
-      path.startsWith('/assets') ||
-      path.startsWith('/login') ||
-      path.startsWith('/ads/') ||
-      path === '/robots.txt';
-
-    if (!isExcluded) {
-      return res.redirect(301, `https://pk.elocanto.com${req.url}`);
-    }
-  }
-  next();
-});
 
 // Apply Redirect Middleware before everything else
 app.use(redirectMiddleware);
